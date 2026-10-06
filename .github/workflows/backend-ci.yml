@@ -1,0 +1,62 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check if backend project exists
+        id: check
+        run: |
+          if [ -f "backend/pom.xml" ] || ls backend/build.gradle* 1> /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Java
+        if: steps.check.outputs.exists == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Maven/Gradle
+        if: steps.check.outputs.exists == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/pom.xml', 'backend/build.gradle*', 'backend/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Build and Test
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          if [ -f "pom.xml" ]; then
+            mvn -B clean verify
+          elif [ -f "gradlew" ]; then
+            ./gradlew build
+          else
+            gradle build
+          fi
+        working-directory: ./backend
+
+      - name: Skip gracefully
+        if: steps.check.outputs.exists == 'false'
+        run: echo "No backend project found. Skipping workflow successfully."

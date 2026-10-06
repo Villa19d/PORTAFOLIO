@@ -1,5 +1,8 @@
 # Portafolio de Rodrigo Del Villar
 
+[![Backend CI](https://github.com/OWNER/REPO/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/OWNER/REPO/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/frontend-ci.yml)
+
 Portafolio profesional de desarrollo Full-Stack. Construido con React (Vite) en el frontend y Spring Boot en el backend.
 
 ## Arquitectura
