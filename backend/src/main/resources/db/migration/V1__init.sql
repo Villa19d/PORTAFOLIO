@@ -1,0 +1,1 @@
+-- Empty migration to initialize Flyway baseline
