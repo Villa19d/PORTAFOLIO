@@ -30,4 +30,34 @@ public class ProjectMapper {
                 project.getUpdatedAt()
         );
     }
+
+    public Project toEntity(com.rodrigodvillar.portfolio.dto.ProjectRequest request) {
+        if (request == null) {
+            return null;
+        }
+        Project project = new Project();
+        updateEntityFromRequest(request, project);
+        return project;
+    }
+
+    public void updateEntityFromRequest(com.rodrigodvillar.portfolio.dto.ProjectRequest request, Project project) {
+        if (request == null || project == null) {
+            return;
+        }
+        project.setSlug(request.slug());
+        project.setTitleEs(request.title().es());
+        project.setTitleEn(request.title().en());
+        project.setSummaryEs(request.summary().es());
+        project.setSummaryEn(request.summary().en());
+        project.setDescriptionEs(request.description().es());
+        project.setDescriptionEn(request.description().en());
+        project.setTechStack(request.techStack());
+        project.setImageUrl(request.imageUrl());
+        project.setVideoUrl(request.videoUrl());
+        project.setRepoUrl(request.repoUrl());
+        project.setLiveUrl(request.liveUrl());
+        project.setFeatured(request.featured());
+        project.setPublished(request.published());
+        project.setDisplayOrder(request.displayOrder());
+    }
 }

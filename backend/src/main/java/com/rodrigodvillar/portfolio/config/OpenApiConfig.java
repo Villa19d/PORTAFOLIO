@@ -15,6 +15,12 @@ public class OpenApiConfig {
                 .info(new Info().title("Portfolio API")
                         .description("API for Rodrigo Del Villar's portfolio")
                         .version("1.0.0")
-                        .contact(new Contact().name("Rodrigo Del Villar")));
+                        .contact(new Contact().name("Rodrigo Del Villar")))
+                .components(new io.swagger.v3.oas.models.Components()
+                        .addSecuritySchemes("bearerAuth",
+                                new io.swagger.v3.oas.models.security.SecurityScheme()
+                                        .type(io.swagger.v3.oas.models.security.SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")));
     }
 }

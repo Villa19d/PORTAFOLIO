@@ -9,5 +9,6 @@ import java.util.UUID;
 
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
     List<Project> findByPublishedTrueOrderByDisplayOrderAsc();
+    List<Project> findAllByOrderByDisplayOrderAsc();
     Optional<Project> findBySlugAndPublishedTrue(String slug);
 }

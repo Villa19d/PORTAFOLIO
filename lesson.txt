@@ -9,8 +9,44 @@ PostgreSQL
   → Controller devuelve el resultado (De DTO a JSON)
   → Spring MVC y Jackson lo serializan a JSON (en Controller)
 
+* DTO: Un DTO (Data Transfer Object) es un objeto pensado para transportar datos entre partes del sistema o a través de la API. ProjectRequest representa datos de entrada; ProjectResponse, datos de salida.
+* Bean Validation: mecanismo que comprueba reglas declaradas en los campos del DTO.
+* Controller Advice: componente Spring que centraliza el manejo de excepciones de los Controllers.
+* @ExceptionHandler: indica qué método puede manejar cierto tipo de excepción.
+* Restricción UNIQUE: regla de la base de datos que impide valores duplicados en una columna, como el slug.
+* Código HTTP: comunica el resultado de la petición: 400 entrada inválida, 404 recurso ausente y 409 conflicto con el estado existente.
 
-Un DTO (Data Transfer Object) es un objeto pensado para transportar datos entre partes del sistema o a través de la API.
+
+Ojo - Flyway preguntar a pinedo como funciona.
 
 
-Flyway preguntar a pinedo como funciona.
+
+flowchart TD
+    C["Cliente: navegador o frontend"] -->|"HTTP + JSON"| MVC["Spring MVC recibe y enruta"]
+
+    MVC -->|"Jackson convierte JSON"| DTO["ProjectRequest DTO"]
+    DTO -->|"@Valid + Bean Validation"| V{"¿Pasa las reglas?"}
+
+    V -->|"No"| E400["Excepción de validación"]
+    E400 --> A["RestControllerAdvice + ExceptionHandler"]
+    A --> R400["Respuesta HTTP 400 + JSON de error"]
+
+    V -->|"Sí"| CTRL["Controller: adapta HTTP y delega"]
+    CTRL --> SVC["Service: coordina lógica de aplicación"]
+    SVC --> REPO["Repository: acceso a datos"]
+    REPO --> ORM["JPA / Hibernate traduce operaciones"]
+    ORM --> DB["PostgreSQL + restricciones"]
+
+    SVC -->|"ID inexistente"| E404["ResourceNotFoundException"]
+    E404 --> A
+    A --> R404["Respuesta HTTP 404 + JSON de error"]
+
+    DB -->|"slug duplicado"| E409["DataIntegrityViolationException"]
+    E409 --> A
+    A --> R409["Respuesta HTTP 409 + JSON de error"]
+
+    DB -->|"Proyecto encontrado/creado"| ENT["Entidad Project"]
+    ENT --> MAP["Mapper: Entity → Response DTO"]
+    MAP --> CTRL
+    CTRL -->|"objeto de respuesta"| MVC
+    MVC -->|"Jackson: objeto → JSON"| C

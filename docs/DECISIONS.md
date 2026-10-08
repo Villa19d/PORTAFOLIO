@@ -48,3 +48,8 @@
 - **Consecuencia:** 
   - **Eficiencia**: Es totalmente *stateless* (sin guardar tokens en la DB). 
   - **Trade-off de revocación**: Al no guardar estado en la base de datos, no se puede revocar un token individual si se compromete, excepto rotando la variable de entorno `JWT_SECRET` (lo cual invalidaría TODOS los accesos, algo aceptable siendo un portafolio de un único usuario).
+
+## 10. Sanitización de Markdown (Ticket 2.2)
+- **Contexto:** Los proyectos permiten escribir descripciones usando Markdown. Hay un riesgo de inyección de código XSS si el usuario escribe HTML directamente en el texto Markdown.
+- **Decisión:** La descripción markdown se renderiza en el frontend SIN HTML crudo (sanitizada). El backend asume que el frontend aplicará esta restricción (una restricción para el Sprint S6).
+- **Consecuencia:** Menor riesgo de ataques XSS. El backend no necesita procesar, limpiar o sanitizar el markdown antes de guardarlo en base de datos.

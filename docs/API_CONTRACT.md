@@ -10,6 +10,8 @@
 | POST | `/api/auth/login` | Public | Login to get tokens. |
 | POST | `/api/auth/refresh` | Cookie | Refresh access token using HttpOnly cookie. |
 | POST | `/api/auth/logout` | None | Logout. |
+| GET | `/api/admin/projects` | JWT | Get all projects (published or not), ordered by `displayOrder` asc. |
+| GET | `/api/admin/projects/{id}` | JWT | Get a single project by ID. |
 | POST | `/api/admin/projects` | JWT | Create project. |
 | PUT | `/api/admin/projects/{id}` | JWT | Update project. |
 | DELETE | `/api/admin/projects/{id}` | JWT | Delete project. |
@@ -131,6 +133,15 @@
 
 ### POST `/api/auth/logout`
 **Response (204 No Content)**
+
+### GET `/api/admin/projects`
+**Response (200 OK)**
+*(Same JSON array as `/api/projects`, but includes unpublished projects)*
+
+### GET `/api/admin/projects/{id}`
+**Response (200 OK)**
+*(Same JSON object as `/api/projects/{slug}`, but fetched by UUID)*
+**Response (404 Not Found)**
 
 ### POST `/api/admin/projects`
 **Request**
