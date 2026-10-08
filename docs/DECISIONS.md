@@ -41,3 +41,10 @@
   - **Actuator (`/actuator/health`, `/actuator/info`):** NO se rompe. Spring Boot marca internamente sus endpoints de management como eager cuando están incluidos en la lista de exposición, por lo que se inicializan al arranque independientemente del flag de lazy-init.
   - **Springdoc (`/v3/api-docs`, Swagger UI):** En versiones anteriores (≤2.8.x), el primer request podía tardar 1-2 segundos extra o generar un 500 en contextos con dependencias cruzadas. **Solución aplicada:** `springdoc.pre-loading-enabled=true` en `application-prod.yml`. Esto le indica a Springdoc que construya el spec OpenAPI durante el arranque del contexto, eliminando la latencia del primer request sin perder el beneficio del lazy-init en el resto de los beans de negocio.
 - **Consecuencia:** Startup más rápido en Render (~30% menos según benchmarks de Spring), con Actuator y Swagger disponibles inmediatamente tras el primer request al servidor.
+
+## 9. Seguridad: JWT Stateless y Refresh Tokens en Cookie (Ticket 2.1)
+- **Contexto:** La API necesita un método de autenticación para el administrador que prevenga robo de tokens vía XSS y funcione eficientemente en un entorno de memoria restringida (512MB).
+- **Decisión:** Se usa Spring Security con OAuth2 Resource Server y Nimbus para la emisión de tokens JWT `HS256`. El Access Token es de corta duración (15 min) y se devuelve en el body de la respuesta. El Refresh Token es de larga duración (7 días) y se entrega de manera exclusiva mediante una Cookie `HttpOnly`, `Secure` y `SameSite=Lax`.
+- **Consecuencia:** 
+  - **Eficiencia**: Es totalmente *stateless* (sin guardar tokens en la DB). 
+  - **Trade-off de revocación**: Al no guardar estado en la base de datos, no se puede revocar un token individual si se compromete, excepto rotando la variable de entorno `JWT_SECRET` (lo cual invalidaría TODOS los accesos, algo aceptable siendo un portafolio de un único usuario).

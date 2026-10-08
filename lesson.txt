@@ -11,3 +11,6 @@ PostgreSQL
 
 
 Un DTO (Data Transfer Object) es un objeto pensado para transportar datos entre partes del sistema o a través de la API.
+
+
+Flyway preguntar a pinedo como funciona.

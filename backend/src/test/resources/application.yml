@@ -4,9 +4,9 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/portfolio}
+    username: ${DB_USER:test}
+    password: ${DB_PASSWORD:test}
     hikari:
       maximum-pool-size: 4
       minimum-idle: 1
@@ -37,7 +37,7 @@ cors:
 
 portfolio:
   security:
-    jwt-secret: ${JWT_SECRET}
-    admin-username: ${ADMIN_USERNAME}
-    admin-password-hash: ${ADMIN_PASSWORD_HASH}
-    cookie-secure: ${COOKIE_SECURE:true}
+    jwt-secret: dummy_secret_key_that_is_at_least_32_bytes_long
+    admin-username: admin
+    admin-password-hash: $2a$10$w4R4eJg/Gz6U8qU9kMvSce9SgR1h.l8w8m0dGZ/Y1rN/1bWb6M3V2 # 'password'
+    cookie-secure: false
