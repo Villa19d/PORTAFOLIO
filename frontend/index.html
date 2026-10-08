@@ -18,6 +18,20 @@
     <meta name="twitter:description" content="Portfolio Description Placeholder" />
     <meta name="twitter:image" content="/placeholder-twitter.jpg" />
 
+    <script>
+      (function() {
+        try {
+          var savedTheme = localStorage.getItem('theme');
+          var isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          // Dark por defecto en fallback
+          if (savedTheme === null && !window.matchMedia('(prefers-color-scheme: dark)').matches && !window.matchMedia('(prefers-color-scheme: light)').matches) {
+            isDark = true;
+          }
+          document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        } catch (e) {}
+      })();
+    </script>
+
     <title>Rodrigo Del Villar | Portfolio</title>
   </head>
   <body>

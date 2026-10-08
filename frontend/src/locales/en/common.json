@@ -1,0 +1,15 @@
+{
+  "nav": {
+    "projects": "Projects",
+    "contact": "Contact"
+  },
+  "hero": {
+    "placeholder": "Full-Stack Developer."
+  },
+  "theme": {
+    "toggle": "Toggle theme"
+  },
+  "language": {
+    "toggle": "Switch to Spanish"
+  }
+}

@@ -8,10 +8,51 @@
   --font-sans: 'Inter Variable', sans-serif;
   --font-display: 'Space Grotesk Variable', sans-serif;
   --font-mono: 'JetBrains Mono Variable', monospace;
+
+  /* Colores */
+  --color-bg: var(--color-bg-base);
+  --color-surface: var(--color-surface-base);
+  --color-text-main: var(--color-text-base);
+  --color-text-muted: var(--color-text-muted-base);
+  --color-accent-violet: var(--color-accent-violet-base);
+  --color-accent-cyan: var(--color-accent-cyan-base);
+  --color-border-subtle: var(--color-border-base);
+
+  /* Curvas de easing */
+  --ease-fluid: cubic-bezier(0.3, 0, 0, 1);
+  --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Sombras y Radios */
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px 2px var(--color-accent-violet-base);
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
 }
 
 @layer base {
+  :root,
+  [data-theme="light"] {
+    --color-bg-base: #f8fafc;
+    --color-surface-base: #ffffff;
+    --color-text-base: #0f172a;
+    --color-text-muted-base: #64748b;
+    --color-accent-violet-base: #8b5cf6;
+    --color-accent-cyan-base: #06b6d4;
+    --color-border-base: #e2e8f0;
+  }
+
+  /* Paleta dark por defecto según los requerimientos */
+  [data-theme="dark"] {
+    --color-bg-base: #0a0a0f;
+    --color-surface-base: #13131a;
+    --color-text-base: #f8fafc;
+    --color-text-muted-base: #94a3b8;
+    --color-accent-violet-base: #8b5cf6;
+    --color-accent-cyan-base: #22d3ee;
+    --color-border-base: #27272a;
+  }
+
   body {
-    @apply font-sans antialiased bg-gray-50 text-gray-900;
+    @apply font-sans antialiased bg-bg text-text-main transition-colors duration-300;
   }
 }
