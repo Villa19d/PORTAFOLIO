@@ -1,0 +1,16 @@
+portfolio:
+  rate-limit:
+    enabled: true
+    bucket-capacity: 1000
+    bucket-expiration-hours: 1
+    rules:
+      - method: POST
+        pathPattern: /api/auth/login
+        bandwidths:
+          - capacity: 1
+            duration: PT2S
+      - method: POST
+        pathPattern: /api/auth/refresh
+        bandwidths:
+          - capacity: 30
+            duration: PT1M

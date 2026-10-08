@@ -22,6 +22,7 @@ spring:
 
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: framework
 
 management:
   endpoints:
@@ -41,3 +42,25 @@ portfolio:
     admin-username: ${ADMIN_USERNAME}
     admin-password-hash: ${ADMIN_PASSWORD_HASH}
     cookie-secure: ${COOKIE_SECURE:true}
+  rate-limit:
+    enabled: true
+    bucket-capacity: 10000
+    bucket-expiration-hours: 1
+    rules:
+      - method: POST
+        pathPattern: /api/auth/login
+        bandwidths:
+          - capacity: 5
+            duration: PT1M
+          - capacity: 20
+            duration: PT1H
+      - method: POST
+        pathPattern: /api/auth/refresh
+        bandwidths:
+          - capacity: 30
+            duration: PT1M
+      - method: POST
+        pathPattern: /api/contact
+        bandwidths:
+          - capacity: ${RATE_LIMIT_CONTACT_CAPACITY:3}
+            duration: PT1H
