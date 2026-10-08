@@ -45,7 +45,7 @@ describe('useCapabilities', () => {
   });
 
   it('should disable heavy effects if prefersReducedMotion is true', () => {
-    vi.stubGlobal('matchMedia', vi.fn((_: string) => ({
+    vi.stubGlobal('matchMedia', vi.fn(() => ({
       matches: true, // all queries match, including prefersReducedMotion
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),

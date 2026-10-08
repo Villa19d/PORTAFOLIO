@@ -35,6 +35,9 @@ Hallazgos de rendimiento (si aplica):
 El tamaño final de la imagen Docker es de ~129 MB usando Alpine, optimizado para el despliegue en Render.
 Dudas para Claude PM: Ninguna. Sprint 1 completado con éxito, API pública de lectura funcionando según el contrato.
 
+
+
+
 ## Reporte de Sprint S2
 **Tickets:** completados 3/3 (S2-T1 Security JWT, S2-T2 Admin CRUD, S2-T3 Rate Limiting)
 **Estado de main:** Builds verdes. CI ejecutando exitosamente. Todos los tests de integración (27/27) pasando.
@@ -55,18 +58,26 @@ Dudas para Claude PM: Ninguna. Sprint 1 completado con éxito, API pública de l
 
 
 
+
+
 In Progres...
+
+
+
 ## Reporte de Sprint S3 (EN PROGRESO)
-**Tickets:** completados 1/3 (S3-T1 Scaffold. Faltan: S3-T2 Foundations, S3-T3 API Fallback)
-**Estado de main:** Builds verdes. CI de frontend ejecutando `lint`, `typecheck`, `test` y `build` exitosamente.
+**Tickets:** completados 2/3 (S3-T1 Scaffold, S3-T2 Foundations. Falta: S3-T3 API Fallback)
+**Estado de main:** Builds verdes. CI de frontend ejecutando `lint`, `typecheck`, `test` y `build` exitosamente. Tests unitarios 11/11 pasando.
 **Desviaciones del plan:**
 *   Ninguna.
 **Decisiones nuevas:**
-*   **Ticket 3.1:** Se optó por `.eslintrc.cjs` en lugar del linter predeterminado de Vite para cumplir estrictamente con las reglas de Hooks y a11y requeridas.
 *   **Ticket 3.1:** Se integró Vitest con JSDOM compartiendo la configuración de tipos globales de Vite.
+*   **Ticket 3.2:** Se establecieron tokens de diseño nativos con Tailwind v4.
+*   **Ticket 3.2:** Se implementó `useCapabilities` para evaluar en tiempo real las capacidades del hardware del cliente, protegiendo animaciones pesadas.
+*   **Ticket 3.2:** Script anti-FOUC inyectado en `index.html` para prevenir el parpadeo del modo oscuro.
+*   **Ticket 3.2:** Mocks globales de `ResizeObserver` y `matchMedia` inyectados en JSDOM para pruebas consistentes.
 **Deuda técnica / riesgos detectados:**
-*   Los placeholders de SEO (Open Graph / Twitter Cards) en `index.html` deben ser actualizados antes del despliegue final.
+*   Los placeholders de SEO en `index.html` deben ser actualizados antes del despliegue final.
 **Hallazgos de rendimiento:**
-*   **Ticket 3.1:** Bundle base hiperligero (~65.97 kB gzip) empaquetando React y Motion en chunks separados.
+*   N/A
 **Links:** 
-* PR Ticket 3.1: [Pendiente de tu enlace]
+* PRs: [Pendiente de tus enlaces]

@@ -3,7 +3,35 @@ import { useCapabilities } from './hooks/useCapabilities';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageToggle } from './components/LanguageToggle';
 import { useSmoothScroll } from './components/SmoothScrollProvider';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { useProjects } from './features/projects/api/useProjects';
 
+function ProjectsList() {
+  const { data: projects, isLoading, error, source } = useProjects();
+  const { i18n } = useTranslation();
+  const lang = i18n.language as 'es' | 'en';
+
+  if (isLoading) return <div>Cargando proyectos...</div>;
+  if (error) throw error; // Caught by ErrorBoundary
+
+  return (
+    <div className="space-y-4 w-full">
+      <div className="flex justify-end">
+        <span className={`px-2 py-1 text-xs font-bold rounded ${source === 'live' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+          Source: {source}
+        </span>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {projects?.map((p) => (
+          <div key={p.id} className="p-4 border rounded-xl bg-bg shadow-sm">
+            <h3 className="font-bold text-lg">{p.title[lang] || p.title.es}</h3>
+            <p className="text-sm text-text-muted">{p.summary[lang] || p.summary.es}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 export default function App() {
   const { t } = useTranslation('common');
   const caps = useCapabilities();
@@ -74,8 +102,13 @@ export default function App() {
         Espacio para scroll...
       </div>
 
-      <section id="seccion-proyectos" className="min-h-screen bg-surface p-12 rounded-3xl shadow-glow border border-accent-violet flex items-center justify-center">
+      <section id="seccion-proyectos" className="min-h-screen bg-surface p-12 rounded-3xl shadow-glow border border-accent-violet flex flex-col items-center justify-center space-y-8">
         <h2 className="text-5xl font-display font-bold text-accent-violet">SECCIÓN PROYECTOS</h2>
+        <div className="w-full">
+          <ErrorBoundary>
+            <ProjectsList />
+          </ErrorBoundary>
+        </div>
       </section>
 
       <div className="h-[50vh] border-l-4 border-dashed border-border-subtle flex items-center pl-8 text-text-muted">

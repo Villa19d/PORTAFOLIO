@@ -1,0 +1,53 @@
+[
+  {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "slug": "portfolio",
+    "title": { "es": "Portafolio", "en": "Portfolio" },
+    "summary": { "es": "Mi portafolio personal", "en": "My personal portfolio" },
+    "description": { "es": "Detalles del portafolio...", "en": "Portfolio details..." },
+    "techStack": ["React", "Spring Boot"],
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    "videoUrl": null,
+    "repoUrl": "https://github.com/rodrigodvillar/portfolio",
+    "liveUrl": "https://rodrigodvillar.com",
+    "featured": true,
+    "published": true,
+    "displayOrder": 1,
+    "createdAt": "2024-10-06T12:00:00Z",
+    "updatedAt": "2024-10-06T12:00:00Z"
+  },
+  {
+    "id": "223e4567-e89b-12d3-a456-426614174001",
+    "slug": "ecommerce-api",
+    "title": { "es": "API E-Commerce", "en": "E-Commerce API" },
+    "summary": { "es": "Backend para tienda", "en": "Store backend" },
+    "description": { "es": "Detalles API...", "en": "API details..." },
+    "techStack": ["Java", "Spring Boot", "PostgreSQL"],
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    "videoUrl": null,
+    "repoUrl": "https://github.com/rodrigodvillar/ecommerce-api",
+    "liveUrl": null,
+    "featured": false,
+    "published": true,
+    "displayOrder": 2,
+    "createdAt": "2024-10-07T12:00:00Z",
+    "updatedAt": "2024-10-07T12:00:00Z"
+  },
+  {
+    "id": "323e4567-e89b-12d3-a456-426614174002",
+    "slug": "task-manager",
+    "title": { "es": "Gestor de Tareas", "en": "Task Manager" },
+    "summary": { "es": "App de productividad", "en": "Productivity app" },
+    "description": { "es": "Detalles app...", "en": "App details..." },
+    "techStack": ["React", "TypeScript", "Tailwind"],
+    "imageUrl": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    "videoUrl": null,
+    "repoUrl": "https://github.com/rodrigodvillar/task-manager",
+    "liveUrl": "https://tasks.rodrigodvillar.com",
+    "featured": true,
+    "published": true,
+    "displayOrder": 3,
+    "createdAt": "2024-10-08T12:00:00Z",
+    "updatedAt": "2024-10-08T12:00:00Z"
+  }
+]
