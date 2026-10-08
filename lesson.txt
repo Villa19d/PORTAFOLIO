@@ -16,6 +16,10 @@ PostgreSQL
 * Restricción UNIQUE: regla de la base de datos que impide valores duplicados en una columna, como el slug.
 * Código HTTP: comunica el resultado de la petición: 400 entrada inválida, 404 recurso ausente y 409 conflicto con el estado existente.
 
+* i18n: organización de textos para ofrecer varios idiomas; al cambiar el idioma, React actualiza la interfaz sin recargar toda la página.
+* i18n: organización de textos para ofrecer varios idiomas; al cambiar el idioma, React actualiza la interfaz sin recargar toda la página.
+* @theme: directiva de Tailwind v4 que permite tener variables de de tema con utilidades como clases de color en el CSS, facilitando la consistencia del diseño.
+
 
 Ojo - Flyway preguntar a pinedo como funciona.
 
