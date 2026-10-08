@@ -34,3 +34,39 @@ Hallazgos de rendimiento (si aplica):
 
 El tamaño final de la imagen Docker es de ~129 MB usando Alpine, optimizado para el despliegue en Render.
 Dudas para Claude PM: Ninguna. Sprint 1 completado con éxito, API pública de lectura funcionando según el contrato.
+
+## Reporte de Sprint S2
+**Tickets:** completados 3/3 (S2-T1 Security JWT, S2-T2 Admin CRUD, S2-T3 Rate Limiting)
+**Estado de main:** Builds verdes. CI ejecutando exitosamente. Todos los tests de integración (27/27) pasando.
+**Desviaciones del plan:**
+*   Ninguna.
+**Decisiones nuevas:**
+*   **Ticket 2.1:** Implementación de JWT Stateless usando `oauth2-resource-server` con Nimbus (HmacSHA256). Refresh Token configurado en cookie HttpOnly.
+*   **Ticket 2.2:** CRUD de administración protegido bajo `/api/admin/projects`. Intercepción de `DataIntegrityViolationException` para garantizar unicidad de slugs (409 Conflict).
+*   **Ticket 2.3:** Rate Limiting implementado con Bucket4j y Caffeine para control de RAM. 
+*   **Ticket 2.3:** Resolución de IPs confiando en `server.forward-headers-strategy=framework`, compatible con el proxy de Render. Se resolvió la limitación de pruebas inyectando una `@TestConfiguration` para sobreescribir el comportamiento de merge de listas YAML de Spring Boot.
+**Deuda técnica / riesgos detectados:**
+*   Asegurar en producción que no existan accesos directos al servidor Java evadiendo el proxy de Render, para evitar "spoofing" de la cabecera X-Forwarded-For.
+*   Subida de imágenes delegada al Sprint 9.
+**Hallazgos de rendimiento:**
+*   El servidor backend arranca ocupando ~265.6 MiB en memoria (evaluado con `docker stats`), manteniéndose ampliamente por debajo del límite de 512 MB.
+**Links:** 
+* PRs mergeados: git merge feat/s2-t3-rate-limit, git merge feat/s2-t2-admin-crud, git merge feat/s2-t1-security-jwt a main 
+
+
+
+In Progres...
+## Reporte de Sprint S3 (EN PROGRESO)
+**Tickets:** completados 1/3 (S3-T1 Scaffold. Faltan: S3-T2 Foundations, S3-T3 API Fallback)
+**Estado de main:** Builds verdes. CI de frontend ejecutando `lint`, `typecheck`, `test` y `build` exitosamente.
+**Desviaciones del plan:**
+*   Ninguna.
+**Decisiones nuevas:**
+*   **Ticket 3.1:** Se optó por `.eslintrc.cjs` en lugar del linter predeterminado de Vite para cumplir estrictamente con las reglas de Hooks y a11y requeridas.
+*   **Ticket 3.1:** Se integró Vitest con JSDOM compartiendo la configuración de tipos globales de Vite.
+**Deuda técnica / riesgos detectados:**
+*   Los placeholders de SEO (Open Graph / Twitter Cards) en `index.html` deben ser actualizados antes del despliegue final.
+**Hallazgos de rendimiento:**
+*   **Ticket 3.1:** Bundle base hiperligero (~65.97 kB gzip) empaquetando React y Motion en chunks separados.
+**Links:** 
+* PR Ticket 3.1: [Pendiente de tu enlace]
