@@ -44,6 +44,16 @@ jobs:
         run: npm run lint
         working-directory: ./frontend
 
+      - name: Typecheck
+        if: steps.check.outputs.exists == 'true'
+        run: npm run typecheck
+        working-directory: ./frontend
+
+      - name: Test
+        if: steps.check.outputs.exists == 'true'
+        run: npm test
+        working-directory: ./frontend
+
       - name: Build
         if: steps.check.outputs.exists == 'true'
         run: npm run build

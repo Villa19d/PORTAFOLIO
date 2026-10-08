@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/jetbrains-mono";
+
+@theme {
+  --font-sans: 'Inter Variable', sans-serif;
+  --font-display: 'Space Grotesk Variable', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', monospace;
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased bg-gray-50 text-gray-900;
+  }
+}
