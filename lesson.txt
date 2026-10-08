@@ -1,0 +1,13 @@
+Navegador → Controller → Service → Repository → PostgreSQL
+Navegador ← JSON ← DTO ← Mapper ← Service ← Repository
+
+De BASE DE DATOS a PAYLOAD de salida 
+PostgreSQL
+  → Repository devuelve Project (objeto Java)
+  → Service coordina la operación
+  → Mapper convierte Project en ProjectResponse
+  → Controller devuelve el resultado (De DTO a JSON)
+  → Spring MVC y Jackson lo serializan a JSON (en Controller)
+
+
+Un DTO (Data Transfer Object) es un objeto pensado para transportar datos entre partes del sistema o a través de la API.

@@ -9,7 +9,7 @@ Objetivo: impresionar a reclutadores y usuarios con un diseño moderno, interact
 ## 2. Arquitectura
 - Monorepo: `frontend/`, `backend/`, `docs/`, `docker-compose.yml`.
 - **Frontend:** React 19 + Vite + TypeScript + Tailwind v4 (plugin `@tailwindcss/vite`, sin tailwind.config.js salvo necesidad) + `motion` (import desde `motion/react`) + Swiper + TanStack Query + react-i18next + Lenis. Deploy: Vercel.
-- **Backend:** Java 21 + Spring Boot 3.5.x + Spring Security + JWT + Spring Data JPA + Flyway + Validation + Actuator + springdoc-openapi 2.8.x + Bucket4j. Deploy: Render (Docker).
+- **Backend:** Java 21 + Spring Boot (línea vigente registrada en docs/DECISIONS.md) + Spring Security + JWT + Spring Data JPA + Flyway + Validation + Actuator + springdoc-openapi 2.8.x + Bucket4j. Deploy: Render (Docker).
 - **BD:** PostgreSQL (Neon en producción, contenedor Postgres en local).
 - **Servicios externos:** Resend (correo por API HTTP, NUNCA SMTP), Cloudinary (imágenes), Cloudflare Turnstile (anti-spam).
 - **Dominios:** frontend `rodrigodvillar.com`, backend `api.rodrigodvillar.com`.
@@ -21,6 +21,7 @@ Objetivo: impresionar a reclutadores y usuarios con un diseño moderno, interact
 - `/api/health` NO debe tocar la base de datos.
 - El backend puede estar dormido: el frontend nunca debe mostrar pantallas vacías (usa datos de fallback).
 - Prohibido guardar JWT en localStorage. Access token en memoria; refresh token en cookie HttpOnly + Secure + SameSite=Lax.
+-Los secretos de seguridad (JWT_SECRET, ADMIN_PASSWORD_HASH) solo por variables de entorno. Se validan al arrancar y la app falla si faltan.
 
 ## 4. Reglas de rendimiento y móvil
 - Hook `useCapabilities()` (se crea en S3) expone: `hasFinePointer` (`(hover: hover) and (pointer: fine)`), `isDesktopLayout` (ancho >= 1024px), `prefersReducedMotion`.
@@ -33,7 +34,7 @@ Objetivo: impresionar a reclutadores y usuarios con un diseño moderno, interact
 ## 5. Convenciones de código
 **General:** nombres en inglés en el código; textos de UI en i18n (ES por defecto, EN); sin `console.log` olvidados; sin código comentado; sin secretos en el repo.
 **Frontend:** TypeScript estricto (sin `any`), componentes funcionales, carpeta por feature (`src/features/<nombre>`), componentes compartidos en `src/components`, hooks en `src/hooks`. Accesibilidad: HTML semántico, `alt`, foco visible, navegación por teclado.
-**Backend:** paquetes por feature (`com.rodrigodvillar.portfolio.<feature>`), DTOs separados de entidades (records), validación con Bean Validation, manejo de errores global con `@RestControllerAdvice` y respuesta uniforme (RFC 7807 ProblemDetail), migraciones solo con Flyway (`ddl-auto=validate`), configuración por variables de entorno.
+**Backend:** paquetes por feature (`com.rodrigodvillar.portfolio.<feature>`), DTOs separados de entidades (records), validación con Bean Validation, manejo de errores global con `@RestControllerAdvice` y respuesta uniforme (RFC 7807 ProblemDetail), migraciones solo con Flyway (`ddl-auto=validate`), configuración por variables de entorno. Seeds solo en db/seed como migraciones repetibles R__*.sql, idempotentes. Prohibidas migraciones versionadas V* en db/seed.
 
 ## 6. Flujo de trabajo con Git
 - Rama por ticket: `feat/s<sprint>-t<ticket>-<slug>`.
