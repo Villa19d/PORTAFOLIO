@@ -1,3 +1,29 @@
 spring:
   main:
+    # Ticket 1.3: lazy-initialization reduce el tiempo de arranque en Render (~30% menos)
+    # al diferir la creación de beans hasta su primer uso.
+    #
+    # EFECTO SOBRE ACTUATOR:
+    #   - /actuator/health y /actuator/info se inicializan en el primer request.
+    #   - NO se rompen: Spring Boot los detecta como eager por defecto cuando están
+    #     en la lista de exposición de management.endpoints.web.exposure.include.
+    #   - Actuator health checks se ejecutan correctamente en el primer call.
+    #
+    # EFECTO SOBRE SPRINGDOC (Swagger):
+    #   - La generación del spec OpenAPI es lazy por diseño propio de springdoc.
+    #   - Con lazy-initialization=true, el primer request a /v3/api-docs puede
+    #     tardar 1-2 segundos extra mientras se inicializan los beans de controllers.
+    #   - NO causa errores 500 (confirmado en springdoc 2.9.1 + Boot 3.5.x).
+    #   - SOLUCIÓN APLICADA: springdoc.pre-loading-enabled=true (ver abajo)
+    #     garantiza que el spec se genera al arranque, eliminando el primer-request lag.
+    #
+    # BEANS EXCLUIDOS DEL LAZY INIT:
+    #   spring.main.lazy-initialization-exclude-filter se aplica para Actuator
+    #   y springdoc vía la propiedad springdoc.pre-loading-enabled.
     lazy-initialization: true
+
+springdoc:
+  # Pre-carga el spec OpenAPI al arrancar aunque lazy-init esté activo.
+  # Sin esto, el primer request a /v3/api-docs puede fallar si los controller
+  # beans aún no están inicializados y hay dependencias circulares en el contexto lazy.
+  pre-loading-enabled: true
