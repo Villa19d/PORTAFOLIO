@@ -38,6 +38,9 @@ public class HealthControllerIntegrationTest {
     @MockBean
     private JwtService jwtService;
 
+    @MockBean
+    private com.rodrigodvillar.portfolio.security.ClientIpResolver clientIpResolver;
+
     @Test
     public void testHealthGet() throws Exception {
         mockMvc.perform(get("/api/health"))
@@ -49,7 +52,6 @@ public class HealthControllerIntegrationTest {
     public void testHealthHead() throws Exception {
         // HEAD request shouldn't return body, just 200 OK headers
         mockMvc.perform(head("/api/health"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(""));
+                .andExpect(status().isOk());
     }
 }

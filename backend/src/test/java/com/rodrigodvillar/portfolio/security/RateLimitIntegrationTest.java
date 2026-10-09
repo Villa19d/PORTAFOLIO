@@ -26,6 +26,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import java.time.Duration;
 import java.util.List;
 
+import org.springframework.test.annotation.DirtiesContext;
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
