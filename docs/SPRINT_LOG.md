@@ -80,4 +80,4 @@ In Progres...
 **Hallazgos de rendimiento:**
 *   N/A
 **Links:** 
-* PRs: [Pendiente de tus enlaces]
+* PRs: git merge feat/s3-t2-foundations, git merge feat/s3-t1-scaffold a main

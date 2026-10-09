@@ -30,7 +30,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitProperties rateLimitProperties;
     private final ClientIpResolver clientIpResolver;
-    private final Cache<String, Bucket> bucketCache;
+    private final com.github.benmanes.caffeine.cache.Cache<String, Bucket> bucketCache;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     public RateLimitFilter(RateLimitProperties rateLimitProperties, ClientIpResolver clientIpResolver) {

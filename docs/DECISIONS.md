@@ -53,3 +53,8 @@
 - **Contexto:** Los proyectos permiten escribir descripciones usando Markdown. Hay un riesgo de inyección de código XSS si el usuario escribe HTML directamente en el texto Markdown.
 - **Decisión:** La descripción markdown se renderiza en el frontend SIN HTML crudo (sanitizada). El backend asume que el frontend aplicará esta restricción (una restricción para el Sprint S6).
 - **Consecuencia:** Menor riesgo de ataques XSS. El backend no necesita procesar, limpiar o sanitizar el markdown antes de guardarlo en base de datos.
+
+## 11. Conexiones de Base de Datos y HikariCP en Neon (Ticket 4.1)
+- **Contexto:** Neon, al ser una base de datos serverless (con escalado a cero), cierra abruptamente las conexiones inactivas (idle) después de 5 minutos, provocando errores en HikariCP si intenta reutilizarlas.
+- **Decisión:** Se bajó el parámetro `max-lifetime` de HikariCP a 4 minutos (240000 ms) en el perfil de producción (`application-prod.yml`).
+- **Consecuencia:** HikariCP cerrará y reciclará proactivamente las conexiones antes de que Neon las cierre a la fuerza, evitando picos de errores o latencia intermitente al levantar la app.
