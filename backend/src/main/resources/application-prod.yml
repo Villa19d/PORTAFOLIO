@@ -21,15 +21,13 @@ spring:
     #   spring.main.lazy-initialization-exclude-filter se aplica para Actuator
     #   y springdoc vía la propiedad springdoc.pre-loading-enabled.
     lazy-initialization: true
+  datasource:
+    hikari:
+      # Neon severless idle connection drops after 5 minutes
+      max-lifetime: 240000
 
 springdoc:
   # Pre-carga el spec OpenAPI al arrancar aunque lazy-init esté activo.
   # Sin esto, el primer request a /v3/api-docs puede fallar si los controller
   # beans aún no están inicializados y hay dependencias circulares en el contexto lazy.
   pre-loading-enabled: true
-
-spring:
-  datasource:
-    hikari:
-      # Neon severless idle connection drops after 5 minutes
-      max-lifetime: 240000
