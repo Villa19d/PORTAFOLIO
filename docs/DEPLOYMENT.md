@@ -51,3 +51,41 @@ Separa el usuario y la contraseña en `DB_USER` y `DB_PASSWORD`, y ajusta el `DB
 ## 4. Validaciones de Salud
 
 - Render utilizará la ruta de salud configurada (ej. `HEAD /api/health` o `GET /api/health`) para monitorear si la aplicación se levantó correctamente. El controller de health no se conecta a la base de datos, garantizando que un reinicio de la base de datos no marque a la aplicación como caída (si esto no es deseado) y evitando falsos positivos o negativos al escalar a cero la base de datos Neon.
+
+
+## 5. Despliegue de Frontend (Vercel)
+
+El frontend de la aplicación está optimizado para su despliegue en Vercel, ofreciendo un proceso rápido e integrado.
+
+### 5.1 Configuración del Proyecto en Vercel
+
+Al importar el repositorio en Vercel, asegúrate de configurar los siguientes parámetros:
+
+- **Framework Preset**: `Vite`
+- **Root Directory**: `frontend`
+- **Node.js Version**: `22.x` (en la configuración del proyecto -> General -> Node.js Version)
+- **Build Command**: `npm run build` (o se detecta automáticamente con Vite)
+- **Output Directory**: `dist` (o se detecta automáticamente)
+
+### 5.2 Variables de Entorno
+
+Debes configurar **ambas** variables de entorno en Vercel para que el proyecto construya correctamente:
+
+1. **`VITE_API_URL`**: `https://api.rodrigodvillar.com`
+   - **Por qué**: Vite inyecta en el *bundle* público (accesible en el navegador del usuario) cualquier variable que empiece con `VITE_`. Esta es la URL a la que la aplicación web hará las llamadas HTTP en vivo.
+2. **`API_URL`**: `https://api.rodrigodvillar.com`
+   - **Por qué**: Se usa exclusivamente en el entorno de Node.js durante el proceso de *build* (script `prebuild` -> `snapshot-projects.mjs`). No es expuesta al navegador. Permite que el proceso de despliegue extraiga un *snapshot* inicial de la base de datos de forma segura, incluso si la API de producción estuviera dormida.
+
+### 5.3 Regeneración de Snapshots de Proyectos
+
+El frontend usa un archivo local estático (`src/data/projects.snapshot.json`) como respaldo. Esto garantiza que la página web jamás quede "en blanco", incluso mientras el backend (en su plan gratuito de Render) está despertando (*cold start*, que puede tardar ~30 a 50 segundos).
+
+El script `npm run snapshot` actualiza este archivo en Vercel durante cada despliegue, logrando una sincronización continua con la base de datos de producción.
+
+Para commitear un *snapshot* real por primera vez o actualizarlo manualmente para persistirlo en el código fuente:
+1. Asegúrate de tener proyectos reales creados en producción.
+2. Desde la terminal, en la carpeta `frontend`, ejecuta:
+   ```bash
+   API_URL=https://api.rodrigodvillar.com npm run snapshot
+   ```
+3. Verifica los cambios en `src/data/projects.snapshot.json` y realiza un *commit*.
