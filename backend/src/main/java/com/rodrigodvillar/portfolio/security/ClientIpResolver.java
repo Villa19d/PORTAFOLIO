@@ -4,17 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
 import java.util.Set;
 
 @Component
 public class ClientIpResolver {
-
-    private static final List<String> TRUSTED_EDGE_HEADERS = List.of(
-            "CF-Connecting-IP", // Inyectado por Cloudflare en Render (inmutable por el cliente)
-            "True-Client-IP",   // CDN / Akamai / Cloudflare Enterprise
-            "X-Real-IP"         // Nginx / Ingress de Render
-    );
 
     // Subnets privadas estándar consideradas proxies internos (Docker / Kubernetes / Render)
     private static final Set<String> TRUSTED_PROXY_PREFIXES = Set.of(
@@ -26,51 +19,50 @@ public class ClientIpResolver {
 
     /**
      * Resuelve de forma segura y confiable la dirección IP real del cliente,
-     * mitigando ataques de IP Spoofing a través de cabeceras de proxy manipuladas.
+     * mitigando ataques de evasión de Rate Limit e IP Spoofing.
      *
-     * Orden de resolución:
-     * 1. Cabeceras de borde inmutables inyectadas por Cloudflare/Render
-     *    (CF-Connecting-IP, True-Client-IP, X-Real-IP).
-     * 2. Si sólo existe X-Forwarded-For:
-     *    - Si la conexión TCP directa (remoteAddr) NO proviene de un proxy interno confiable,
-     *      se descarta X-Forwarded-For (el cliente está intentando spoofing directo).
-     *    - Si proviene de un proxy confiable y hay una cadena de IPs (ej: "spoofed, real_ip"),
-     *      se extrae la última IP validada por el proxy.
-     * 3. Fallback a request.getRemoteAddr().
+     * Regla de auditoría (Ticket 4.4 / ADR 12 en DECISIONS.md):
+     * 1. Fuente autoritativa única documentada: 'CF-Connecting-IP'.
+     *    Cloudflare (el edge de Render) garantiza que sobrescribe incondicionalmente cualquier
+     *    cabecera 'CF-Connecting-IP' enviada por el cliente con la IP real del visitante.
+     *    Cabeceras como 'True-Client-IP', 'X-Real-IP' y 'Forwarded' fueron auditadas y
+     *    ELIMINADAS de la lista de confianza porque el edge no garantiza su sobrescritura
+     *    en planes estándar.
+     * 2. Fallback X-Forwarded-For: Solo se evalúa si la conexión proviene de un proxy
+     *    interno confiable (Docker/Render private subnet). En tal caso, se extrae el elemento
+     *    rightmost válido que no sea un proxy privado (último añadido por la infraestructura confiable),
+     *    descartando valores basura o manipulados por el cliente.
+     * 3. Fallback final: request.getRemoteAddr() directo del socket TCP.
      */
     public String resolveIp(HttpServletRequest request) {
-        // 1. Cabeceras autoritativas inyectadas en el edge
-        for (String header : TRUSTED_EDGE_HEADERS) {
-            String val = request.getHeader(header);
-            if (StringUtils.hasText(val)) {
-                String ip = val.trim();
-                if (isValidIp(ip)) {
-                    return ip;
-                }
+        // 1. Fuente única verificada y documentada en edge: Cloudflare (Render)
+        String cfConnectingIp = request.getHeader("CF-Connecting-IP");
+        if (StringUtils.hasText(cfConnectingIp)) {
+            String ip = cfConnectingIp.trim();
+            if (isValidIp(ip)) {
+                return ip;
             }
         }
 
         String remoteAddr = request.getRemoteAddr();
         String xff = request.getHeader("X-Forwarded-For");
 
-        // 2. Validación de X-Forwarded-For
-        if (StringUtils.hasText(xff)) {
-            // Si el socket proviene de un proxy interno confiable, el proxy concatenó la IP real al final
-            if (isTrustedProxy(remoteAddr)) {
-                String[] parts = xff.split(",");
-                String candidate = parts[parts.length - 1].trim();
+        // 2. Fallback de X-Forwarded-For solo si el socket remoto es un proxy interno de confianza
+        if (StringUtils.hasText(xff) && isTrustedProxy(remoteAddr)) {
+            String[] parts = xff.split(",");
+            for (int i = parts.length - 1; i >= 0; i--) {
+                String candidate = parts[i].trim();
                 if (isValidIp(candidate) && !isTrustedProxy(candidate)) {
                     return candidate;
                 }
             }
-            // Si la conexión directa no proviene de un proxy interno, X-Forwarded-For no es confiable.
         }
 
         // 3. Fallback al socket TCP
         return remoteAddr != null ? remoteAddr : "unknown";
     }
 
-    private boolean isTrustedProxy(String ip) {
+    public boolean isTrustedProxy(String ip) {
         if (!StringUtils.hasText(ip)) {
             return false;
         }
@@ -83,6 +75,10 @@ public class ClientIpResolver {
     }
 
     private boolean isValidIp(String ip) {
-        return StringUtils.hasText(ip) && !ip.equalsIgnoreCase("unknown");
+        if (!StringUtils.hasText(ip) || ip.equalsIgnoreCase("unknown")) {
+            return false;
+        }
+        // Validar formato sintáctico básico (IPv4 o IPv6), descartando inyecciones o basura
+        return ip.matches("^[0-9a-fA-F.:]+$") && !ip.contains(" ");
     }
 }
