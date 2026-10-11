@@ -89,3 +89,50 @@ Para commitear un *snapshot* real por primera vez o actualizarlo manualmente par
    API_URL=https://api.rodrigodvillar.com npm run snapshot
    ```
 3. Verifica los cambios en `src/data/projects.snapshot.json` y realiza un *commit*.
+
+## 6. Pruebas de Humo en Producción (Smoke Tests)
+
+Para verificar la integridad del contrato de producción (CORS, cookies, rate limit, seguridad y prevención de spoofing), el repositorio cuenta con el script automatizado `scripts/smoke-prod.mjs` (requiere Node 22, sin dependencias externas).
+
+### 6.1 Cómo Ejecutar el Script
+
+Desde la raíz del repositorio:
+
+```bash
+# Ejecución completa (verificaciones a - i) con URLs por defecto:
+node scripts/smoke-prod.mjs
+
+# Medición rápida de arranque en frío (Cold Start) sin pruebas destructivas ni rate limits:
+node scripts/smoke-prod.mjs --cold-start
+
+# Especificando URLs personalizadas (ej. URL temporal de Render):
+node scripts/smoke-prod.mjs --api-base=https://portafolio-ml6g.onrender.com --front-origin=https://rodrigodvillar.com
+
+# O mediante variables de entorno:
+API_BASE=https://api.rodrigodvillar.com FRONT_ORIGIN=https://rodrigodvillar.com node scripts/smoke-prod.mjs
+```
+
+### 6.2 Guía de Interpretación de Resultados
+
+El script evalúa las siguientes comprobaciones en estricto orden y muestra una salida tipo checklist (`✔` / `✘`):
+
+| Check | Descripción | Criterio de Éxito | Interpretación si Falla |
+|---|---|---|---|
+| **a** | `GET` y `HEAD` `/api/health` | HTTP 200 | El backend está inactivo, en hibernación sin responder o bloqueado a nivel de red/firewall. |
+| **b** | `GET` `/api/projects` | HTTP 200, JSON, Array, cabecera `Cache-Control` | Falla de conexión a base de datos, JSON corrupto o falta de cabecera de caché en el endpoint público. |
+| **c** | Preflight `OPTIONS /api/auth/refresh` con `Origin = FRONT_ORIGIN` | `Access-Control-Allow-Origin: FRONT_ORIGIN` (exacto) y `Access-Control-Allow-Credentials: true` | CORS mal configurado para el frontend legítimo. El usuario no podrá refrescar tokens ni autenticarse desde Vercel. |
+| **d** | Preflight `OPTIONS` con `Origin: https://evil.example` | Cabecera `Access-Control-Allow-Origin` omitida o rechazada | CORS permisivo / abierto indebidamente (permite orígenes no autorizados). |
+| **e** | `POST /api/auth/login` con credenciales inválidas | HTTP 401, `application/problem+json`, **SIN** cabecera `Set-Cookie` | Se está emitiendo una cookie de refresh token ante credenciales erróneas o el formato de error no cumple RFC 7807. |
+| **f** | `GET /api/admin/projects` sin token | HTTP 401, `application/problem+json` | Endpoint administrativo desprotegido o exponiendo información sin autenticación. |
+| **g** | `GET /swagger-ui.html` y `/v3/api-docs` | HTTP 200, `servers[0].url` inicia con `https://` | Swagger deshabilitado o proxy headers mal procesados (OpenAPI anuncia `http://` en lugar de `https://`). |
+| **h** | **Rate Limit Básico** (6 logins fallidos seguidos) | Al menos una petición (la #6 o antes) devuelve HTTP 429 con cabecera `Retry-After` | Bucket4j inactivo o umbral de login mal configurado. Ataques de fuerza bruta no serían mitigados. |
+| **i** | **Spoofing de IP** (8 logins con `X-Forwarded-For` variables) | Al menos una petición devuelve HTTP 429 | **FALLO CRÍTICO:** La aplicación confía ciegamente en `X-Forwarded-For` enviado por el cliente. Un atacante puede eludir el rate limit simplemente cambiando esta cabecera en cada intento. |
+
+### 6.3 Diagnóstico y Propuesta de Fix ante Fallo en Spoofing (Check i)
+
+Si la prueba **i** es marcada como `CRITICAL FAIL`:
+- **Causa Raíz:** `server.forward-headers-strategy: framework` hace que Spring extraiga la dirección IP del primer elemento en `X-Forwarded-For`. Si Render no sanitiza ni sobrescribe esta cabecera (o agrega la IP del cliente al final en lugar de al principio), el servidor confía en la IP falsificada.
+- **Propuesta de Mitigación:**
+  1. Cambiar `server.forward-headers-strategy: native` y configurar una lista blanca de proxies confiables en Tomcat (`internal-proxies`), o
+  2. Implementar un `ClientIpResolver` personalizado que priorice cabeceras de proxy de confianza específicas de la plataforma (por ejemplo, cabeceras seguras de Render o Cloudflare `CF-Connecting-IP`), ignorando `X-Forwarded-For` arbitrarios enviados por el cliente.
+
