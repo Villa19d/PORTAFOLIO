@@ -29,6 +29,10 @@
 - **Contexto:** El proyecto arrancó en Spring Boot 3.4.3 por ser la versión que generó Spring Initializr en ese momento. El PM rechazó esta decisión porque el ticket original especificaba 3.5.x (rama con soporte vigente en el momento del Sprint 1).
 - **Decisión:** Se actualizó a Spring Boot **3.5.16**, última patch release de la rama 3.5.x (lanzada el 25 de junio de 2026, también la última OSS de esa rama). Se documenta que la rama 3.5.x alcanzó EOL en junio 2026; una futura decisión de arquitectura deberá evaluar si migrar a 4.x para seguir recibiendo parches de seguridad.
 - **Consecuencia:** La actualización es compatible binariamente con el código existente (mismo Java 21, mismo Hibernate 6, mismo Flyway de la rama compatible). El BOM actualizado trae versiones más recientes de Flyway y Testcontainers gestionadas automáticamente.
+- **Auditoría de Soporte OSS (Ticket 4.4):**
+  - **Línea actual:** Spring Boot 3.5.16. Su soporte OSS comunitario finalizó en junio de 2026.
+  - **Líneas OSS vigentes hoy (spring.io):** Spring Boot 4.0.x y superiores cuentan con soporte OSS activo en la actualidad.
+  - **Recomendación:** **Aceptar el riesgo en el corto plazo**. La aplicación tiene una superficie de ataque muy reducida (solo dos endpoints públicos y endpoints de admin protegidos), no utiliza dependencias con CVEs críticos activos y opera en un contenedor Alpine Linux con límite de memoria estricto (~512MB RAM en Render Free). Se recomienda programar la migración mayor a Spring Boot 4.x en un sprint técnico futuro cuando se aborde la actualización de dependencias pesadas.
 
 ## 7. Testcontainers: 1.21.4 en lugar de serie 2.x (Ticket 1.3)
 - **Contexto:** El BOM de Spring Boot 3.5.x gestiona una versión anterior de Testcontainers 1.x que no detecta correctamente el socket nombrado de Docker Desktop en Windows con Docker Engine ≥29 (error: `Could not find a valid Docker environment`).
@@ -58,3 +62,22 @@
 - **Contexto:** Neon, al ser una base de datos serverless (con escalado a cero), cierra abruptamente las conexiones inactivas (idle) después de 5 minutos, provocando errores en HikariCP si intenta reutilizarlas.
 - **Decisión:** Se bajó el parámetro `max-lifetime` de HikariCP a 4 minutos (240000 ms) en el perfil de producción (`application-prod.yml`).
 - **Consecuencia:** HikariCP cerrará y reciclará proactivamente las conexiones antes de que Neon las cierre a la fuerza, evitando picos de errores o latencia intermitente al levantar la app.
+
+## 12. Auditoría de Cabeceras de Cliente y Resolución Anti-Spoofing de IP (Ticket 4.4)
+- **Contexto:** El script de humo detectó evasión de Rate Limit al inyectar cabeceras manipuladas por el cliente. Se requirió auditar el camino real de la petición (`Cliente → Edge de Render / Cloudflare → App en Tomcat`) para identificar qué cabeceras son de confianza estricta.
+- **Matriz de Auditoría:**
+  | Cabecera | Quién la establece | ¿El Edge la sobrescribe / elimina? | Fuente Oficial | ¿Confiable? |
+  |---|---|---|---|---|
+  | `CF-Connecting-IP` | Cloudflare (Edge de Render) | **SÍ, la sobrescribe siempre.** Cloudflare sobreescribe cualquier valor que envíe el cliente con la IP real del socket TCP del visitante. | [Cloudflare Request Headers](https://developers.cloudflare.com/fundamentals/reference/http-request-headers/#cf-connecting-ip) | **SÍ (Fuente autoritativa primaria)** |
+  | `True-Client-IP` | Cloudflare Enterprise (Managed Transforms) | **NO en planes estándar.** Sólo se normaliza en Enterprise. En planes estándar pasa tal cual si el cliente la inyecta. | [Cloudflare True-Client-IP Docs](https://developers.cloudflare.com/fundamentals/reference/http-request-headers/#true-client-ip) | **NO (Eliminada de la lista de confianza)** |
+  | `X-Real-IP` | Proxies inversos genéricos (Nginx/Envoy) | **NO garantizado por Render.** Si el cliente la envía, Render la deja pasar tal cual. | [Render Web Services Docs](https://render.com/docs/web-services) | **NO (Eliminada de la lista de confianza)** |
+  | `Forwarded` (RFC 7239) | Cliente / Proxies | **NO garantizado.** Render no normaliza ni reescribe RFC 7239 en el edge. | [Cloudflare Request Headers](https://developers.cloudflare.com/fundamentals/reference/http-request-headers/) | **NO (Eliminada de la lista de confianza)** |
+  | `X-Forwarded-For` | Cliente / Cloudflare / Render | **Concatena (Append), NO sobrescribe.** Render añade la IP real al final de la lista. | [Render Proxy Documentation](https://render.com/docs/web-services) | **SÓLO el rightmost si proviene de proxy interno confiable (Fallback)** |
+
+- **Decisión:**
+  1. Se eliminan `True-Client-IP`, `X-Real-IP` y `Forwarded` del resolver de IP de la aplicación.
+  2. Se establece `CF-Connecting-IP` como **fuente única autoritativa documentada** en el entorno de producción.
+  3. Como fallback para pruebas locales y entornos sin Cloudflare, se evalúa `X-Forwarded-For` únicamente si el socket TCP remoto proviene de un proxy interno privado (`isTrustedProxy`), extrayendo el elemento *rightmost* público.
+  4. En Tomcat se mantiene `server.forward-headers-strategy: native` con `internal-proxies` configurados en `application.yml`.
+- **Consecuencia:** Cero evasión del rate limit por inyección de cabeceras arbitrarias. Los ataques de fuerza bruta son mitigados de forma confiable independientemente de qué cabecera intente falsificar el atacante.
+

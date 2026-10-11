@@ -51,7 +51,7 @@ const SYMBOL_FAIL = `${colors.red}✘${colors.reset}`;
 const SYMBOL_WARN = `${colors.yellow}⚠${colors.reset}`;
 const SYMBOL_INFO = `${colors.cyan}ℹ${colors.reset}`;
 
-const REQUEST_TIMEOUT_MS = 25000;
+const REQUEST_TIMEOUT_MS = 60000;
 
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
@@ -430,62 +430,82 @@ async function runFullSmoke() {
   }
 
   // -------------------------------------------------------------
-  // i. SPOOFING: Espera a que expire ventana y envía 8 logins con X-Forwarded-For falso
+  // i. SPOOFING MULTI-CABECERA: Una ronda por cada cabecera
+  //    (X-Forwarded-For, CF-Connecting-IP, True-Client-IP, X-Real-IP, Forwarded)
   // -------------------------------------------------------------
   {
-    const waitSeconds = Math.max(retryAfterSeconds, 1) + 2;
-    console.log(`\n${SYMBOL_INFO} Esperando ${waitSeconds}s a que expire la ventana de rate limit (Retry-After: ${retryAfterSeconds}s + 2s de gracia)...`);
+    console.log(`\n${SYMBOL_INFO} ${colors.bold}Iniciando Auditoría Anti-Spoofing (5 rondas de cabeceras)...${colors.reset}`);
 
-    // Cuenta regresiva visual
-    for (let remaining = waitSeconds; remaining > 0; remaining -= 5) {
-      process.stdout.write(`    ${colors.dim}Tiempo restante: ${remaining}s...${colors.reset}\r`);
-      await sleep(Math.min(remaining, 5) * 1000);
-    }
-    console.log(`    ${colors.dim}Ventana expirada. Iniciando prueba de spoofing de IP...${colors.reset}`);
+    const SPOOF_HEADERS = [
+      { code: 'i-1', header: 'X-Forwarded-For', generate: (i) => `198.51.100.${10 + i}` },
+      { code: 'i-2', header: 'CF-Connecting-IP', generate: (i) => `198.51.100.${20 + i}` },
+      { code: 'i-3', header: 'True-Client-IP', generate: (i) => `198.51.100.${30 + i}` },
+      { code: 'i-4', header: 'X-Real-IP', generate: (i) => `198.51.100.${40 + i}` },
+      { code: 'i-5', header: 'Forwarded', generate: (i) => `for=198.51.100.${50 + i};proto=https` }
+    ];
 
-    const start = performance.now();
-    let got429 = false;
-    const spoofAttempts = [];
+    for (const testCase of SPOOF_HEADERS) {
+      const waitSeconds = Math.max(retryAfterSeconds, 1) + 2;
+      console.log(`\n${SYMBOL_INFO} [Ronda ${testCase.header}] Esperando ${waitSeconds}s a que expire la ventana (Retry-After: ${retryAfterSeconds}s + 2s)...`);
 
-    for (let i = 1; i <= 8; i++) {
-      const fakeIp = `198.51.100.${10 + i}`;
-      const { res } = await fetchWithTimeout(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: {
+      // Cuenta regresiva visual
+      for (let remaining = waitSeconds; remaining > 0; remaining -= 5) {
+        process.stdout.write(`    ${colors.dim}Tiempo restante: ${remaining}s...${colors.reset}\r`);
+        await sleep(Math.min(remaining, 5) * 1000);
+      }
+      console.log(`    ${colors.dim}Ventana expirada. Enviando 8 logins falsificando '${testCase.header}'...${colors.reset}`);
+
+      const start = performance.now();
+      let got429 = false;
+      let blockedIndex = -1;
+
+      for (let i = 1; i <= 8; i++) {
+        const fakeVal = testCase.generate(i);
+        const headers = {
           'Content-Type': 'application/json',
           Origin: FRONT_ORIGIN,
-          'X-Forwarded-For': fakeIp
-        },
-        body: JSON.stringify({
-          username: `probe_spoof_user_${i}`,
-          password: 'ProbeWrongPassword!'
-        })
-      });
+          [testCase.header]: fakeVal
+        };
 
-      const st = res ? res.status : 0;
-      spoofAttempts.push({ ip: fakeIp, status: st });
-      if (st === 429) {
-        got429 = true;
+        const { res } = await fetchWithTimeout(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            username: `probe_spoof_${testCase.code}_${i}`,
+            password: 'ProbeWrongPassword!'
+          })
+        });
+
+        if (res && res.status === 429) {
+          got429 = true;
+          blockedIndex = i;
+          const retryHeader = res.headers.get('retry-after');
+          if (retryHeader) {
+            const parsed = parseInt(retryHeader, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              retryAfterSeconds = parsed;
+            }
+          }
+          break;
+        }
+        await sleep(50);
       }
-      await sleep(50);
-    }
 
-    const duration = Math.round(performance.now() - start);
+      const duration = Math.round(performance.now() - start);
 
-    // Si NUNCA hay 429, la IP se puede falsificar -> FALLO CRÍTICO
-    if (!got429) {
-      const detail = [
-        'FALLO CRÍTICO: Vulnerabilidad de IP Spoofing comprobada.',
-        'Se enviaron 8 peticiones con cabeceras X-Forwarded-For falsas distintas y NINGUNA fue bloqueada con 429.',
-        'Causa raíz: La aplicación (ClientIpResolver / ForwardedHeaderFilter) confía en la cabecera enviada por el cliente',
-        'sin validar una lista de proxies confiables (trusted proxies).',
-        'Un atacante puede saltarse completamente el rate limit rotando X-Forwarded-For en cada petición.'
-      ].join('\n');
+      if (!got429) {
+        const detail = [
+          `FALLO CRÍTICO: La cabecera '${testCase.header}' permite evadir el rate limit.`,
+          `Se enviaron 8 peticiones con valores falsificados distintos y NINGUNA fue bloqueada con 429.`,
+          `Causa raíz: La aplicación confía en '${testCase.header}' o el proxy no la sobrescribe en el edge,`,
+          `permitiendo ataques de fuerza bruta ilimitados al rotar esta cabecera.`
+        ].join('\n');
 
-      recordResult('i', 'SPOOFING: Resistencia a cabecera X-Forwarded-For falsificada', false, duration, detail, true);
-    } else {
-      const detail = 'Rate limit bloqueó las peticiones a pesar de cabeceras X-Forwarded-For variables (Proxy seguro o IP real respetada).';
-      recordResult('i', 'SPOOFING: Resistencia a cabecera X-Forwarded-For falsificada', true, duration, detail);
+        recordResult(testCase.code, `SPOOFING: Resistencia ante '${testCase.header}' falsificada`, false, duration, detail, true);
+      } else {
+        const detail = `Rate limit bloqueó exitosamente en intento #${blockedIndex}/8 (Status 429) a pesar de falsificar '${testCase.header}'.`;
+        recordResult(testCase.code, `SPOOFING: Resistencia ante '${testCase.header}' falsificada`, true, duration, detail);
+      }
     }
   }
 
