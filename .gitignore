@@ -35,3 +35,9 @@ target/
 .gradle/
 build/
 bin/
+
+
+lesson.txt
+.neon
+neon.ts
+TestBcrypt.java
