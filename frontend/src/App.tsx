@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Navbar } from './components/layout/Navbar';
 import { Section } from './components/layout/Section';
+import { Hero } from './features/hero/components/Hero';
 import { SITE_CONFIG } from './data/site';
 
 export default function App() {
@@ -12,9 +13,7 @@ export default function App() {
       <Navbar />
 
       <main id="main-content" className="flex-1">
-        <Section id="home" titleKey="sections.home" title={t('sections.home')}>
-          <p className="text-text-muted text-lg max-w-prose">{t('sections.homePlaceholder')}</p>
-        </Section>
+        <Hero />
 
         <Section id="about" titleKey="sections.about" title={t('sections.about')}>
           <p className="text-text-muted text-lg max-w-prose">{t('sections.aboutPlaceholder')}</p>

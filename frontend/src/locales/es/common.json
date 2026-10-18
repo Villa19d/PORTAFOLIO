@@ -22,7 +22,13 @@
     "rights": "Todos los derechos reservados."
   },
   "hero": {
-    "placeholder": "Desarrollador Full-Stack."
+    "greeting": "Hola, soy",
+    "name": "Rodrigo Del Villar",
+    "role": "Desarrollador Full-Stack",
+    "subtitle": "Construyo aplicaciones web rápidas y seguras, del backend en Spring Boot a interfaces que se sienten vivas.",
+    "ctaProjects": "Ver proyectos",
+    "ctaContact": "Contáctame",
+    "photoAlt": "Retrato profesional de Rodrigo Del Villar, Desarrollador Full-Stack"
   },
   "theme": {
     "toggle": "Cambiar tema"
