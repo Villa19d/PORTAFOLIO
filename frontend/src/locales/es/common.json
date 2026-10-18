@@ -1,7 +1,25 @@
 {
   "nav": {
+    "home": "Inicio",
+    "about": "Sobre mí",
     "projects": "Proyectos",
-    "contact": "Contacto"
+    "contact": "Contacto",
+    "skipToContent": "Saltar al contenido",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú"
+  },
+  "sections": {
+    "home": "Inicio",
+    "about": "Sobre mí",
+    "projects": "Proyectos",
+    "contact": "Contacto",
+    "homePlaceholder": "(placeholder) Bienvenido al portafolio de Rodrigo Del Villar. Aquí encontrarás proyectos, experiencia y más.",
+    "aboutPlaceholder": "(placeholder) Sección Sobre mí. Desarrollador Full-Stack apasionado por el código limpio y el diseño accesible.",
+    "projectsPlaceholder": "(placeholder) Aquí irán los proyectos reales cuando estén listos.",
+    "contactPlaceholder": "(placeholder) Formulario de contacto próximamente."
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados."
   },
   "hero": {
     "placeholder": "Desarrollador Full-Stack."

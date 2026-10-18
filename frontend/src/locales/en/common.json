@@ -1,7 +1,25 @@
 {
   "nav": {
+    "home": "Home",
+    "about": "About",
     "projects": "Projects",
-    "contact": "Contact"
+    "contact": "Contact",
+    "skipToContent": "Skip to content",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "sections": {
+    "home": "Home",
+    "about": "About Me",
+    "projects": "Projects",
+    "contact": "Contact",
+    "homePlaceholder": "(placeholder) Welcome to Rodrigo Del Villar's portfolio. Here you'll find projects, experience and more.",
+    "aboutPlaceholder": "(placeholder) About Me section. Full-Stack Developer passionate about clean code and accessible design.",
+    "projectsPlaceholder": "(placeholder) Real projects will go here when ready.",
+    "contactPlaceholder": "(placeholder) Contact form coming soon."
+  },
+  "footer": {
+    "rights": "All rights reserved."
   },
   "hero": {
     "placeholder": "Full-Stack Developer."

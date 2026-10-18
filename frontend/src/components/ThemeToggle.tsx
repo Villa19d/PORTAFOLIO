@@ -8,8 +8,8 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      aria-label={t('theme.toggle', 'Cambiar tema')}
-      className="p-2 rounded-xl bg-surface border border-border-subtle hover:bg-border-subtle transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-violet"
+      aria-label={t('theme.toggle')}
+      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[var(--radius-md)] bg-surface border border-border-control hover:bg-surface-elevated transition-colors"
     >
       {theme === 'dark' ? '🌞' : '🌙'}
     </button>

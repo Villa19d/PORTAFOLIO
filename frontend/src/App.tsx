@@ -1,123 +1,59 @@
 import { useTranslation } from 'react-i18next';
-import { useCapabilities } from './hooks/useCapabilities';
-import { ThemeToggle } from './components/ThemeToggle';
-import { LanguageToggle } from './components/LanguageToggle';
-import { useSmoothScroll } from './components/SmoothScrollProvider';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { useProjects } from './features/projects/api/useProjects';
+import { Navbar } from './components/layout/Navbar';
+import { Section } from './components/layout/Section';
+import { SITE_CONFIG } from './data/site';
 
-function ProjectsList() {
-  const { data: projects, isLoading, error, source } = useProjects();
-  const { i18n } = useTranslation();
-  const lang = i18n.language as 'es' | 'en';
-
-  if (isLoading) return <div>Cargando proyectos...</div>;
-  if (error) throw error; // Caught by ErrorBoundary
-
-  return (
-    <div className="space-y-4 w-full">
-      <div className="flex justify-end">
-        <span className={`px-2 py-1 text-xs font-bold rounded ${source === 'live' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-          Source: {source}
-        </span>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {projects?.map((p) => (
-          <div key={p.id} className="p-4 border rounded-xl bg-bg shadow-sm">
-            <h3 className="font-bold text-lg">{p.title[lang] || p.title.es}</h3>
-            <p className="text-sm text-text-muted">{p.summary[lang] || p.summary.es}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 export default function App() {
   const { t } = useTranslation('common');
-  const caps = useCapabilities();
-  const { scrollTo } = useSmoothScroll();
+  const currentYear = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen p-8 max-w-4xl mx-auto space-y-12">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface p-6 rounded-2xl shadow-soft border border-border-subtle">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-accent-violet">
-            Portfolio Foundations
-          </h1>
-          <p className="text-text-muted mt-2">Página de pruebas visuales (Temporal)</p>
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+
+      <main id="main-content" className="flex-1">
+        <Section id="home" titleKey="sections.home" title={t('sections.home')}>
+          <p className="text-text-muted text-lg max-w-prose">{t('sections.homePlaceholder')}</p>
+        </Section>
+
+        <Section id="about" titleKey="sections.about" title={t('sections.about')}>
+          <p className="text-text-muted text-lg max-w-prose">{t('sections.aboutPlaceholder')}</p>
+        </Section>
+
+        <Section id="projects" titleKey="sections.projects" title={t('sections.projects')}>
+          <p className="text-text-muted text-lg max-w-prose">{t('sections.projectsPlaceholder')}</p>
+        </Section>
+
+        <Section id="contact" titleKey="sections.contact" title={t('sections.contact')}>
+          <p className="text-text-muted text-lg max-w-prose">{t('sections.contactPlaceholder')}</p>
+        </Section>
+      </main>
+
+      <footer className="border-t border-border py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-text-muted">
+          <span>
+            &copy; {currentYear} {SITE_CONFIG.authorName}. {t('footer.rights')}
+          </span>
+          <div className="flex items-center gap-6">
+            <a
+              href={SITE_CONFIG.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-accent transition-colors"
+            >
+              GitHub
+            </a>
+            <a
+              href={SITE_CONFIG.linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-accent transition-colors"
+            >
+              LinkedIn
+            </a>
+          </div>
         </div>
-        <div className="flex gap-4">
-          <LanguageToggle />
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <section className="bg-surface p-6 rounded-2xl shadow-soft border border-border-subtle space-y-4">
-        <h2 className="text-2xl font-bold font-display">Traducciones</h2>
-        <div className="flex gap-4">
-          <span className="px-3 py-1 bg-accent-cyan/10 text-accent-cyan rounded-full font-mono text-sm">nav.projects: {t('nav.projects')}</span>
-          <span className="px-3 py-1 bg-accent-violet/10 text-accent-violet rounded-full font-mono text-sm">hero.placeholder: {t('hero.placeholder')}</span>
-        </div>
-      </section>
-
-      <section className="bg-surface p-6 rounded-2xl shadow-soft border border-border-subtle space-y-4">
-        <h2 className="text-2xl font-bold font-display">useCapabilities</h2>
-        <ul className="space-y-2 font-mono text-sm">
-          <li>hasFinePointer: <span className={caps.hasFinePointer ? "text-accent-cyan" : "text-red-500"}>{String(caps.hasFinePointer)}</span></li>
-          <li>isDesktopLayout: <span className={caps.isDesktopLayout ? "text-accent-cyan" : "text-red-500"}>{String(caps.isDesktopLayout)}</span></li>
-          <li>prefersReducedMotion: <span className={caps.prefersReducedMotion ? "text-accent-cyan" : "text-red-500"}>{String(caps.prefersReducedMotion)}</span></li>
-          <li>canUseHeavyEffects: <span className={caps.canUseHeavyEffects ? "text-accent-cyan" : "text-red-500"}>{String(caps.canUseHeavyEffects)}</span></li>
-        </ul>
-      </section>
-
-      <section className="bg-surface p-6 rounded-2xl shadow-soft border border-border-subtle space-y-4">
-        <h2 className="text-2xl font-bold font-display">Paleta de Colores</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="h-24 rounded-xl bg-bg border border-border-subtle flex items-center justify-center font-mono text-xs">bg</div>
-          <div className="h-24 rounded-xl bg-surface border border-border-subtle flex items-center justify-center font-mono text-xs">surface</div>
-          <div className="h-24 rounded-xl bg-accent-violet flex items-center justify-center font-mono text-xs text-white">accent-violet</div>
-          <div className="h-24 rounded-xl bg-accent-cyan flex items-center justify-center font-mono text-xs text-black">accent-cyan</div>
-        </div>
-      </section>
-
-      <section className="bg-surface p-6 rounded-2xl shadow-soft border border-border-subtle space-y-4">
-        <h2 className="text-2xl font-bold font-display">Prueba de Scroll (Lenis)</h2>
-        <div className="flex gap-4">
-          <button 
-            onClick={() => scrollTo('#seccion-proyectos')}
-            className="px-6 py-2 bg-accent-violet text-white rounded-xl font-bold hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan"
-          >
-            Ver proyectos
-          </button>
-          <button 
-            onClick={() => scrollTo('#seccion-contacto')}
-            className="px-6 py-2 border-2 border-accent-cyan text-accent-cyan rounded-xl font-bold hover:bg-accent-cyan/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-violet"
-          >
-            Contáctame
-          </button>
-        </div>
-      </section>
-
-      <div className="h-[100vh] border-l-4 border-dashed border-border-subtle flex items-center pl-8 text-text-muted">
-        Espacio para scroll...
-      </div>
-
-      <section id="seccion-proyectos" className="min-h-screen bg-surface p-12 rounded-3xl shadow-glow border border-accent-violet flex flex-col items-center justify-center space-y-8">
-        <h2 className="text-5xl font-display font-bold text-accent-violet">SECCIÓN PROYECTOS</h2>
-        <div className="w-full">
-          <ErrorBoundary>
-            <ProjectsList />
-          </ErrorBoundary>
-        </div>
-      </section>
-
-      <div className="h-[50vh] border-l-4 border-dashed border-border-subtle flex items-center pl-8 text-text-muted">
-        Más espacio...
-      </div>
-
-      <section id="seccion-contacto" className="min-h-screen bg-surface p-12 rounded-3xl shadow-glow border border-accent-cyan flex items-center justify-center">
-        <h2 className="text-5xl font-display font-bold text-accent-cyan">SECCIÓN CONTACTO</h2>
-      </section>
+      </footer>
     </div>
   );
 }
