@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, type Variants } from 'motion/react';
 import { useSmoothScroll } from '../../../components/SmoothScrollProvider';
 import { useCapabilities } from '../../../hooks/useCapabilities';
+import { MagneticButton } from '../../../components/ui/MagneticButton';
 import { HeroBackground } from './HeroBackground';
 import { HeroPhoto } from './HeroPhoto';
 
@@ -96,28 +97,32 @@ export function Hero() {
               className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start"
             >
               {/* Primario: Ver proyectos */}
-              <a
-                href="#projects"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollTo('#projects');
-                }}
-                className="inline-flex min-h-[44px] w-full items-center justify-center rounded-[var(--radius)] bg-accent px-6 py-3 font-medium text-bg shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none sm:w-auto"
-              >
-                {t('hero.ctaProjects')}
-              </a>
+              <MagneticButton className="w-full sm:w-auto">
+                <a
+                  href="#projects"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollTo('#projects');
+                  }}
+                  className="inline-flex min-h-[44px] w-full items-center justify-center rounded-[var(--radius)] bg-accent px-6 py-3 font-medium text-bg shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none sm:w-auto"
+                >
+                  {t('hero.ctaProjects')}
+                </a>
+              </MagneticButton>
 
               {/* Secundario: Contáctame */}
-              <a
-                href="#contact"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollTo('#contact');
-                }}
-                className="inline-flex min-h-[44px] w-full items-center justify-center rounded-[var(--radius)] border border-border-control bg-surface px-6 py-3 font-medium text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none sm:w-auto"
-              >
-                {t('hero.ctaContact')}
-              </a>
+              <MagneticButton className="w-full sm:w-auto">
+                <a
+                  href="#contact"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollTo('#contact');
+                  }}
+                  className="inline-flex min-h-[44px] w-full items-center justify-center rounded-[var(--radius)] border border-border-control bg-surface px-6 py-3 font-medium text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none sm:w-auto"
+                >
+                  {t('hero.ctaContact')}
+                </a>
+              </MagneticButton>
             </motion.div>
           </motion.div>
 
