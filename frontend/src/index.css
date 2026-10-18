@@ -95,6 +95,64 @@
   }
 }
 
+.custom-cursor-active,
+.custom-cursor-active * {
+  cursor: none !important;
+}
+
+.custom-cursor-active
+  :is(
+    input:not([type]),
+    input[type='text'],
+    input[type='email'],
+    input[type='search'],
+    input[type='url'],
+    input[type='tel'],
+    input[type='password'],
+    input[type='number'],
+    input[type='date'],
+    input[type='datetime-local'],
+    input[type='month'],
+    input[type='week'],
+    input[type='time'],
+    textarea,
+    [contenteditable]:not([contenteditable='false'])
+  ) {
+  cursor: text !important;
+}
+
+.custom-cursor-dot,
+.custom-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.custom-cursor-dot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+}
+
+.custom-cursor-ring {
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 1px solid var(--text-muted);
+  border-radius: 50%;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.custom-cursor-ring--interactive {
+  border-color: var(--accent-primary);
+  background-color: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
 @keyframes blob-drift-1 {
   0%, 100% {
     transform: translate(0, 0) scale(1);
@@ -156,4 +214,3 @@
 .hero-paused .hero-blob-3 {
   animation-play-state: paused;
 }
-
