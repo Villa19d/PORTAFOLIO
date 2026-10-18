@@ -12,7 +12,7 @@ export function LanguageToggle() {
     <button
       onClick={toggleLanguage}
       aria-label={t('language.toggle')}
-      className="p-2 rounded-xl bg-surface border border-border-subtle hover:bg-border-subtle transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-violet font-mono text-sm font-bold uppercase"
+      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[var(--radius-md)] bg-surface border border-border-control hover:bg-surface-elevated transition-colors font-mono text-sm font-bold uppercase"
     >
       {i18n.language.startsWith('es') ? 'ES' : 'EN'}
     </button>
