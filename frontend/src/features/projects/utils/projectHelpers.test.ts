@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildImageSrcSet,
+  getSafeExternalUrl,
   getLocalized,
   isCloudinaryImageUrl,
   isPlaceholderImageUrl,
@@ -18,6 +19,21 @@ describe('getLocalized', () => {
   it('falls back to Spanish for unsupported or empty translations', () => {
     expect(getLocalized(text, 'fr')).toBe('Proyecto');
     expect(getLocalized({ es: 'Proyecto', en: '' }, 'en')).toBe('Proyecto');
+  });
+});
+
+describe('getSafeExternalUrl', () => {
+  it('allows absolute HTTP, HTTPS, and mailto URLs only', () => {
+    expect(getSafeExternalUrl('https://example.org/project')).toBe(
+      'https://example.org/project',
+    );
+    expect(getSafeExternalUrl('http://example.org/project')).toBe(
+      'http://example.org/project',
+    );
+    expect(getSafeExternalUrl('mailto:hello@example.org')).toBe('mailto:hello@example.org');
+    expect(getSafeExternalUrl('javascript:alert(1)')).toBeUndefined();
+    expect(getSafeExternalUrl('/relative/path')).toBeUndefined();
+    expect(getSafeExternalUrl(null)).toBeUndefined();
   });
 });
 

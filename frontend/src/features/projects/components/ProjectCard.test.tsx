@@ -54,6 +54,7 @@ describe('ProjectCard', () => {
 
     expect(screen.getByRole('link', { name: 'Código' })).toHaveAttribute('tabindex', '-1');
     expect(screen.getByRole('link', { name: 'Demo' })).toHaveAttribute('tabindex', '-1');
+    expect(screen.queryByRole('button', { name: 'Ver detalle' })).not.toBeInTheDocument();
   });
 
   it('mounts TiltSurface only for an active card when heavy effects are supported', () => {
