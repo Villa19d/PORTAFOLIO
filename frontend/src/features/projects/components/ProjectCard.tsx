@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TiltSurface } from '../../../components/ui/TiltSurface';
 import { useCapabilities } from '../../../hooks/useCapabilities';
 import type { Project } from '../types';
 import {
   buildImageSrcSet,
+  getSafeExternalUrl,
   getLocalized,
   isCloudinaryImageUrl,
   isPlaceholderImageUrl,
 } from '../utils/projectHelpers';
 import { PlaceholderArt } from './PlaceholderArt';
+import { ProjectDetailModal } from './ProjectDetailModal';
 
 interface ProjectCardProps {
   project: Project;
@@ -19,15 +21,19 @@ interface ProjectCardProps {
 export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
   const { i18n, t } = useTranslation('common');
   const { canUseHeavyEffects } = useCapabilities();
+  const detailsTriggerRef = useRef<HTMLButtonElement>(null);
   const title = getLocalized(project.title, i18n.language);
   const summary = getLocalized(project.summary, i18n.language);
   const [failedImageUrl, setFailedImageUrl] = useState('');
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const showPlaceholder =
     isPlaceholderImageUrl(project.imageUrl) || failedImageUrl === project.imageUrl;
   const isCloudinaryImage = isCloudinaryImageUrl(project.imageUrl);
   const visibleTechnologies = project.techStack.slice(0, 5);
   const remainingTechnologies = Math.max(0, project.techStack.length - visibleTechnologies.length);
   const linkTabIndex = isActive ? undefined : -1;
+  const repoUrl = getSafeExternalUrl(project.repoUrl);
+  const liveUrl = getSafeExternalUrl(project.liveUrl);
   const cardContent = (
     <>
       <div className="project-card__media">
@@ -73,19 +79,21 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
         </ul>
 
         <div className="project-card__actions">
-          <a
-            className="project-card__action project-card__action--primary"
-            href={project.repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            tabIndex={linkTabIndex}
-          >
-            {t('projects.code')}
-          </a>
-          {project.liveUrl && (
+          {repoUrl && (
+            <a
+              className="project-card__action project-card__action--primary"
+              href={repoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              tabIndex={linkTabIndex}
+            >
+              {t('projects.code')}
+            </a>
+          )}
+          {liveUrl && (
             <a
               className="project-card__action project-card__action--secondary"
-              href={project.liveUrl}
+              href={liveUrl}
               target="_blank"
               rel="noopener noreferrer"
               tabIndex={linkTabIndex}
@@ -93,18 +101,39 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
               {t('projects.demo')}
             </a>
           )}
+          {isActive && (
+            <button
+              ref={detailsTriggerRef}
+              className="project-card__action project-card__action--details"
+              type="button"
+              onClick={() => setIsDetailOpen(true)}
+            >
+              {t('projects.viewDetails')}
+            </button>
+          )}
         </div>
       </div>
     </>
   );
 
   return (
-    <article className="project-card">
-      {isActive && canUseHeavyEffects ? (
-        <TiltSurface>{cardContent}</TiltSurface>
-      ) : (
-        cardContent
+    <>
+      <article className="project-card">
+        {isActive && canUseHeavyEffects ? (
+          <TiltSurface>{cardContent}</TiltSurface>
+        ) : (
+          cardContent
+        )}
+      </article>
+      {isDetailOpen && (
+        <ProjectDetailModal
+          project={project}
+          onClose={() => {
+            setIsDetailOpen(false);
+            detailsTriggerRef.current?.focus();
+          }}
+        />
       )}
-    </article>
+    </>
   );
 }

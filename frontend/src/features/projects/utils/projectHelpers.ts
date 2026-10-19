@@ -7,6 +7,19 @@ export function getLocalized(text: LocalizedText, lang: string): string {
   return (lang.toLowerCase().startsWith('en') ? text.en : text.es) || text.es;
 }
 
+export function getSafeExternalUrl(url: string | null | undefined): string | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    return ['http:', 'https:', 'mailto:'].includes(parsedUrl.protocol) ? url : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function isCloudinaryImageUrl(url: string): boolean {
   try {
     return new URL(url).hostname === CLOUDINARY_HOST;
