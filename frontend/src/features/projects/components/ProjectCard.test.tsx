@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../../lib/i18n';
+import * as capabilitiesModule from '../../../hooks/useCapabilities';
 import type { Project } from '../types';
 import { ProjectCard } from './ProjectCard';
 
@@ -53,6 +54,38 @@ describe('ProjectCard', () => {
 
     expect(screen.getByRole('link', { name: 'Código' })).toHaveAttribute('tabindex', '-1');
     expect(screen.getByRole('link', { name: 'Demo' })).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('mounts TiltSurface only for an active card when heavy effects are supported', () => {
+    vi.spyOn(capabilitiesModule, 'useCapabilities').mockReturnValue({
+      hasFinePointer: true,
+      isDesktopLayout: true,
+      prefersReducedMotion: false,
+      canUseHeavyEffects: true,
+    });
+    const { container, rerender } = renderCard();
+
+    expect(container.querySelector('article.project-card > .tilt-surface')).toBeInTheDocument();
+
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <ProjectCard project={project} isActive={false} />
+      </I18nextProvider>,
+    );
+    expect(container.querySelector('.tilt-surface')).not.toBeInTheDocument();
+  });
+
+  it('does not mount TiltSurface when reduced motion disables heavy effects', () => {
+    vi.spyOn(capabilitiesModule, 'useCapabilities').mockReturnValue({
+      hasFinePointer: true,
+      isDesktopLayout: true,
+      prefersReducedMotion: true,
+      canUseHeavyEffects: false,
+    });
+
+    const { container } = renderCard();
+
+    expect(container.querySelector('.tilt-surface')).not.toBeInTheDocument();
   });
 
   it('shows at most five technologies and a remaining-count chip', () => {

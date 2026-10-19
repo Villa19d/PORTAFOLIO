@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TiltSurface } from '../../../components/ui/TiltSurface';
+import { useCapabilities } from '../../../hooks/useCapabilities';
 import type { Project } from '../types';
 import {
   buildImageSrcSet,
@@ -16,6 +18,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
   const { i18n, t } = useTranslation('common');
+  const { canUseHeavyEffects } = useCapabilities();
   const title = getLocalized(project.title, i18n.language);
   const summary = getLocalized(project.summary, i18n.language);
   const [failedImageUrl, setFailedImageUrl] = useState('');
@@ -25,9 +28,8 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
   const visibleTechnologies = project.techStack.slice(0, 5);
   const remainingTechnologies = Math.max(0, project.techStack.length - visibleTechnologies.length);
   const linkTabIndex = isActive ? undefined : -1;
-
-  return (
-    <article className="project-card">
+  const cardContent = (
+    <>
       <div className="project-card__media">
         {showPlaceholder ? (
           <PlaceholderArt slug={project.slug} title={title} />
@@ -93,6 +95,16 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
           )}
         </div>
       </div>
+    </>
+  );
+
+  return (
+    <article className="project-card">
+      {isActive && canUseHeavyEffects ? (
+        <TiltSurface>{cardContent}</TiltSurface>
+      ) : (
+        cardContent
+      )}
     </article>
   );
 }

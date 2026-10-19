@@ -240,6 +240,36 @@
   background-color: var(--surface);
 }
 
+.tilt-surface {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  perspective: 1000px;
+}
+
+.tilt-surface__content {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  border-radius: inherit;
+}
+
+.tilt-surface__glare {
+  position: absolute;
+  z-index: 1;
+  inset: -20%;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent-primary) 36%, transparent),
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
 .project-card__media {
   position: relative;
   width: 100%;
