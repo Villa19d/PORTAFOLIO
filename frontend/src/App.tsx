@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from './components/layout/Navbar';
 import { Section } from './components/layout/Section';
 import { Hero } from './features/hero/components/Hero';
+import { ProjectsSection } from './features/projects/components/ProjectsSection';
 import { SITE_CONFIG } from './data/site';
 
 export default function App() {
@@ -19,9 +20,7 @@ export default function App() {
           <p className="text-text-muted text-lg max-w-prose">{t('sections.aboutPlaceholder')}</p>
         </Section>
 
-        <Section id="projects" titleKey="sections.projects" title={t('sections.projects')}>
-          <p className="text-text-muted text-lg max-w-prose">{t('sections.projectsPlaceholder')}</p>
-        </Section>
+        <ProjectsSection />
 
         <Section id="contact" titleKey="sections.contact" title={t('sections.contact')}>
           <p className="text-text-muted text-lg max-w-prose">{t('sections.contactPlaceholder')}</p>
