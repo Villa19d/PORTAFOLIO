@@ -1,0 +1,98 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { Project } from '../types';
+import {
+  buildImageSrcSet,
+  getLocalized,
+  isCloudinaryImageUrl,
+  isPlaceholderImageUrl,
+} from '../utils/projectHelpers';
+import { PlaceholderArt } from './PlaceholderArt';
+
+interface ProjectCardProps {
+  project: Project;
+  isActive?: boolean;
+}
+
+export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
+  const { i18n, t } = useTranslation('common');
+  const title = getLocalized(project.title, i18n.language);
+  const summary = getLocalized(project.summary, i18n.language);
+  const [failedImageUrl, setFailedImageUrl] = useState('');
+  const showPlaceholder =
+    isPlaceholderImageUrl(project.imageUrl) || failedImageUrl === project.imageUrl;
+  const isCloudinaryImage = isCloudinaryImageUrl(project.imageUrl);
+  const visibleTechnologies = project.techStack.slice(0, 5);
+  const remainingTechnologies = Math.max(0, project.techStack.length - visibleTechnologies.length);
+  const linkTabIndex = isActive ? undefined : -1;
+
+  return (
+    <article className="project-card">
+      <div className="project-card__media">
+        {showPlaceholder ? (
+          <PlaceholderArt slug={project.slug} title={title} />
+        ) : (
+          <img
+            className="project-card__image"
+            src={project.imageUrl}
+            srcSet={isCloudinaryImage ? buildImageSrcSet(project.imageUrl) : undefined}
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            width={800}
+            height={500}
+            alt={t('projects.imageAlt', { title })}
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailedImageUrl(project.imageUrl)}
+          />
+        )}
+      </div>
+
+      <div className="project-card__body">
+        <h3 className="project-card__title" title={title}>
+          {title}
+        </h3>
+        <p className="project-card__summary">{summary}</p>
+
+        <ul className="project-card__technologies" aria-label={t('projects.technologies')}>
+          {visibleTechnologies.map((technology) => (
+            <li className="project-card__technology" key={technology} title={technology}>
+              {technology}
+            </li>
+          ))}
+          {remainingTechnologies > 0 && (
+            <li
+              className="project-card__technology project-card__technology--more"
+              aria-label={t('projects.moreTechnologies', { count: remainingTechnologies })}
+              title={t('projects.moreTechnologies', { count: remainingTechnologies })}
+            >
+              +{remainingTechnologies}
+            </li>
+          )}
+        </ul>
+
+        <div className="project-card__actions">
+          <a
+            className="project-card__action project-card__action--primary"
+            href={project.repoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            tabIndex={linkTabIndex}
+          >
+            {t('projects.code')}
+          </a>
+          {project.liveUrl && (
+            <a
+              className="project-card__action project-card__action--secondary"
+              href={project.liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              tabIndex={linkTabIndex}
+            >
+              {t('projects.demo')}
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}

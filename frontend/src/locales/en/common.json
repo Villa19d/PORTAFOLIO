@@ -15,7 +15,6 @@
     "contact": "Contact",
     "homePlaceholder": "(placeholder) Welcome to Rodrigo Del Villar's portfolio. Here you'll find projects, experience and more.",
     "aboutPlaceholder": "(placeholder) About Me section. Full-Stack Developer passionate about clean code and accessible design.",
-    "projectsPlaceholder": "(placeholder) Real projects will go here when ready.",
     "contactPlaceholder": "(placeholder) Contact form coming soon."
   },
   "footer": {
@@ -35,5 +34,15 @@
   },
   "language": {
     "toggle": "Switch to Spanish"
+  },
+  "projects": {
+    "loading": "Loading projects",
+    "loadingCard": "Loading project",
+    "empty": "No published projects yet.",
+    "imageAlt": "Image of {{title}}",
+    "technologies": "Technologies used",
+    "moreTechnologies": "{{count}} more technologies",
+    "code": "Code",
+    "demo": "Demo"
   }
 }
