@@ -43,6 +43,14 @@
     "technologies": "Technologies used",
     "moreTechnologies": "{{count}} more technologies",
     "code": "Code",
-    "demo": "Demo"
+    "demo": "Demo",
+    "previous": "Previous project",
+    "next": "Next project",
+    "firstSlide": "First project",
+    "lastSlide": "Last project",
+    "slideLabel": "Project {{index}} of {{slidesLength}}",
+    "slidePosition": "Project {{current}} of {{total}}",
+    "pagination": "Project pagination",
+    "goToSlide": "Go to project {{current}} of {{total}}"
   }
 }
