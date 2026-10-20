@@ -1,53 +1,91 @@
 [
   {
-    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "id": "216b80b6-41bb-4f2d-a6aa-e10b775193cc",
     "slug": "portfolio",
-    "title": { "es": "Portafolio", "en": "Portfolio" },
-    "summary": { "es": "Mi portafolio personal", "en": "My personal portfolio" },
-    "description": { "es": "Detalles del portafolio...", "en": "Portfolio details..." },
-    "techStack": ["React", "Spring Boot"],
-    "imageUrl": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    "title": {
+      "es": "Portafolio",
+      "en": "Portfolio"
+    },
+    "summary": {
+      "es": "Mi portafolio personal",
+      "en": "My personal portfolio"
+    },
+    "description": {
+      "es": "Detalles del portafolio...",
+      "en": "Portfolio details..."
+    },
+    "techStack": [
+      "React",
+      "Spring Boot"
+    ],
+    "imageUrl": "https://example.com/placeholder.png",
     "videoUrl": null,
     "repoUrl": "https://github.com/rodrigodvillar/portfolio",
     "liveUrl": "https://rodrigodvillar.com",
     "featured": true,
     "published": true,
     "displayOrder": 1,
-    "createdAt": "2024-10-06T12:00:00Z",
-    "updatedAt": "2024-10-06T12:00:00Z"
+    "createdAt": "2026-10-20T01:15:45.003302Z",
+    "updatedAt": "2026-10-20T01:15:45.003383Z"
   },
   {
-    "id": "223e4567-e89b-12d3-a456-426614174001",
+    "id": "3fc2d195-9a16-4a66-983d-87a4894ed068",
     "slug": "ecommerce-api",
-    "title": { "es": "API E-Commerce", "en": "E-Commerce API" },
-    "summary": { "es": "Backend para tienda", "en": "Store backend" },
-    "description": { "es": "Detalles API...", "en": "API details..." },
-    "techStack": ["Java", "Spring Boot", "PostgreSQL"],
-    "imageUrl": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    "title": {
+      "es": "API E-Commerce",
+      "en": "E-Commerce API"
+    },
+    "summary": {
+      "es": "Backend para tienda",
+      "en": "Store backend"
+    },
+    "description": {
+      "es": "Detalles API...",
+      "en": "API details..."
+    },
+    "techStack": [
+      "Java",
+      "Spring Boot",
+      "PostgreSQL"
+    ],
+    "imageUrl": "https://example.com/placeholder.png",
     "videoUrl": null,
     "repoUrl": "https://github.com/rodrigodvillar/ecommerce-api",
     "liveUrl": null,
     "featured": false,
     "published": true,
     "displayOrder": 2,
-    "createdAt": "2024-10-07T12:00:00Z",
-    "updatedAt": "2024-10-07T12:00:00Z"
+    "createdAt": "2026-10-20T01:16:06.312455Z",
+    "updatedAt": "2026-10-20T01:16:06.312493Z"
   },
   {
-    "id": "323e4567-e89b-12d3-a456-426614174002",
+    "id": "b36faca4-66d8-4052-88ae-29abd32efa9f",
     "slug": "task-manager",
-    "title": { "es": "Gestor de Tareas", "en": "Task Manager" },
-    "summary": { "es": "App de productividad", "en": "Productivity app" },
-    "description": { "es": "Detalles app...", "en": "App details..." },
-    "techStack": ["React", "TypeScript", "Tailwind"],
-    "imageUrl": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+    "title": {
+      "es": "Gestor de Tareas",
+      "en": "Task Manager"
+    },
+    "summary": {
+      "es": "App de productividad",
+      "en": "Productivity app"
+    },
+    "description": {
+      "es": "Detalles app...",
+      "en": "App details..."
+    },
+    "techStack": [
+      "React",
+      "TypeScript",
+      "Tailwind"
+    ],
+    "imageUrl": "https://example.com/placeholder.png",
     "videoUrl": null,
     "repoUrl": "https://github.com/rodrigodvillar/task-manager",
     "liveUrl": "https://tasks.rodrigodvillar.com",
     "featured": true,
     "published": true,
     "displayOrder": 3,
-    "createdAt": "2024-10-08T12:00:00Z",
-    "updatedAt": "2024-10-08T12:00:00Z"
+    "createdAt": "2026-10-20T01:16:24.802009Z",
+    "updatedAt": "2026-10-20T01:16:24.80206Z"
   }
 ]
