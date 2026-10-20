@@ -26,6 +26,7 @@
 - **Consecuencia:** Prohibición estricta de guardar tokens en localStorage, incrementando la seguridad general de la autenticación.
 
 ## 6. Versión de Spring Boot: 3.5.16 (Ticket 1.3)
+- **Última revisión de la decisión de soporte:** 19 de octubre de 2026. La tabla oficial de soporte de Spring.io queda pendiente de inserción por el PM.
 - **Contexto:** El proyecto arrancó en Spring Boot 3.4.3 por ser la versión que generó Spring Initializr en ese momento. El PM rechazó esta decisión porque el ticket original especificaba 3.5.x (rama con soporte vigente en el momento del Sprint 1).
 - **Decisión:** Se actualizó a Spring Boot **3.5.16**, última patch release de la rama 3.5.x (lanzada el 25 de junio de 2026, también la última OSS de esa rama). Se documenta que la rama 3.5.x alcanzó EOL en junio 2026; una futura decisión de arquitectura deberá evaluar si migrar a 4.x para seguir recibiendo parches de seguridad.
 - **Consecuencia:** La actualización es compatible binariamente con el código existente (mismo Java 21, mismo Hibernate 6, mismo Flyway de la rama compatible). El BOM actualizado trae versiones más recientes de Flyway y Testcontainers gestionadas automáticamente.
@@ -80,4 +81,3 @@
   3. Como fallback para pruebas locales y entornos sin Cloudflare, se evalúa `X-Forwarded-For` únicamente si el socket TCP remoto proviene de un proxy interno privado (`isTrustedProxy`), extrayendo el elemento *rightmost* público.
   4. En Tomcat se mantiene `server.forward-headers-strategy: native` con `internal-proxies` configurados en `application.yml`.
 - **Consecuencia:** Cero evasión del rate limit por inyección de cabeceras arbitrarias. Los ataques de fuerza bruta son mitigados de forma confiable independientemente de qué cabecera intente falsificar el atacante.
-

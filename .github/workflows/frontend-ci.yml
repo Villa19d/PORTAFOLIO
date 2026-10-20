@@ -39,6 +39,12 @@ jobs:
         run: npm ci
         working-directory: ./frontend
 
+      - name: Security audit
+        if: steps.check.outputs.exists == 'true'
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+        working-directory: ./frontend
+
       - name: Lint
         if: steps.check.outputs.exists == 'true'
         run: npm run lint
