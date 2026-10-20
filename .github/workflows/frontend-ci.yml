@@ -41,8 +41,9 @@ jobs:
 
       - name: Security audit
         if: steps.check.outputs.exists == 'true'
-        run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
+        run: |
+          npm audit --omit=dev --json > audit-report.json || true
+          node scripts/check-runtime-audit.mjs audit-report.json
         working-directory: ./frontend
 
       - name: Lint

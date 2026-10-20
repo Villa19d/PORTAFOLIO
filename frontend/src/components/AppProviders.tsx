@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { MotionConfig } from 'motion/react';
+import { domAnimation, LazyMotion, MotionConfig } from 'motion/react';
 import { ThemeProvider } from './ThemeProvider';
 import { SmoothScrollProvider } from './SmoothScrollProvider';
 import { CursorLoader } from './cursor/CursorLoader';
@@ -23,12 +23,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider>
-          <MotionConfig reducedMotion="user">
-            <SmoothScrollProvider>
-              {children}
-              <CursorLoader />
-            </SmoothScrollProvider>
-          </MotionConfig>
+          <LazyMotion features={domAnimation} strict>
+            <MotionConfig reducedMotion="user">
+              <SmoothScrollProvider>
+                {children}
+                <CursorLoader />
+              </SmoothScrollProvider>
+            </MotionConfig>
+          </LazyMotion>
         </ThemeProvider>
       </I18nextProvider>
     </QueryClientProvider>

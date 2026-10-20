@@ -1,5 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, type ReactNode, useRef } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { m, useMotionValue, useSpring, useTransform } from 'motion/react';
 
 interface TiltSurfaceProps {
   children: ReactNode;
@@ -78,17 +78,17 @@ export function TiltSurface({ children }: TiltSurfaceProps) {
       onPointerCancel={handlePointerLeave}
       onPointerLeave={handlePointerLeave}
     >
-      <motion.div
+      <m.div
         className="tilt-surface__content"
         style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
       >
         {children}
-        <motion.div
+        <m.div
           className="tilt-surface__glare"
           aria-hidden="true"
           style={{ x: glareX, y: glareY, opacity: glareOpacity }}
         />
-      </motion.div>
+      </m.div>
     </div>
   );
 }

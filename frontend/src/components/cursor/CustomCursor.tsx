@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { motion, useMotionValue, useSpring } from 'motion/react';
+import { m, useMotionValue, useSpring } from 'motion/react';
 
 export function CustomCursor() {
   const pointX = useMotionValue(0);
@@ -88,12 +88,12 @@ export function CustomCursor() {
 
   return (
     <>
-      <motion.div
+      <m.div
         aria-hidden="true"
         className="custom-cursor-dot"
         style={{ x: pointX, y: pointY, opacity }}
       />
-      <motion.div
+      <m.div
         ref={ringRef}
         aria-hidden="true"
         className="custom-cursor-ring"
