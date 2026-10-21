@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from '../types';
 import {
@@ -83,7 +83,7 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
         dialogRef.current?.close();
       }}
     >
-      <motion.div
+      <m.div
         className="project-detail-modal__panel"
         initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -167,7 +167,7 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
             </div>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     </dialog>
   );
 }

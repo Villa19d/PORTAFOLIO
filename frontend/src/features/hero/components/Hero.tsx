@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, type Variants } from 'motion/react';
+import { m, type Variants } from 'motion/react';
 import { useSmoothScroll } from '../../../components/SmoothScrollProvider';
 import { useCapabilities } from '../../../hooks/useCapabilities';
 import { MagneticButton } from '../../../components/ui/MagneticButton';
@@ -50,22 +50,22 @@ export function Hero() {
       <div className="relative z-10 mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between gap-10 md:gap-12 lg:flex-row lg:gap-16">
           {/* Text Column (Left on Desktop, Bottom on Mobile) */}
-          <motion.div
+          <m.div
             className="order-2 w-full text-center lg:order-1 lg:max-w-xl lg:text-left"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
             {/* Saludo */}
-            <motion.p
+            <m.p
               variants={itemVariants}
               className="font-mono text-sm font-semibold tracking-wider text-text-muted uppercase"
             >
               {t('hero.greeting')}
-            </motion.p>
+            </m.p>
 
             {/* Nombre (H1) con gradiente de marca */}
-            <motion.h1
+            <m.h1
               id="hero-title"
               variants={itemVariants}
               className="mt-2 font-display text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
@@ -73,26 +73,26 @@ export function Hero() {
               <span className="bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
                 {t('hero.name')}
               </span>
-            </motion.h1>
+            </m.h1>
 
             {/* Rol */}
-            <motion.p
+            <m.p
               variants={itemVariants}
               className="mt-3 font-display text-xl font-semibold text-text sm:text-2xl"
             >
               {t('hero.role')}
-            </motion.p>
+            </m.p>
 
             {/* Subtítulo */}
-            <motion.p
+            <m.p
               variants={itemVariants}
               className="mt-4 text-base text-text-muted sm:text-lg sm:leading-relaxed"
             >
               {t('hero.subtitle')}
-            </motion.p>
+            </m.p>
 
             {/* CTAs */}
-            <motion.div
+            <m.div
               variants={itemVariants}
               className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start"
             >
@@ -123,11 +123,11 @@ export function Hero() {
                   {t('hero.ctaContact')}
                 </a>
               </MagneticButton>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
 
           {/* Photo Column (Right on Desktop, Top on Mobile) */}
-          <motion.div
+          <m.div
             className="order-1 w-full lg:order-2 lg:w-auto"
             initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -138,7 +138,7 @@ export function Hero() {
             }}
           >
             <HeroPhoto />
-          </motion.div>
+          </m.div>
         </div>
       </div>
     </section>

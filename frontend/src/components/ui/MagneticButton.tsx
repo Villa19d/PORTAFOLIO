@@ -1,5 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef } from 'react';
-import { motion, useSpring } from 'motion/react';
+import { m, useSpring } from 'motion/react';
 import { useCapabilities } from '../../hooks/useCapabilities';
 
 const INFLUENCE_RADIUS = 80;
@@ -57,7 +57,7 @@ export function MagneticButton({ children, className = '' }: MagneticButtonProps
   };
 
   return (
-    <motion.span
+    <m.span
       ref={wrapperRef}
       className={`inline-flex ${className}`}
       onPointerMove={handlePointerMove}
@@ -65,6 +65,6 @@ export function MagneticButton({ children, className = '' }: MagneticButtonProps
       style={{ x, y }}
     >
       {children}
-    </motion.span>
+    </m.span>
   );
 }

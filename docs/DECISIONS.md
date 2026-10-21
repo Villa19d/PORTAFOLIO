@@ -34,6 +34,10 @@
   - **Línea actual:** Spring Boot 3.5.16. Su soporte OSS comunitario finalizó en junio de 2026.
   - **Líneas OSS vigentes hoy (spring.io):** Spring Boot 4.0.x y superiores cuentan con soporte OSS activo en la actualidad.
   - **Recomendación:** **Aceptar el riesgo en el corto plazo**. La aplicación tiene una superficie de ataque muy reducida (solo dos endpoints públicos y endpoints de admin protegidos), no utiliza dependencias con CVEs críticos activos y opera en un contenedor Alpine Linux con límite de memoria estricto (~512MB RAM en Render Free). Se recomienda programar la migración mayor a Spring Boot 4.x en un sprint técnico futuro cuando se aborde la actualización de dependencias pesadas.
+- **Excepción del audit frontend (revisada el 20 de octubre de 2026):**
+  - **Advisory:** GHSA-hmx5-qpq5-p643, Prototype pollution en `swiper` 6.5.1–12.1.1, severidad crítica; la versión corregida disponible es 14.3.0.
+  - **Motivo:** La corrección requiere saltar al major 14. Se conserva Swiper 11 hasta que un ticket futuro permita migración y validación de compatibilidad.
+  - **Política CI:** El audit bloquea cualquier advisory runtime high/crítico que no esté explícitamente aprobado. GHSA-hmx5-qpq5-p643 es la única excepción y debe retirarse al actualizar Swiper.
 
 ## 7. Testcontainers: 1.21.4 en lugar de serie 2.x (Ticket 1.3)
 - **Contexto:** El BOM de Spring Boot 3.5.x gestiona una versión anterior de Testcontainers 1.x que no detecta correctamente el socket nombrado de Docker Desktop en Windows con Docker Engine ≥29 (error: `Could not find a valid Docker environment`).

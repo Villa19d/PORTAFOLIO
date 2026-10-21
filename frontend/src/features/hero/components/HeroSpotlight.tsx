@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { motion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
+import { m, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
 
 interface HeroSpotlightProps {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -45,7 +45,7 @@ export function HeroSpotlight({ containerRef }: HeroSpotlightProps) {
   }, [containerRef, mouseX, mouseY]);
 
   return (
-    <motion.div
+    <m.div
       className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
       style={{ background }}
       aria-hidden="true"
