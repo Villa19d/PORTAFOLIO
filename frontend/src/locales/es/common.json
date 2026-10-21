@@ -35,6 +35,20 @@
   "language": {
     "toggle": "Cambiar a Inglés"
   },
+  "about": {
+    "title": "Sobre mí",
+    "subtitle": "Conoce mi perfil, las herramientas que utilizo y lo que me inspira.",
+    "introLabel": "Perfil",
+    "linksLabel": "Enlaces",
+    "sectionLabel": "Sobre mí",
+    "stackLabel": "Stack técnico",
+    "locationLabel": "Ubicación",
+    "hobbiesLabel": "Pasatiempos",
+    "currentlyLabel": "Actualmente",
+    "cvLabel": "Currículum",
+    "cvDownloadEs": "Descargar CV (ES)",
+    "cvDownloadEn": "Descargar CV (EN)"
+  },
   "projects": {
     "loading": "Cargando proyectos",
     "loadingCard": "Cargando proyecto",

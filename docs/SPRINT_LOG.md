@@ -82,3 +82,31 @@ Decisiones nuevas:
 Deuda técnica / riesgos detectados: SEO tags y título en `index.html` aún genéricos. Duplicidad de imágenes en carpetas temporales (`src/assets/generated`).
 Hallazgos de rendimiento: Renderizado responsivo impecable (LCP de 2.9s atribuido exclusivamente al servidor, resuelto visualmente vía caché y snapshot del S3).
 Dudas para el PM (Próximo Sprint): Definir si el Sprint 6 usará capturas reales de los proyectos para el Coverflow o continuará con placeholders.
+
+
+
+
+Reporte Sprint s7
+### 📝 Reporte de Cierre: Sprints 0 al 7.0 (Fundamentos y Proyectos)
+**Estado:** COMPLETADO y en `main`
+**Entorno:** Producción (Render / Vercel / Neon)
+
+**Resumen Arquitectónico:**
+- **Backend:** Spring Boot 3.5.16 (Java 21) desplegado en Render. Configuración aislada de HikariCP para Neon Serverless PostgreSQL.
+- **Seguridad:** Spring Security con JWT Stateless, Rate Limiting (Bucket4j), y prevención de IP Spoofing (ADR 12: `CF-Connecting-IP`). Auditoría Gitleaks limpia.
+- **Frontend:** React 19, Vite, Tailwind CSS v4. Configurado con Framer Motion (LazyMotion) y Lenis para scroll suave.
+- **Features integradas:** Hero, Navigation, y Projects Carousel. 
+- **SRE & Rendimiento:** Script de Snapshot SRE habilitado. Lighthouse en móvil ≥ 90, CLS en 0 gracias a `PlaceholderArt` y la pre-carga segura de Markdown.
+
+
+### 📝 Reporte de Cierre: Ticket 7.1 (Bento Grid Layout & Optimización)
+**Estado:** COMPLETADO y listo para Merge a `main`
+**Rama:** `feat/s7-t1-bento-layout`
+
+**Resumen de Implementación:**
+- **Estructura de Datos (`profile.ts`):** Creación del modelo estricto y tipado para StackItem, Hobbies, Ubicación (Pachuca/CDMX) y CV.
+- **Bento Grid Layout:** Desarrollo de contenedor asimétrico usando CSS Grid (`BentoGrid.tsx` y `BentoTile.tsx`) 100% responsivo (1 col en móvil, 2 en tablet, 4 en desktop con `--bento-row`).
+- **Iconografía Vectorial (`SimpleIcons.tsx`):** Creación manual de componentes funcionales SVG inline (cero dependencias externas) para 11 tecnologías del stack (incluyendo OpenJDK).
+- **Traducciones:** Integración fluida con `i18next` en `common.json` (ES/EN) para todos los títulos y textos de la cuadrícula.
+- **Optimización Crítica (React Query):** Se refactorizó `useProjects.ts` migrando de `placeholderData` a `initialData` con `staleTime: Infinity`. 
+  * *Impacto:* Se eliminaron las peticiones HTTP de fondo redundantes desde el cliente, forzando la lectura del snapshot de Vercel. Esto resolvió errores de entorno local (CORS/Proxy) y garantizó un CLS de 0 estricto en producción sin costo de base de datos.

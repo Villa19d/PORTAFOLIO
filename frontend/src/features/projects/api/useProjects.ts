@@ -7,12 +7,15 @@ export function useProjects() {
   const query = useQuery<Project[]>({
     queryKey: ['projects'],
     queryFn: () => fetchApi<Project[]>('/api/projects'),
-    placeholderData: projectsSnapshot as Project[],
+    // Usamos initialData en lugar de placeholderData
+    initialData: projectsSnapshot as Project[],
+    // Infinity evita que haga peticiones HTTP de fondo (adiós error 500/HTML)
+    staleTime: Infinity,
   });
 
   return {
     ...query,
-    source: query.isPlaceholderData ? 'snapshot' : 'live',
+    source: 'snapshot',
   };
 }
 
@@ -20,14 +23,15 @@ export function useProject(slug: string) {
   const query = useQuery<Project>({
     queryKey: ['projects', slug],
     queryFn: () => fetchApi<Project>(`/api/projects/${slug}`),
-    placeholderData: () => {
+    initialData: () => {
       const found = (projectsSnapshot as Project[]).find((p) => p.slug === slug);
       return found ? found : undefined;
     },
+    staleTime: Infinity,
   });
 
   return {
     ...query,
-    source: query.isPlaceholderData ? 'snapshot' : 'live',
+    source: 'snapshot',
   };
 }

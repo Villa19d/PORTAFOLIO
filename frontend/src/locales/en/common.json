@@ -35,6 +35,20 @@
   "language": {
     "toggle": "Switch to Spanish"
   },
+  "about": {
+    "title": "About me",
+    "subtitle": "Get to know my background, the tools I use, and what inspires me.",
+    "introLabel": "Profile",
+    "linksLabel": "Links",
+    "sectionLabel": "About Me",
+    "stackLabel": "Tech stack",
+    "locationLabel": "Location",
+    "hobbiesLabel": "Hobbies",
+    "currentlyLabel": "Currently",
+    "cvLabel": "Résumé",
+    "cvDownloadEs": "Download CV (ES)",
+    "cvDownloadEn": "Download CV (EN)"
+  },
   "projects": {
     "loading": "Loading projects",
     "loadingCard": "Loading project",
