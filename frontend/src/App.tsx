@@ -4,6 +4,7 @@ import { Section } from './components/layout/Section';
 import { Hero } from './features/hero/components/Hero';
 import { ProjectsSection } from './features/projects/components/ProjectsSection';
 import { SITE_CONFIG } from './data/site';
+import { AboutSection } from './features/about/AboutSection';
 
 export default function App() {
   const { t } = useTranslation('common');
@@ -16,9 +17,7 @@ export default function App() {
       <main id="main-content" className="flex-1">
         <Hero />
 
-        <Section id="about" titleKey="sections.about" title={t('sections.about')}>
-          <p className="text-text-muted text-lg max-w-prose">{t('sections.aboutPlaceholder')}</p>
-        </Section>
+        <AboutSection />
 
         <ProjectsSection />
 

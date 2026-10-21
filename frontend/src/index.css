@@ -42,6 +42,7 @@
 @layer base {
   /* === DARK MODE (default) === */
   :root {
+    --bento-row: 12rem;
     --bg: #07090c;
     --surface: #0d1117;
     --surface-elevated: #151b23;
