@@ -15,12 +15,17 @@ export default function BentoGlow({ containerRef }: BentoGlowProps) {
       return;
     }
 
+    let bounds: DOMRect | null = null;
+
+    const handlePointerEnter = () => {
+      bounds = container.getBoundingClientRect();
+    };
+
     const handlePointerMove = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse') {
+      if (event.pointerType !== 'mouse' || !bounds) {
         return;
       }
 
-      const bounds = container.getBoundingClientRect();
       const x = event.clientX - bounds.left;
       const y = event.clientY - bounds.top;
 
@@ -30,12 +35,15 @@ export default function BentoGlow({ containerRef }: BentoGlowProps) {
 
     const hideGlow = () => {
       glow.style.opacity = '0';
+      bounds = null;
     };
 
+    container.addEventListener('pointerenter', handlePointerEnter, { passive: true });
     container.addEventListener('pointermove', handlePointerMove, { passive: true });
     container.addEventListener('pointerleave', hideGlow, { passive: true });
 
     return () => {
+      container.removeEventListener('pointerenter', handlePointerEnter);
       container.removeEventListener('pointermove', handlePointerMove);
       container.removeEventListener('pointerleave', hideGlow);
     };
@@ -44,6 +52,7 @@ export default function BentoGlow({ containerRef }: BentoGlowProps) {
   return (
     <div
       aria-hidden="true"
+      data-testid="bento-glow-overlay"
       className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-[--radius-lg]"
     >
       <div
