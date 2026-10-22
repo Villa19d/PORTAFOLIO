@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { m, useReducedMotion } from 'motion/react';
 
 export type BentoSize =
   | 'wide'      // col-span-2, row-span-1
@@ -27,15 +28,27 @@ export function BentoTile({
   children,
   label,
 }: BentoTileProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
-    <div
+    <m.div
       role={label ? 'region' : undefined}
       aria-label={label}
+      variants={{
+        hidden: { opacity: 0, y: 12 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] },
+        },
+      }}
+      whileHover={prefersReducedMotion ? undefined : { y: -3, transition: { duration: 0.18 } }}
       className={[
         'relative overflow-hidden rounded-[--radius-lg]',
-        'bg-surface border border-border',
+        'border border-border bg-surface',
         'p-5 flex flex-col gap-3',
-        'transition-colors duration-200',
+        'transition-[border-color,background-color,box-shadow] duration-200',
+        'hover:border-accent/40 hover:shadow-[0_12px_36px_-24px_var(--color-accent)]',
         sizeClasses[size],
         className,
       ]
@@ -43,6 +56,6 @@ export function BentoTile({
         .join(' ')}
     >
       {children}
-    </div>
+    </m.div>
   );
 }
