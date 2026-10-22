@@ -6,7 +6,7 @@ interface BentoGridProps {
 }
 
 export function BentoGrid({ children }: BentoGridProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('common');
 
   return (
     <div
@@ -14,8 +14,10 @@ export function BentoGrid({ children }: BentoGridProps) {
       aria-label={t('about.sectionLabel')}
       className="
         grid
-        grid-cols-2
-        auto-rows-[--bento-row]
+        grid-cols-1
+        sm:grid-cols-2
+        lg:grid-cols-4
+        auto-rows-[minmax(var(--bento-row),auto)]
         gap-4
         w-full
         mx-auto

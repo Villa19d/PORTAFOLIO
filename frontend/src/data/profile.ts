@@ -2,6 +2,8 @@ export interface StackItem {
   id: string;
   label: string;
   category: 'frontend' | 'backend' | 'devops' | 'tools';
+  icon?: 'react' | 'typescript' | 'tailwind' | 'springboot' | 'postgresql' | 'docker';
+  monogram?: string;
 }
 
 export interface LocationInfo {
@@ -37,6 +39,7 @@ export interface Education {
 }
 
 export interface ProfileData {
+  bio: LocalizedText;
   stack: StackItem[];
   hobbies: LocalizedText;
   currently: LocalizedText;
@@ -45,34 +48,39 @@ export interface ProfileData {
 }
 
 export const PROFILE_DATA: ProfileData = {
+  bio: {
+    es: 'Ingeniero en Sistemas Computacionales y desarrollador Full Stack apasionado por la nube y arquitecturas escalables. Transformando problemas complejos en soluciones eficientes.',
+    en: 'Computer Systems Engineer and Full Stack developer passionate about cloud computing and scalable architectures. Transforming complex problems into efficient solutions.',
+  },
   stack: [
-    { id: 'react', label: 'React', category: 'frontend' },
-    { id: 'typescript', label: 'TypeScript', category: 'frontend' },
-    { id: 'vite', label: 'Vite', category: 'frontend' },
-    { id: 'tailwind', label: 'Tailwind CSS', category: 'frontend' },
-    { id: 'java', label: 'Java', category: 'backend' },
-    { id: 'springboot', label: 'Spring Boot', category: 'backend' },
-    { id: 'postgresql', label: 'PostgreSQL', category: 'backend' },
-    { id: 'docker', label: 'Docker', category: 'devops' },
-    { id: 'git', label: 'Git', category: 'tools' },
-    { id: 'vercel', label: 'Vercel', category: 'devops' },
-    { id: 'render', label: 'Render', category: 'devops' },
+    { id: 'react', label: 'React', category: 'frontend', icon: 'react' },
+    { id: 'typescript', label: 'TypeScript', category: 'frontend', icon: 'typescript' },
+    { id: 'javascript', label: 'JavaScript', category: 'frontend', monogram: 'JS' },
+    { id: 'tailwind', label: 'Tailwind CSS', category: 'frontend', icon: 'tailwind' },
+    { id: 'node-express', label: 'Node.js / Express', category: 'backend', monogram: 'N/EX' },
+    { id: 'python-django', label: 'Python / Django', category: 'backend', monogram: 'PY/DJ' },
+    { id: 'java-spring', label: 'Java / Spring Boot', category: 'backend', icon: 'springboot' },
+    { id: 'postgresql-mysql', label: 'PostgreSQL / MySQL', category: 'backend', icon: 'postgresql' },
+    { id: 'aws', label: 'AWS', category: 'devops', monogram: 'AWS' },
+    { id: 'docker', label: 'Docker', category: 'devops', icon: 'docker' },
+    { id: 'cpp', label: 'C / C++', category: 'tools', monogram: 'C/C++' },
+    { id: 'esp32-arduino', label: 'ESP32 / Arduino', category: 'tools', monogram: 'ESP/ARD' },
   ],
   hobbies: {
-    es: 'Videojuegos, lectura, gimnasio y fotografía.',
-    en: 'Video games, reading, gym, and photography.',
+    es: 'Ajedrez competitivo, entrenamiento de fuerza, adiestramiento canino, guitarra, lectura e inversión en bolsa.',
+    en: 'Competitive chess, strength training, dog training, guitar, reading, and stock market investing.',
   },
   currently: {
-    es: '[TODO_CONTENT] Construyendo este portafolio con React 19 y Spring Boot',
-    en: '[TODO_CONTENT] Building this portfolio with React 19 and Spring Boot',
+    es: 'Construyendo este portafolio con React 19 y Spring Boot; cursando 9.º semestre de Ing. en Sistemas Computacionales en el Instituto Tecnológico de Pachuca.',
+    en: 'Building this portfolio with React 19 and Spring Boot; currently in the 9th semester of Computer Systems Engineering at Instituto Tecnológico de Pachuca.',
   },
   location: {
-    city: 'Pachuca, Hidalgo',
+    city: 'Pachuca de Soto',
     country: 'México',
     timeZone: 'America/Mexico_City',
   },
   cv: {
-    es: '/cv/cv-es.pdf',
-    en: '/cv/cv-en.pdf',
+    es: null,
+    en: null,
   },
 };
