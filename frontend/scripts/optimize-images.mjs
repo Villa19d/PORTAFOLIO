@@ -22,10 +22,7 @@ if (!sourceFile) {
 console.log(`📸 Found source image: ${path.relative(frontendDir, sourceFile)}`);
 
 const WIDTHS = [480, 800, 1200];
-const OUTPUT_DIRS = [
-  path.join(frontendDir, 'public/assets/rodrigo'),
-  path.join(frontendDir, 'src/assets/generated'),
-];
+const OUTPUT_DIRS = [path.join(frontendDir, 'public/assets/rodrigo')];
 
 // Ensure output directories exist
 for (const dir of OUTPUT_DIRS) {

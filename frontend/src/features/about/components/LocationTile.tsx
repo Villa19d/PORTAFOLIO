@@ -2,35 +2,45 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PROFILE_DATA } from '../../../data/profile';
 
-function getLocalTime(timeZone: string): string {
+interface LocationTileProps {
+  clock?: () => Date;
+  timeZone?: string;
+}
+
+const systemClock = () => new Date();
+
+function getLocalTime(timeZone: string, clock: () => Date): string {
   return new Intl.DateTimeFormat('en-GB', {
     timeZone,
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
-  }).format(new Date());
+  }).format(clock());
 }
 
-export function LocationTile() {
-  const { t } = useTranslation();
-  const { city, country, timeZone } = PROFILE_DATA.location;
-  const [localTime, setLocalTime] = useState(() => getLocalTime(timeZone));
+export function LocationTile({
+  clock = systemClock,
+  timeZone = PROFILE_DATA.location.timeZone,
+}: LocationTileProps) {
+  const { t } = useTranslation('common');
+  const { city, country } = PROFILE_DATA.location;
+  const [localTime, setLocalTime] = useState(() => getLocalTime(timeZone, clock));
 
   useEffect(() => {
-    const updateTime = () => setLocalTime(getLocalTime(timeZone));
+    const updateTime = () => setLocalTime(getLocalTime(timeZone, clock));
 
     updateTime();
     const intervalId = window.setInterval(updateTime, 60_000);
 
     return () => window.clearInterval(intervalId);
-  }, [timeZone]);
+  }, [clock, timeZone]);
 
   return (
     <section
       aria-label={t('about.locationLabel')}
       className="
         relative isolate overflow-hidden
-        rounded-[--radius-lg] border border-border
+        h-full min-h-0
         bg-surface p-5
       "
     >

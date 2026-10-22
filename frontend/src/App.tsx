@@ -32,14 +32,16 @@ export default function App() {
             &copy; {currentYear} {SITE_CONFIG.authorName}. {t('footer.rights')}
           </span>
           <div className="flex items-center gap-6">
-            <a
-              href={SITE_CONFIG.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-accent transition-colors"
-            >
-              GitHub
-            </a>
+            {SITE_CONFIG.githubUrl && (
+              <a
+                href={SITE_CONFIG.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-accent transition-colors"
+              >
+                GitHub
+              </a>
+            )}
             <a
               href={SITE_CONFIG.linkedinUrl}
               target="_blank"

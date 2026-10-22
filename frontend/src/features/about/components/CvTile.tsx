@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { PROFILE_DATA } from '../../../data/profile';
 
 export function CvTile() {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation('common');
   const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
   const link = PROFILE_DATA.cv[lang];
 

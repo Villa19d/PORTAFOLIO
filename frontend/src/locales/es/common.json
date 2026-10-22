@@ -47,7 +47,8 @@
     "currentlyLabel": "Actualmente",
     "cvLabel": "Currículum",
     "cvDownloadEs": "Descargar CV (ES)",
-    "cvDownloadEn": "Descargar CV (EN)"
+    "cvDownloadEn": "Descargar CV (EN)",
+    "cvUnavailable": "CV próximamente"
   },
   "projects": {
     "loading": "Cargando proyectos",

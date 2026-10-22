@@ -79,7 +79,7 @@ Decisiones nuevas:
 - Ticket 5.1: Se redefinió la paleta a Cian (#00e5ff) y Verde Fosforescente (#39ff88). Tema Light contrastado con Teal (#00798c) logrando umbrales WCAG AA estrictos. Navbar con `IntersectionObserver` para scroll-spy.
 - Ticket 5.2: Se integró `sharp` (devDependency) mediante `scripts/optimize-images.mjs` para generación de AVIF/WebP automático. 
 - Ticket 5.2: El componente animado `HeroSpotlight` se condicionó a renderizarse *únicamente* si `canUseHeavyEffects` es verdadero, y el fondo CSS se pausa fuera del viewport (`hero-paused`) ahorrando batería en móviles.
-Deuda técnica / riesgos detectados: SEO tags y título en `index.html` aún genéricos. Duplicidad de imágenes en carpetas temporales (`src/assets/generated`).
+Deuda técnica / riesgos detectados: SEO tags y título en `index.html` aún genéricos. La duplicidad de imágenes generadas en `src/assets/generated` se resolvió en el ticket 7.1b; el destino de optimización queda en `public/assets/rodrigo`.
 Hallazgos de rendimiento: Renderizado responsivo impecable (LCP de 2.9s atribuido exclusivamente al servidor, resuelto visualmente vía caché y snapshot del S3).
 Dudas para el PM (Próximo Sprint): Definir si el Sprint 6 usará capturas reales de los proyectos para el Coverflow o continuará con placeholders.
 

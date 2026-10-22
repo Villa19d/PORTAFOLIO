@@ -151,12 +151,12 @@ export function Navbar() {
               e.preventDefault();
               handleNavClick('#home');
             }}
-            className="font-mono text-xl font-bold text-text hover:opacity-80 transition-opacity"
+            className="inline-flex w-[8.75rem] shrink-0 items-center whitespace-nowrap font-mono text-xl font-bold text-text transition-opacity hover:opacity-80"
             aria-label="Ir al inicio"
           >
-            <span className="text-accent">&lt;</span>
-            Rodrigo
-            <span className="text-accent"> /&gt;</span>
+            <span className="inline-block w-3 text-accent">&lt;</span>
+            <span className="inline-block w-[5.25rem]">Rodrigo</span>
+            <span className="inline-block w-6 text-right text-accent">/&gt;</span>
           </a>
 
           {/* Desktop links */}
