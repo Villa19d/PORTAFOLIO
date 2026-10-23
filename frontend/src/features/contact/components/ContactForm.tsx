@@ -12,6 +12,13 @@ type ContactValues = {
 
 type ContactErrors = Partial<Record<keyof ContactValues, string>>;
 type SubmitState = 'idle' | 'sending' | 'waiting' | 'success' | 'error';
+type ValidationKey =
+  | 'contact.validation.nameRequired'
+  | 'contact.validation.nameLength'
+  | 'contact.validation.emailRequired'
+  | 'contact.validation.emailInvalid'
+  | 'contact.validation.messageRequired'
+  | 'contact.validation.messageLength';
 
 const initialValues: ContactValues = {
   name: '',
@@ -21,7 +28,7 @@ const initialValues: ContactValues = {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validate(values: ContactValues, t: (key: string) => string): ContactErrors {
+function validate(values: ContactValues, t: (key: ValidationKey) => string): ContactErrors {
   const errors: ContactErrors = {};
 
   if (!values.name.trim()) {
@@ -84,7 +91,7 @@ export function ContactForm() {
     setValues(nextValues);
 
     if (errors[field]) {
-      setErrors(validate(nextValues, (key: string) => t(key)));
+      setErrors(validate(nextValues, (key: ValidationKey) => t(key)));
     }
     setGeneralError('');
     setRetryAfter(null);
@@ -96,7 +103,7 @@ export function ContactForm() {
       return;
     }
 
-    const validationErrors = validate(values, (key: string) => t(key));
+    const validationErrors = validate(values, (key: ValidationKey) => t(key));
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setSubmitState('error');
