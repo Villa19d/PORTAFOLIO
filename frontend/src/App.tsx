@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'rea
 import { useTranslation } from 'react-i18next';
 import { Navbar } from './components/layout/Navbar';
 import { Section } from './components/layout/Section';
+import { ContactForm } from './features/contact/components/ContactForm';
 import { Hero } from './features/hero/components/Hero';
 import { SITE_CONFIG } from './data/site';
 
@@ -222,7 +223,10 @@ export default function App() {
         <DeferredExperienceSection />
 
         <Section id="contact" titleKey="sections.contact" title={t('sections.contact')}>
-          <p className="text-text-muted text-lg max-w-prose">{t('sections.contactPlaceholder')}</p>
+          <p className="mb-8 max-w-prose text-lg text-text-muted">{t('contact.subtitle')}</p>
+          <div className="max-w-2xl">
+            <ContactForm />
+          </div>
         </Section>
       </main>
 
