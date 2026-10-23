@@ -34,6 +34,48 @@
   "theme": {
     "toggle": "Toggle theme"
   },
+  "contact": {
+    "title": "Let's talk",
+    "subtitle": "Have an idea, an opportunity, or a question? Send a message and I will get back to you soon.",
+    "fields": {
+      "name": "Name",
+      "nameHint": "Between 1 and 80 characters.",
+      "email": "Email",
+      "emailHint": "I will use this email only to reply to you.",
+      "message": "Message",
+      "messageHint": "Between 10 and 2000 characters.",
+      "messageCount": "{{count}} / 2000 characters"
+    },
+    "validation": {
+      "nameRequired": "Enter your name.",
+      "nameLength": "Name must be between 1 and 80 characters.",
+      "emailRequired": "Enter your email.",
+      "emailInvalid": "Enter a valid email with up to 254 characters.",
+      "messageRequired": "Enter a message.",
+      "messageLength": "Message must be between 10 and 2000 characters."
+    },
+    "privacy": "Your data will only be used to reply to this message and will be deleted after 30 days.",
+    "submit": "Send message",
+    "turnstile": {
+      "blocked": "The anti-spam system was blocked by your browser. You can contact me through LinkedIn.",
+      "linkedin": "Open my LinkedIn profile"
+    },
+    "status": {
+      "sending": "Sending…",
+      "waiting": "The server is waking up; it may take up to a minute.",
+      "waitingButton": "Waking server…",
+      "success": "Message sent successfully. Thank you for reaching out."
+    },
+    "errors": {
+      "turnstile": "Verification failed. Please try again.",
+      "validation": "Review the fields marked below.",
+      "rateLimit": "You have reached the submission limit.",
+      "retryAfter": "Try again in {{seconds}} seconds.",
+      "unavailable": "Service temporarily unavailable.",
+      "timeout": "The server is taking too long. Please try again.",
+      "generic": "The message could not be sent. Please try again."
+    }
+  },
   "language": {
     "toggle": "Switch to Spanish"
   },

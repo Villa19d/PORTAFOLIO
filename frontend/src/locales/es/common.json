@@ -34,6 +34,48 @@
   "theme": {
     "toggle": "Cambiar tema"
   },
+  "contact": {
+    "title": "Hablemos",
+    "subtitle": "¿Tienes una idea, una oportunidad o una pregunta? Escríbeme y te responderé pronto.",
+    "fields": {
+      "name": "Nombre",
+      "nameHint": "Entre 1 y 80 caracteres.",
+      "email": "Correo electrónico",
+      "emailHint": "Usaré este correo solo para responderte.",
+      "message": "Mensaje",
+      "messageHint": "Entre 10 y 2000 caracteres.",
+      "messageCount": "{{count}} / 2000 caracteres"
+    },
+    "validation": {
+      "nameRequired": "Escribe tu nombre.",
+      "nameLength": "El nombre debe tener entre 1 y 80 caracteres.",
+      "emailRequired": "Escribe tu correo electrónico.",
+      "emailInvalid": "Introduce un correo electrónico válido de hasta 254 caracteres.",
+      "messageRequired": "Escribe un mensaje.",
+      "messageLength": "El mensaje debe tener entre 10 y 2000 caracteres."
+    },
+    "privacy": "Tus datos se usarán únicamente para responder a este mensaje y se eliminarán después de 30 días.",
+    "submit": "Enviar mensaje",
+    "turnstile": {
+      "blocked": "El sistema antispam fue bloqueado por tu navegador. Puedes contactarme a través de LinkedIn.",
+      "linkedin": "Abrir mi perfil de LinkedIn"
+    },
+    "status": {
+      "sending": "Enviando…",
+      "waiting": "El servidor se está despertando, puede tardar hasta un minuto.",
+      "waitingButton": "Despertando servidor…",
+      "success": "Mensaje enviado correctamente. Gracias por escribirme."
+    },
+    "errors": {
+      "turnstile": "Falló la verificación, inténtalo de nuevo.",
+      "validation": "Revisa los campos marcados.",
+      "rateLimit": "Has alcanzado el límite de envíos.",
+      "retryAfter": "Vuelve a intentarlo en {{seconds}} segundos.",
+      "unavailable": "Servicio temporalmente no disponible.",
+      "timeout": "El servidor está tardando demasiado. Inténtalo de nuevo.",
+      "generic": "No se pudo enviar el mensaje. Inténtalo de nuevo."
+    }
+  },
   "language": {
     "toggle": "Cambiar a Inglés"
   },
