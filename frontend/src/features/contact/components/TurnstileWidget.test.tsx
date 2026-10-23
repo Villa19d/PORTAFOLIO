@@ -59,7 +59,7 @@ describe('TurnstileWidget', () => {
     const renderMock = vi.fn(() => 'widget-id');
     window.turnstile = { render: renderMock, reset: vi.fn() };
     await act(async () => {
-      fireEvent.load(script);
+      fireEvent.load(script!);
     });
 
     await waitFor(() => expect(renderMock).toHaveBeenCalledWith(container, expect.objectContaining({
@@ -78,7 +78,7 @@ describe('TurnstileWidget', () => {
 
     const script = await waitFor(() => document.querySelector<HTMLScriptElement>('script[data-turnstile-script]'));
     await act(async () => {
-      fireEvent.error(script);
+      fireEvent.error(script!);
     });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('El sistema antispam fue bloqueado');
@@ -103,7 +103,7 @@ describe('TurnstileWidget', () => {
     });
     window.turnstile = { render: renderMock, reset: vi.fn() };
     await act(async () => {
-      fireEvent.load(script);
+      fireEvent.load(script!);
     });
 
     await waitFor(() => expect(onToken).toHaveBeenCalledWith('generated-token'));

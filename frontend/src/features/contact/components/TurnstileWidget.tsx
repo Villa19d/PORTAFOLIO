@@ -83,7 +83,7 @@ export function TurnstileWidget({
   const { t, i18n } = useTranslation('common');
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string | number>();
+  const widgetIdRef = useRef<string | number | undefined>(undefined);
   const [widgetState, setWidgetState] = useState<WidgetState>('idle');
   const language = i18n.language?.startsWith('en') ? 'en' : 'es';
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;

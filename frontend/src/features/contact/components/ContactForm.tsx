@@ -84,7 +84,7 @@ export function ContactForm() {
     setValues(nextValues);
 
     if (errors[field]) {
-      setErrors(validate(nextValues, t));
+      setErrors(validate(nextValues, (key: string) => t(key)));
     }
     setGeneralError('');
     setRetryAfter(null);
@@ -96,7 +96,7 @@ export function ContactForm() {
       return;
     }
 
-    const validationErrors = validate(values, t);
+    const validationErrors = validate(values, (key: string) => t(key));
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setSubmitState('error');
