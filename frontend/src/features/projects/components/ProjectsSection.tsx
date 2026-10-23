@@ -1,8 +1,20 @@
 import { useTranslation } from 'react-i18next';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { Section } from '../../../components/layout/Section';
 import { useProjects } from '../api/useProjects';
 import { ProjectsCarousel } from './ProjectsCarousel';
+
+const projectsQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function ProjectsContent() {
   const { t } = useTranslation('common');
@@ -29,15 +41,17 @@ export function ProjectsSection() {
   const { t } = useTranslation('common');
 
   return (
-    <Section
-      id="projects"
-      titleKey="sections.projects"
-      title={t('sections.projects')}
-      className="projects-section"
-    >
-      <ErrorBoundary>
-        <ProjectsContent />
-      </ErrorBoundary>
-    </Section>
+    <QueryClientProvider client={projectsQueryClient}>
+      <Section
+        id="projects"
+        titleKey="sections.projects"
+        title={t('sections.projects')}
+        className="projects-section"
+      >
+        <ErrorBoundary>
+          <ProjectsContent />
+        </ErrorBoundary>
+      </Section>
+    </QueryClientProvider>
   );
 }

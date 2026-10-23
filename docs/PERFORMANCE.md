@@ -91,6 +91,46 @@ gzip bytes from the build output for the entry chunk, not an approximate value
 from source sizes. The stats file and `dist/` are generated artifacts and must
 not be committed.
 
+### Ticket S7.3b: entry chunk comparison
+
+Measure the entry file referenced by `dist/index.html`; do not choose an
+arbitrary `index-*.js`, because a build can contain lazy chunks with the same
+name pattern. From `frontend/`, run:
+
+```sh
+npm run build
+node --input-type=module -e 'import { readFileSync } from "node:fs"; import { gzipSync } from "node:zlib"; const html = readFileSync("dist/index.html", "utf8"); const source = html.match(/<script type="module"[^>]*src="([^"]+)"/)?.[1]; if (!source) throw new Error("Entry script not found in dist/index.html"); const file = `dist/${source.replace(/^\//, "")}`; const bytes = readFileSync(file); console.log(`${file}: ${bytes.length} bytes; ${gzipSync(bytes).length} bytes gzip`);'
+```
+
+If Vite reports `EBUSY` while clearing `dist/` in a Dropbox-synced Windows
+checkout, rerun as `npm run build -- --emptyOutDir false`. This keeps old
+unreferenced assets in `dist/`, so measure only the entry selected from the
+current `index.html` and the chunks referenced by that build.
+
+Record that entry size separately from the JavaScript files in `modulepreload`
+links in `dist/index.html`. Splitting an eagerly imported vendor module into a
+separate chunk lowers the entry size but does not defer that vendor download.
+Use `dist/stats.json` for module attribution; its per-module gzip estimates are
+independent and must not be added together as a chunk total.
+
+The comparable production artifacts for this ticket measured:
+
+| Build | Entry gzip | Entry measurement |
+| --- | ---: | --- |
+| S7.0b artifact | 118,609 bytes | `index-DGR5yJwN.js` |
+| Before S7.3b optimization | 129,006 bytes | `index-BPltPHkF.js` |
+| After S7.3b optimization | 38,488 bytes | Entry referenced by `dist/index.html` |
+
+The recorded 76 KB S7.0b figure did not match the available production artifact;
+the comparable increase before this optimization was 10,397 gzip bytes. The
+optimized build defers About until it enters the viewport and Projects until it
+is within 280 px of the viewport. The React Query client is scoped to Projects.
+React DOM is emitted as its own statically preloaded vendor chunk, so include it
+when reporting the initial JavaScript transfer: after optimization, the entry
+and static modulepreloads total 131,174 gzip bytes (React 3,203; React DOM
+66,372; Motion 23,111; entry 38,488). Before optimization those same initial
+chunks totaled 156,487 gzip bytes (React 4,370; Motion 23,111; entry 129,006).
+
 ## Visual comparison
 
 Capture the Hero and Projects at the same viewport, theme, language, browser
