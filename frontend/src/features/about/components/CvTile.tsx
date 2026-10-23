@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { PROFILE_DATA } from '../../../data/profile';
+import { PROFILE_BASE_DATA } from '../../../data/profile-base';
 
 export function CvTile() {
   const { t, i18n } = useTranslation('common');
   const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
-  const link = PROFILE_DATA.cv[lang];
+  const link = PROFILE_BASE_DATA.cv[lang];
 
   if (!link) {
     return null;

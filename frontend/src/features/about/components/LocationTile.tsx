@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PROFILE_DATA } from '../../../data/profile';
+import { PROFILE_BASE_DATA } from '../../../data/profile-base';
 
 interface LocationTileProps {
   clock?: () => Date;
@@ -20,10 +20,10 @@ function getLocalTime(timeZone: string, clock: () => Date): string {
 
 export function LocationTile({
   clock = systemClock,
-  timeZone = PROFILE_DATA.location.timeZone,
+  timeZone = PROFILE_BASE_DATA.location.timeZone,
 }: LocationTileProps) {
   const { t } = useTranslation('common');
-  const { city, country } = PROFILE_DATA.location;
+  const { city, country } = PROFILE_BASE_DATA.location;
   const [localTime, setLocalTime] = useState(() => getLocalTime(timeZone, clock));
 
   useEffect(() => {

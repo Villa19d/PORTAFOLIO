@@ -2,6 +2,7 @@
   "nav": {
     "home": "Inicio",
     "about": "Sobre mí",
+    "experience": "Experiencia",
     "projects": "Proyectos",
     "contact": "Contacto",
     "skipToContent": "Saltar al contenido",
@@ -11,6 +12,7 @@
   "sections": {
     "home": "Inicio",
     "about": "Sobre mí",
+    "experience": "Experiencia",
     "projects": "Proyectos",
     "contact": "Contacto",
     "homePlaceholder": "(placeholder) Bienvenido al portafolio de Rodrigo Del Villar. Aquí encontrarás proyectos, experiencia y más.",
@@ -49,6 +51,18 @@
     "cvDownloadEs": "Descargar CV (ES)",
     "cvDownloadEn": "Descargar CV (EN)",
     "cvUnavailable": "CV próximamente"
+  },
+  "experience": {
+    "title": "Experiencia",
+    "subtitle": "Una trayectoria en constante evolución entre desarrollo, formación y aprendizaje continuo.",
+    "timelineLabel": "Experiencia, estudios y certificaciones en orden cronológico",
+    "tagsLabel": "Temas relacionados",
+    "loading": "Cargando la línea de tiempo de experiencia",
+    "kinds": {
+      "work": "Trabajo",
+      "education": "Educación",
+      "certification": "Certificación"
+    }
   },
   "projects": {
     "loading": "Cargando proyectos",
