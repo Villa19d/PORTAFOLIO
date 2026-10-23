@@ -14,6 +14,7 @@ function renderNavbar() {
           <main id="main-content">
             <div id="home" style={{ height: '100vh' }} />
             <div id="about" style={{ height: '100vh' }} />
+            <div id="experience" style={{ height: '100vh' }} />
             <div id="projects" style={{ height: '100vh' }} />
             <div id="contact" style={{ height: '100vh' }} />
           </main>
@@ -38,6 +39,7 @@ describe('Navbar', () => {
     renderNavbar();
     expect(screen.getAllByRole('link', { name: 'Inicio' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: /Sobre mí/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Experiencia' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: 'Proyectos' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: 'Contacto' }).length).toBeGreaterThan(0);
   });

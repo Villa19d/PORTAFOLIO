@@ -7,6 +7,7 @@ import { useSmoothScroll } from '../SmoothScrollProvider';
 const NAV_LINKS = [
   { key: 'home' as const, href: '#home' },
   { key: 'about' as const, href: '#about' },
+  { key: 'experience' as const, href: '#experience' },
   { key: 'projects' as const, href: '#projects' },
   { key: 'contact' as const, href: '#contact' },
 ] as const;

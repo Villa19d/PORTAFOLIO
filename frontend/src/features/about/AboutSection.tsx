@@ -1,7 +1,7 @@
 import { lazy, Suspense, useRef, type ComponentType, type SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SITE_CONFIG } from '../../data/site';
-import { PROFILE_DATA } from '../../data/profile';
+import { PROFILE_BASE_DATA } from '../../data/profile-base';
 import { Section } from '../../components/layout/Section';
 import {
   DockerIcon,
@@ -60,7 +60,7 @@ export function AboutSection() {
           </h3>
           <p className="text-lg text-text-muted">{t('hero.role')}</p>
           <p className="max-w-prose text-sm leading-relaxed text-text-muted">
-            {PROFILE_DATA.bio[lang]}
+            {PROFILE_BASE_DATA.bio[lang]}
           </p>
         </div>
       </BentoTile>
@@ -70,7 +70,7 @@ export function AboutSection() {
           {t('about.stackLabel')}
         </h3>
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          {PROFILE_DATA.stack.map(({ id, label, monogram }) => {
+          {PROFILE_BASE_DATA.stack.map(({ id, label, monogram }) => {
             const Icon = stackIconById[id];
             return (
               <li
@@ -99,19 +99,19 @@ export function AboutSection() {
         <h3 className="text-sm font-mono uppercase tracking-widest text-text-muted">
           {t('about.hobbiesLabel')}
         </h3>
-        <p className="text-sm leading-relaxed text-text">{PROFILE_DATA.hobbies[lang]}</p>
+        <p className="text-sm leading-relaxed text-text">{PROFILE_BASE_DATA.hobbies[lang]}</p>
       </BentoTile>
 
       <BentoTile label={t('about.currentlyLabel')} className="col-span-1 sm:col-span-2 lg:row-span-1">
         <h3 className="text-sm font-mono uppercase tracking-widest text-text-muted">
           {t('about.currentlyLabel')}
         </h3>
-        <p className="text-sm leading-relaxed text-text">{PROFILE_DATA.currently[lang]}</p>
+        <p className="text-sm leading-relaxed text-text">{PROFILE_BASE_DATA.currently[lang]}</p>
       </BentoTile>
 
       <BentoTile label={t('about.cvLabel')} className="col-span-1 lg:row-span-1 !p-0 flex flex-col justify-center">
         <CvTile />
-        {!PROFILE_DATA.cv[lang] && (
+        {!PROFILE_BASE_DATA.cv[lang] && (
           <p className="px-4 text-center text-xs text-text-muted">
             {t('about.cvUnavailable')}
           </p>

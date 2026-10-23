@@ -86,3 +86,7 @@
   3. Como fallback para pruebas locales y entornos sin Cloudflare, se evalúa `X-Forwarded-For` únicamente si el socket TCP remoto proviene de un proxy interno privado (`isTrustedProxy`), extrayendo el elemento *rightmost* público.
   4. En Tomcat se mantiene `server.forward-headers-strategy: native` con `internal-proxies` configurados en `application.yml`.
 - **Consecuencia:** Cero evasión del rate limit por inyección de cabeceras arbitrarias. Los ataques de fuerza bruta son mitigados de forma confiable independientemente de qué cabecera intente falsificar el atacante.
+
+
+## 13. Infraestructura (Sprint 7)
+**Render:** NitroStore se moverá a una cuenta separada (vinculada al mismo GitHub) para no agotar las 750 horas gratuitas. Límite: antes de enviar el portafolio a reclutadores. UptimeRobot se mantiene en el portafolio.

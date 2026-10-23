@@ -2,6 +2,7 @@
   "nav": {
     "home": "Home",
     "about": "About",
+    "experience": "Experience",
     "projects": "Projects",
     "contact": "Contact",
     "skipToContent": "Skip to content",
@@ -11,6 +12,7 @@
   "sections": {
     "home": "Home",
     "about": "About Me",
+    "experience": "Experience",
     "projects": "Projects",
     "contact": "Contact",
     "homePlaceholder": "(placeholder) Welcome to Rodrigo Del Villar's portfolio. Here you'll find projects, experience and more.",
@@ -49,6 +51,18 @@
     "cvDownloadEs": "Download CV (ES)",
     "cvDownloadEn": "Download CV (EN)",
     "cvUnavailable": "Résumé coming soon"
+  },
+  "experience": {
+    "title": "Experience",
+    "subtitle": "A constantly evolving path through software development, education, and continuous learning.",
+    "timelineLabel": "Work, education, and certifications in chronological order",
+    "tagsLabel": "Related topics",
+    "loading": "Loading experience timeline",
+    "kinds": {
+      "work": "Work",
+      "education": "Education",
+      "certification": "Certification"
+    }
   },
   "projects": {
     "loading": "Loading projects",
