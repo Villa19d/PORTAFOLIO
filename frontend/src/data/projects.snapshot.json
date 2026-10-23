@@ -1,91 +1,74 @@
 [
   {
-    "id": "216b80b6-41bb-4f2d-a6aa-e10b775193cc",
-    "slug": "portfolio",
+    "id": "206b3b28-8919-4057-b656-8e9c1b2a6259",
+    "slug": "nitrostore",
     "title": {
-      "es": "Portafolio",
-      "en": "Portfolio"
+      "es": "NitroStore",
+      "en": "NitroStore"
     },
     "summary": {
-      "es": "Mi portafolio personal",
-      "en": "My personal portfolio"
+      "es": "Tienda en línea full-stack con carrito dual (invitado y usuario), pagos con Braintree y arquitectura desacoplada: React en Vercel y API Django en Render.",
+      "en": "Full-stack e-commerce store with a dual cart (guest and user), Braintree payments and a decoupled architecture: React on Vercel and a Django API on Render."
     },
     "description": {
-      "es": "Detalles del portafolio...",
-      "en": "Portfolio details..."
+      "es": "## Qué es\nPlataforma de comercio electrónico con frontend SPA y una API REST modular.\n\n## Lo más interesante\n- **Carrito en dos capas:** localStorage para invitados y persistencia en PostgreSQL para usuarios autenticados, con sincronización automática al iniciar sesión.\n- **Pagos:** integración con Braintree (nonces, control de inventario y generación de órdenes).\n- **Autenticación:** JWT con Djoser y acceso social (Google y GitHub).\n- **Despliegue:** resolví disco efímero y SMTP bloqueado en la nube usando almacenamiento de objetos compatible con S3 y la API HTTP de Resend para correos.\n- Reseñas con calificación, perfiles de usuario y filtros por categoría y stock.",
+      "en": "## What it is\nAn e-commerce platform with an SPA frontend and a modular REST API.\n\n## Highlights\n- **Two-layer cart:** localStorage for guests and PostgreSQL persistence for authenticated users, synced automatically on login.\n- **Payments:** Braintree integration (nonces, inventory control and order creation).\n- **Authentication:** JWT with Djoser and social login (Google and GitHub).\n- **Deployment:** I worked around ephemeral disks and blocked SMTP in the cloud using S3-compatible object storage and Resend's HTTP API for email.\n- Ratings and reviews, user profiles, and category and stock filters."
     },
     "techStack": [
       "React",
-      "Spring Boot"
+      "Redux",
+      "Django",
+      "Django REST Framework",
+      "PostgreSQL",
+      "Tailwind CSS",
+      "Braintree",
+      "Vercel",
+      "Render"
     ],
     "imageUrl": "https://example.com/placeholder.png",
     "videoUrl": null,
-    "repoUrl": "https://github.com/rodrigodvillar/portfolio",
-    "liveUrl": "https://rodrigodvillar.com",
+    "repoUrl": "https://github.com/Villa19d/Ecommerce",
+    "liveUrl": "https://ecommerce.rodrigodvillar.com/",
     "featured": true,
     "published": true,
     "displayOrder": 1,
-    "createdAt": "2026-10-20T01:15:45.003302Z",
-    "updatedAt": "2026-10-20T01:15:45.003383Z"
+    "createdAt": "2026-10-23T04:10:17.805155Z",
+    "updatedAt": "2026-10-23T04:10:17.805182Z"
   },
   {
-    "id": "3fc2d195-9a16-4a66-983d-87a4894ed068",
-    "slug": "ecommerce-api",
+    "id": "216b80b6-41bb-4f2d-a6aa-e10b775193cc",
+    "slug": "portfolio",
     "title": {
-      "es": "API E-Commerce",
-      "en": "E-Commerce API"
+      "es": "Este portafolio",
+      "en": "This portfolio"
     },
     "summary": {
-      "es": "Backend para tienda",
-      "en": "Store backend"
+      "es": "Portafolio full-stack con React 19 y Spring Boot: API con JWT, rate limiting, documentación Swagger y un frontend que nunca se muestra vacío aunque el backend esté dormido.",
+      "en": "Full-stack portfolio with React 19 and Spring Boot: JWT-secured API, rate limiting, Swagger docs and a frontend that never renders empty even when the backend is asleep."
     },
     "description": {
-      "es": "Detalles API...",
-      "en": "API details..."
-    },
-    "techStack": [
-      "Java",
-      "Spring Boot",
-      "PostgreSQL"
-    ],
-    "imageUrl": "https://example.com/placeholder.png",
-    "videoUrl": null,
-    "repoUrl": "https://github.com/rodrigodvillar/ecommerce-api",
-    "liveUrl": null,
-    "featured": false,
-    "published": true,
-    "displayOrder": 2,
-    "createdAt": "2026-10-20T01:16:06.312455Z",
-    "updatedAt": "2026-10-20T01:16:06.312493Z"
-  },
-  {
-    "id": "b36faca4-66d8-4052-88ae-29abd32efa9f",
-    "slug": "task-manager",
-    "title": {
-      "es": "Gestor de Tareas",
-      "en": "Task Manager"
-    },
-    "summary": {
-      "es": "App de productividad",
-      "en": "Productivity app"
-    },
-    "description": {
-      "es": "Detalles app...",
-      "en": "App details..."
+      "es": "## Decisiones técnicas\n- **Frontend:** React 19, TypeScript, Vite y Tailwind v4, con carga diferida del código pesado y degradación en móvil.\n- **Backend:** Spring Boot con Spring Security y JWT (refresh en cookie HttpOnly), migraciones con Flyway y documentación con Swagger.\n- **Resiliencia:** un snapshot de los datos se muestra al instante mientras la API despierta del cold start.\n- **Seguridad:** rate limiting por IP con Bucket4j, validado con un script de pruebas contra producción.\n- **Despliegue:** frontend en Vercel, backend en Docker sobre Render y PostgreSQL en Neon.",
+      "en": "## Technical decisions\n- **Frontend:** React 19, TypeScript, Vite and Tailwind v4, with lazy-loaded heavy code and graceful degradation on mobile.\n- **Backend:** Spring Boot with Spring Security and JWT (refresh token in an HttpOnly cookie), Flyway migrations and Swagger docs.\n- **Resilience:** a data snapshot renders instantly while the API wakes from a cold start.\n- **Security:** per-IP rate limiting with Bucket4j, validated by a smoke-test script against production.\n- **Deployment:** frontend on Vercel, Dockerized backend on Render and PostgreSQL on Neon."
     },
     "techStack": [
       "React",
       "TypeScript",
-      "Tailwind"
+      "Vite",
+      "Tailwind CSS",
+      "Spring Boot",
+      "PostgreSQL",
+      "Docker",
+      "Vercel",
+      "Render"
     ],
     "imageUrl": "https://example.com/placeholder.png",
     "videoUrl": null,
-    "repoUrl": "https://github.com/rodrigodvillar/task-manager",
-    "liveUrl": "https://tasks.rodrigodvillar.com",
+    "repoUrl": "https://github.com/Villa19d/PORTAFOLIO",
+    "liveUrl": "https://rodrigodvillar.com/",
     "featured": true,
     "published": true,
-    "displayOrder": 3,
-    "createdAt": "2026-10-20T01:16:24.802009Z",
-    "updatedAt": "2026-10-20T01:16:24.80206Z"
+    "displayOrder": 2,
+    "createdAt": "2026-10-20T01:15:45.003302Z",
+    "updatedAt": "2026-10-23T04:53:57.381578Z"
   }
 ]

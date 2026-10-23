@@ -1,17 +1,118 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from './components/layout/Navbar';
 import { Section } from './components/layout/Section';
 import { Hero } from './features/hero/components/Hero';
-import { ProjectsSection } from './features/projects/components/ProjectsSection';
 import { SITE_CONFIG } from './data/site';
-import { AboutSection } from './features/about/AboutSection';
+
+const LazyAboutSection = lazy(() =>
+  import('./features/about/AboutSection').then(({ AboutSection }) => ({
+    default: AboutSection,
+  })),
+);
+
+const LazyProjectsSection = lazy(() =>
+  import('./features/projects/components/ProjectsSection').then(({ ProjectsSection }) => ({
+    default: ProjectsSection,
+  })),
+);
 
 const LazyExperienceSection = lazy(() =>
   import('./features/experience/ExperienceSection').then(({ ExperienceSection }) => ({
     default: ExperienceSection,
   })),
 );
+
+interface DeferredFeatureSectionProps {
+  id: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  rootMargin?: string;
+}
+
+function DeferredFeatureSection({
+  id,
+  title,
+  description,
+  children,
+  rootMargin = '280px 0px',
+}: DeferredFeatureSectionProps) {
+  const { t } = useTranslation('common');
+  const sectionRef = useRef<HTMLElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+
+    if (!section) return;
+
+    if (!('IntersectionObserver' in window)) {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin },
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [rootMargin]);
+
+  const placeholder = (
+    <section
+      id={id}
+      ref={sectionRef}
+      aria-labelledby={`${id}-heading`}
+      className="mx-auto flex min-h-screen w-full max-w-6xl scroll-mt-[72px] flex-col justify-center px-4 py-24 sm:px-6 lg:px-8"
+    >
+      <h2 id={`${id}-heading`} className="mb-8 font-display text-4xl font-bold text-text md:text-5xl">
+        {title}
+      </h2>
+      {description && <p className="mb-8 max-w-2xl text-base leading-relaxed text-text-muted">{description}</p>}
+      {shouldLoad && <span role="status" className="sr-only">{t('experience.loading')}</span>}
+      <div
+        aria-hidden="true"
+        className={id === 'about'
+          ? 'grid grid-cols-1 auto-rows-[minmax(var(--bento-row),auto)] gap-4 sm:grid-cols-2 lg:grid-cols-4'
+          : 'flex gap-4 overflow-hidden'}
+      >
+        {(id === 'about'
+          ? [
+              'col-span-1 sm:col-span-2 lg:row-span-2',
+              'col-span-1 sm:col-span-2 lg:col-span-2 lg:row-span-2',
+              'col-span-1 lg:row-span-1',
+              'col-span-1 lg:row-span-1',
+              'col-span-1 sm:col-span-2 lg:row-span-1',
+              'col-span-1 lg:row-span-1',
+              'col-span-1 lg:row-span-1',
+            ]
+          : ['projects-placeholder-card', 'projects-placeholder-card', 'projects-placeholder-card']
+        ).map((tileClass, item) => (
+          <div
+            key={item}
+            className={`rounded-[--radius-xl] border border-border bg-surface p-6 ${
+              id === 'about' ? tileClass : 'h-[26rem] min-w-[min(82vw,22rem)]'
+            }`}
+          >
+            <div className="h-3 w-28 animate-pulse rounded bg-surface-elevated" />
+            <div className="mt-5 h-6 w-3/4 animate-pulse rounded bg-surface-elevated" />
+            <div className="mt-5 h-4 w-full animate-pulse rounded bg-surface-elevated" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  return shouldLoad ? <Suspense fallback={placeholder}>{children}</Suspense> : placeholder;
+}
 
 interface ExperiencePlaceholderProps {
   title: string;
@@ -105,9 +206,18 @@ export default function App() {
       <main id="main-content" className="flex-1">
         <Hero />
 
-        <AboutSection />
+        <DeferredFeatureSection
+          id="about"
+          title={t('about.title')}
+          description={t('about.subtitle')}
+          rootMargin="0px"
+        >
+          <LazyAboutSection />
+        </DeferredFeatureSection>
 
-        <ProjectsSection />
+        <DeferredFeatureSection id="projects" title={t('sections.projects')}>
+          <LazyProjectsSection />
+        </DeferredFeatureSection>
 
         <DeferredExperienceSection />
 
