@@ -170,6 +170,18 @@ export function TurnstileWidget({
     onToken(null);
   }, [onToken, resetSignal]);
 
+  useEffect(() => {
+    return () => {
+      const widgetId = widgetIdRef.current;
+      if (widgetId === undefined) {
+        return;
+      }
+
+      window.turnstile?.remove?.(widgetId);
+      widgetIdRef.current = undefined;
+    };
+  }, []);
+
   return (
     <div
       ref={containerRef}
