@@ -41,7 +41,7 @@ describe('TurnstileWidget', () => {
 
   it('lazy-loads the script when the container intersects and renders explicitly', async () => {
     const onToken = vi.fn();
-    const { container: rendered } = renderWidget(onToken);
+    const { container: rendered, unmount } = renderWidget(onToken);
     const container = rendered.firstElementChild as HTMLElement;
     const observer = (IntersectionObserver as unknown as { instances: Array<{ triggerIntersection: (element: Element, value: boolean) => void }> }).instances.at(-1);
 
@@ -57,7 +57,8 @@ describe('TurnstileWidget', () => {
     });
 
     const renderMock = vi.fn(() => 'widget-id');
-    window.turnstile = { render: renderMock, reset: vi.fn() };
+    const removeMock = vi.fn();
+    window.turnstile = { render: renderMock, reset: vi.fn(), remove: removeMock };
     await act(async () => {
       fireEvent.load(script!);
     });
@@ -66,6 +67,9 @@ describe('TurnstileWidget', () => {
       sitekey: 'test-site-key',
       appearance: 'interaction-only',
     })));
+
+    unmount();
+    expect(removeMock).toHaveBeenCalledWith('widget-id');
   });
 
   it('shows the LinkedIn alternative when the script fails', async () => {
