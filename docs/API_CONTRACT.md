@@ -181,6 +181,19 @@
 ```
 **Response (202 Accepted)**
 
+El mensaje se persiste antes de intentar el envío. La respuesta `202` se devuelve
+cuando fue guardado, incluso si Resend falla; en ese caso queda con estado `FAILED`
+para su posterior observabilidad/reintento.
+
+**Errores**
+
+| Estado | Condición |
+|---|---|
+| `400 Bad Request` | Campos ausentes, límites excedidos, email inválido o caracteres de control. |
+| `403 Forbidden` | Turnstile rechazó el token o el hostname no está permitido. |
+| `429 Too Many Requests` | Más de 3 solicitudes por hora desde la misma IP. Incluye `Retry-After`. |
+| `503 Service Unavailable` | Turnstile no está disponible o se alcanzó el límite diario. Incluye `Retry-After`. |
+
 ## Errores (RFC 7807)
 **Response (400 Bad Request)**
 ```json

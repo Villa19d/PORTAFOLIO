@@ -10,6 +10,13 @@
 - **Decisión:** Se utilizará Resend a través de su API HTTP.
 - **Consecuencia:** Aseguramos que el envío de correos funcione en el entorno de producción de Render sin configuraciones especiales ni problemas de bloqueo de puertos.
 
+## 10. Contacto: Persistencia, seguridad y resiliencia
+- **Guardar antes de enviar:** El mensaje se persiste como `PENDING` antes de llamar a Resend. Así un fallo del proveedor no pierde el contacto recibido.
+- **Texto plano:** El correo se envía como texto plano, evitando HTML no confiable y reduciendo la superficie de inyección en plantillas.
+- **Turnstile falla cerrado:** Un rechazo devuelve `403`; una caída o timeout del proveedor devuelve `503` y no se persiste el mensaje.
+- **Límite diario:** Se cuentan los mensajes creados en las últimas 24 horas y se rechaza el exceso con `503`, protegiendo costes y capacidad operativa.
+- **Retención:** `[TODO_CONTENT] Definir con el responsable del producto el período de retención, proceso de borrado y requisitos legales para los mensajes de contacto.`
+
 ## 3. Almacenamiento de Imágenes: Cloudinary
 - **Contexto:** El backend estará desplegado en Render usando un disco efímero (sin almacenamiento persistente).
 - **Decisión:** Se utilizará Cloudinary para almacenar y servir imágenes.
