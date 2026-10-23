@@ -67,5 +67,13 @@ portfolio:
       - method: POST
         pathPattern: /api/contact
         bandwidths:
-          - capacity: ${RATE_LIMIT_CONTACT_CAPACITY:3}
+          - capacity: 3
             duration: PT1H
+  contact:
+    resend-api-key: ${RESEND_API_KEY:}
+    to-email: ${CONTACT_TO_EMAIL:}
+    from: ${CONTACT_FROM:}
+    turnstile-secret-key: ${TURNSTILE_SECRET_KEY:}
+    turnstile-allowed-hostnames: ${TURNSTILE_ALLOWED_HOSTNAMES:}
+    daily-cap: ${CONTACT_DAILY_CAP:40}
+    mode: ${CONTACT_MODE:resend}

@@ -1,13 +1,14 @@
 package com.rodrigodvillar.portfolio;
 
 import com.rodrigodvillar.portfolio.config.RateLimitProperties;
+import com.rodrigodvillar.portfolio.config.ContactProperties;
 import com.rodrigodvillar.portfolio.config.SecurityProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({SecurityProperties.class, RateLimitProperties.class})
+@EnableConfigurationProperties({SecurityProperties.class, RateLimitProperties.class, ContactProperties.class})
 public class PortfolioApplication {
 
 

@@ -10,6 +10,8 @@
  *   API_BASE      (default: https://api.rodrigodvillar.com)   o --api-base=<url>
  *   FRONT_ORIGIN  (default: https://rodrigodvillar.com)       o --front-origin=<origin>
  *   --cold-start  Solo mide e imprime el tiempo de GET /api/health y GET /api/projects
+ *   --contact     Prueba Turnstile inválido y validación del endpoint de contacto.
+ *                 Es opt-in, consume cuota de rate limit y nunca debe enviar un correo real.
  */
 
 const args = process.argv.slice(2);
@@ -27,6 +29,7 @@ function getArgValue(flag) {
 }
 
 const isColdStart = args.includes('--cold-start') || process.env.COLD_START === 'true';
+const isContactCheck = args.includes('--contact');
 
 const rawApiBase = getArgValue('--api-base') || process.env.API_BASE || 'https://api.rodrigodvillar.com';
 const rawFrontOrigin = getArgValue('--front-origin') || process.env.FRONT_ORIGIN || 'https://rodrigodvillar.com';
@@ -163,6 +166,44 @@ async function runFullSmoke() {
       passed,
       duration,
       `GET status: ${getRes.res?.status ?? getRes.error?.message} | HEAD status: ${headRes.res?.status ?? headRes.error?.message}`
+    );
+  }
+
+  // -------------------------------------------------------------
+  // contact. Opt-in: no usa un token válido y nunca debe enviar correo.
+  // Cada ejecución consume la cuota del rate limit del endpoint.
+  // -------------------------------------------------------------
+  if (isContactCheck) {
+    const invalidTokenStart = performance.now();
+    const invalidTokenRes = await fetchWithTimeout(`${API_BASE}/api/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Smoke Test',
+        email: 'smoke@example.com',
+        message: 'Mensaje de prueba que no debe enviarse.',
+        turnstileToken: 'invalid-smoke-token'
+      })
+    });
+    recordResult(
+      'contact-1',
+      'POST /api/contact con Turnstile inválido',
+      invalidTokenRes.res?.status === 403,
+      invalidTokenRes.duration,
+      `HTTP status: ${invalidTokenRes.res?.status ?? invalidTokenRes.error?.message}`
+    );
+
+    const invalidBodyRes = await fetchWithTimeout(`${API_BASE}/api/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '', email: 'not-an-email', message: 'short', turnstileToken: '' })
+    });
+    recordResult(
+      'contact-2',
+      'POST /api/contact con cuerpo inválido',
+      invalidBodyRes.res?.status === 400,
+      invalidBodyRes.duration,
+      `HTTP status: ${invalidBodyRes.res?.status ?? invalidBodyRes.error?.message}`
     );
   }
 

@@ -24,8 +24,31 @@ En el dashboard de Render, al configurar el Web Service (o background worker), s
 - **`JWT_SECRET`**: Clave secreta (mínimo 32 caracteres) para firmar los tokens JWT.
 - **`ADMIN_USERNAME`**: Usuario para el panel de administración.
 - **`ADMIN_PASSWORD_HASH`**: Contraseña hasheada (BCrypt) para el administrador.
+- **`RESEND_API_KEY`**: API key de Resend. Solo se usa desde el backend.
+- **`CONTACT_TO_EMAIL`**: Buzón que recibe los mensajes de contacto.
+- **`CONTACT_FROM`**: Remitente verificado en Resend, por ejemplo `Portfolio <contacto@rodrigodvillar.com>`.
+- **`TURNSTILE_SECRET_KEY`**: Secret key privada de Cloudflare Turnstile.
+- **`TURNSTILE_ALLOWED_HOSTNAMES`**: Lista separada por comas, por ejemplo `rodrigodvillar.com,www.rodrigodvillar.com`.
+- **`CONTACT_DAILY_CAP`**: Límite de mensajes en 24 horas; por defecto `40`.
+- **`CONTACT_MODE`**: `resend` en producción. `log` solo para desarrollo/local.
 
-### 2.1 Conversión de la URL de Neon (DB_URL)
+En el perfil `prod`, todas las variables de contacto son obligatorias y
+`CONTACT_MODE=log` provoca un fallo rápido durante el arranque.
+
+### 2.1 Configuración de Resend y Turnstile
+
+En Resend, agrega y verifica el dominio remitente en **Domains**. Publica en DNS
+los registros SPF y DKIM que Resend proporciona y espera a que el dominio aparezca
+como verificado antes de usarlo en `CONTACT_FROM`. `CONTACT_TO_EMAIL` puede ser un
+buzón distinto; no debe confundirse con el remitente verificado.
+
+En Cloudflare Turnstile, crea un widget para los hostnames reales y configura su
+secret key en `TURNSTILE_SECRET_KEY`. Los hostnames enviados por Cloudflare deben
+coincidir con `TURNSTILE_ALLOWED_HOSTNAMES`; no se aceptan tokens de otro dominio.
+Para desarrollo local usa las claves de prueba oficiales de Turnstile y `localhost`
+en la lista permitida. No uses claves de producción ni las guardes en el repositorio.
+
+### 2.2 Conversión de la URL de Neon (DB_URL)
 
 Neon proporciona una cadena de conexión estándar de PostgreSQL con parámetros específicos. Spring Boot utiliza el driver JDBC y requiere una URL en formato `jdbc:postgresql://`. Además, Neon utiliza SNI (Server Name Indication) y requiere SSL, pero algunos parámetros como `channel_binding=require` no son soportados o necesarios en JDBC.
 
@@ -105,6 +128,10 @@ node scripts/smoke-prod.mjs
 # Medición rápida de arranque en frío (Cold Start) sin pruebas destructivas ni rate limits:
 node scripts/smoke-prod.mjs --cold-start
 
+# Pruebas opt-in del contacto: usa token inválido, no envía correo, pero consume
+# la cuota de rate limit del endpoint.
+node scripts/smoke-prod.mjs --contact
+
 # Especificando URLs personalizadas (ej. URL temporal de Render):
 node scripts/smoke-prod.mjs --api-base=https://portafolio-ml6g.onrender.com --front-origin=https://rodrigodvillar.com
 
@@ -135,4 +162,3 @@ Si la prueba **i** es marcada como `CRITICAL FAIL`:
 - **Propuesta de Mitigación:**
   1. Cambiar `server.forward-headers-strategy: native` y configurar una lista blanca de proxies confiables en Tomcat (`internal-proxies`), o
   2. Implementar un `ClientIpResolver` personalizado que priorice cabeceras de proxy de confianza específicas de la plataforma (por ejemplo, cabeceras seguras de Render o Cloudflare `CF-Connecting-IP`), ignorando `X-Forwarded-For` arbitrarios enviados por el cliente.
-
