@@ -31,6 +31,7 @@ En el dashboard de Render, al configurar el Web Service (o background worker), s
 - **`TURNSTILE_ALLOWED_HOSTNAMES`**: Lista separada por comas, por ejemplo `rodrigodvillar.com,www.rodrigodvillar.com`.
 - **`CONTACT_DAILY_CAP`**: Límite de mensajes en 24 horas; por defecto `40`.
 - **`CONTACT_MODE`**: `resend` en producción. `log` solo para desarrollo/local.
+- **`CONTACT_RETENTION_DAYS`**: Días de conservación de los mensajes de contacto; por defecto `30` y mínimo `1`.
 
 En el perfil `prod`, todas las variables de contacto son obligatorias y
 `CONTACT_MODE=log` provoca un fallo rápido durante el arranque.

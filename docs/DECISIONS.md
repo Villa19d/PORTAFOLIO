@@ -15,7 +15,7 @@
 - **Texto plano:** El correo se envía como texto plano, evitando HTML no confiable y reduciendo la superficie de inyección en plantillas.
 - **Turnstile falla cerrado:** Un rechazo devuelve `403`; una caída o timeout del proveedor devuelve `503` y no se persiste el mensaje.
 - **Límite diario:** Se cuentan los mensajes creados en las últimas 24 horas y se rechaza el exceso con `503`, protegiendo costes y capacidad operativa.
-- **Retención:** `[TODO_CONTENT] Definir con el responsable del producto el período de retención, proceso de borrado y requisitos legales para los mensajes de contacto.`
+- **Retención:** Los mensajes de contacto se conservan durante 30 días desde `created_at`. Una tarea programada elimina diariamente los registros anteriores al período configurado y ejecuta también una purga al arrancar la aplicación. El período se puede ajustar mediante `CONTACT_RETENTION_DAYS`, con un mínimo de 1 día.
 
 ## 3. Almacenamiento de Imágenes: Cloudinary
 - **Contexto:** El backend estará desplegado en Render usando un disco efímero (sin almacenamiento persistente).
