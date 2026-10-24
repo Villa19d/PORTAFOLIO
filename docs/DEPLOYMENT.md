@@ -32,9 +32,31 @@ En el dashboard de Render, al configurar el Web Service (o background worker), s
 - **`CONTACT_DAILY_CAP`**: Límite de mensajes en 24 horas; por defecto `40`.
 - **`CONTACT_MODE`**: `resend` en producción. `log` solo para desarrollo/local.
 - **`CONTACT_RETENTION_DAYS`**: Días de conservación de los mensajes de contacto; por defecto `30` y mínimo `1`.
+- **`CLOUDINARY_CLOUD_NAME`**: Nombre del cloud de Cloudinary.
+- **`CLOUDINARY_API_KEY`**: API key pública de Cloudinary.
+- **`CLOUDINARY_API_SECRET`**: API secret de Cloudinary; solo debe existir en el entorno del backend.
+- **`CLOUDINARY_UPLOAD_PRESET`**: Nombre del upload preset firmado.
+- **`CLOUDINARY_FOLDER`**: Carpeta de destino; por defecto `portfolio/projects`.
 
 En el perfil `prod`, todas las variables de contacto son obligatorias y
 `CONTACT_MODE=log` provoca un fallo rápido durante el arranque.
+
+En el perfil `prod`, todas las variables de Cloudinary son obligatorias. El
+`CLOUDINARY_API_SECRET` nunca debe configurarse en el frontend, devolverse en
+JSON ni escribirse en logs.
+
+### 2.1.1 Upload preset firmado de Cloudinary
+
+En la consola de Cloudinary, abre **Settings > Upload > Upload presets** y crea
+un preset con estas opciones:
+
+1. **Signing mode**: `Signed`.
+2. Carpeta de destino: `portfolio/projects`.
+3. Restricción de tipo de archivo: solo imágenes.
+
+Guarda el nombre del preset en `CLOUDINARY_UPLOAD_PRESET`. El administrador
+solicita la firma mediante `POST /api/admin/uploads/sign` usando un access JWT
+y el navegador carga el archivo directamente a Cloudinary.
 
 ### 2.1 Configuración de Resend y Turnstile
 
