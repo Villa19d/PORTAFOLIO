@@ -17,11 +17,13 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import jakarta.annotation.Resource;
+import com.rodrigodvillar.portfolio.service.ContactRetentionJob;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.not;
@@ -59,6 +61,7 @@ class ContactIntegrationTest {
         registry.add("portfolio.contact.resend-api-key", () -> "test-resend-key");
         registry.add("portfolio.contact.to-email", () -> "owner@example.com");
         registry.add("portfolio.contact.from", () -> "Portfolio <contact@example.com>");
+        registry.add("portfolio.contact.retention-days", () -> "30");
     }
 
     @Resource
@@ -72,6 +75,12 @@ class ContactIntegrationTest {
 
     @Resource
     private ContactMessageRepository repository;
+
+    @Resource
+    private ContactRetentionJob retentionJob;
+
+    @Resource
+    private JdbcTemplate jdbcTemplate;
 
     private MockRestServiceServer turnstileServer;
     private MockRestServiceServer resendServer;
@@ -175,6 +184,25 @@ class ContactIntegrationTest {
                                 {"name":"Valid Name","email":"valid@example.com\\nBcc:evil@example.com","message":"A valid message here","turnstileToken":"token\\u0007"}
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void retentionJobDeletesOnlyMessagesOlderThanRetentionPeriod() {
+        ContactMessage oldMessage = repository.saveAndFlush(
+                new ContactMessage("Old Contact", "old@example.com", "An old contact message")
+        );
+        ContactMessage recentMessage = repository.saveAndFlush(
+                new ContactMessage("Recent Contact", "recent@example.com", "A recent contact message")
+        );
+        jdbcTemplate.update(
+                "update contact_messages set created_at = now() - interval '31 days' where id = ?",
+                oldMessage.getId()
+        );
+
+        retentionJob.deleteExpiredMessages();
+
+        assertThat(repository.existsById(oldMessage.getId())).isFalse();
+        assertThat(repository.existsById(recentMessage.getId())).isTrue();
     }
 
     private void expectTurnstileSuccess() {

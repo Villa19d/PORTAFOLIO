@@ -77,3 +77,4 @@ portfolio:
     turnstile-allowed-hostnames: ${TURNSTILE_ALLOWED_HOSTNAMES:}
     daily-cap: ${CONTACT_DAILY_CAP:40}
     mode: ${CONTACT_MODE:resend}
+    retention-days: ${CONTACT_RETENTION_DAYS:30}

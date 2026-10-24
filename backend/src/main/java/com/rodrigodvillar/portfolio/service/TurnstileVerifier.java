@@ -63,7 +63,9 @@ public class TurnstileVerifier {
             throw new TurnstileUnavailableException("turnstile_unavailable", ex);
         }
 
-        log.info("CHECKPOINT BACKEND 1 - Respuesta cruda de Cloudflare: {}", rawResponse);
+        if (rawResponse == null) {
+            throw new TurnstileUnavailableException("turnstile_empty_response", null);
+        }
 
         TurnstileResponse response;
         try {
@@ -75,21 +77,12 @@ public class TurnstileVerifier {
         if (response == null) {
             throw new TurnstileUnavailableException("turnstile_empty_response", null);
         }
-        log.info(
-                "CHECKPOINT BACKEND 2 - Hostname recibido: {}, Hostnames permitidos: {}",
-                response.hostname(),
-                properties.turnstileAllowedHostnames()
-        );
+        log.info("Turnstile response hostname: {}", response.hostname());
         if (!response.success()) {
-            log.info(
-                    "CHECKPOINT BACKEND 3 - Cloudflare devolvió success=false. Error codes: {}",
-                    response.errorCodes()
-            );
             log.warn("Turnstile rejected request: {}", response.errorCodes());
             throw new TurnstileRejectedException("turnstile_rejected");
         }
         if (!allowedHostname(response.hostname())) {
-            log.info("CHECKPOINT BACKEND 4 - Hostname rechazado.");
             log.warn("Turnstile rejected hostname: {}", response.hostname());
             throw new TurnstileRejectedException("turnstile_hostname_rejected");
         }
