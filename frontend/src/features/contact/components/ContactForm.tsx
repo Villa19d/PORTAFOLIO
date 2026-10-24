@@ -129,6 +129,12 @@ export function ContactForm() {
     const timeoutId = window.setTimeout(() => controller.abort(), 90000);
 
     try {
+      console.log('CHECKPOINT FRONTEND 1 - Iniciando fetch');
+      console.log('CHECKPOINT FRONTEND 2 - URL destino:', `${API_BASE_URL}/api/contact`);
+      console.log(
+        'CHECKPOINT FRONTEND 3 - Token capturado:',
+        turnstileToken ? 'Sí existe' : 'Nulo',
+      );
       const response = await fetch(`${API_BASE_URL}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -174,6 +180,7 @@ export function ContactForm() {
       setResetSignal((current) => current + 1);
       setSubmitState('success');
     } catch (error: unknown) {
+      console.error('CHECKPOINT FRONTEND 4 - Error en el POST:', error);
       setGeneralError(
         error instanceof DOMException && error.name === 'AbortError'
           ? t('contact.errors.timeout')
