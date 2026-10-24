@@ -1,6 +1,8 @@
 package com.rodrigodvillar.portfolio.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rodrigodvillar.portfolio.config.ContactProperties;
 import com.rodrigodvillar.portfolio.exception.TurnstileRejectedException;
 import com.rodrigodvillar.portfolio.exception.TurnstileUnavailableException;
@@ -23,14 +25,17 @@ public class TurnstileVerifier {
 
     private final RestClient.Builder restClientBuilder;
     private final ContactProperties properties;
+    private final ObjectMapper objectMapper;
 
     public TurnstileVerifier(
             @org.springframework.beans.factory.annotation.Qualifier("turnstileRestClientBuilder")
             RestClient.Builder restClientBuilder,
-            ContactProperties properties
+            ContactProperties properties,
+            ObjectMapper objectMapper
     ) {
         this.restClientBuilder = restClientBuilder;
         this.properties = properties;
+        this.objectMapper = objectMapper;
     }
 
     public void verify(String token, String remoteIp) {
@@ -41,14 +46,14 @@ public class TurnstileVerifier {
             form.add("remoteip", remoteIp);
         }
 
-        TurnstileResponse response;
+        String rawResponse;
         try {
-            response = restClientBuilder.build().post()
+            rawResponse = restClientBuilder.build().post()
                     .uri("/turnstile/v0/siteverify")
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(form)
                     .retrieve()
-                    .body(TurnstileResponse.class);
+                    .body(String.class);
         } catch (RestClientException ex) {
             if (ex instanceof RestClientResponseException responseException
                     && responseException.getStatusCode().is4xxClientError()) {
@@ -58,14 +63,33 @@ public class TurnstileVerifier {
             throw new TurnstileUnavailableException("turnstile_unavailable", ex);
         }
 
+        log.info("CHECKPOINT BACKEND 1 - Respuesta cruda de Cloudflare: {}", rawResponse);
+
+        TurnstileResponse response;
+        try {
+            response = objectMapper.readValue(rawResponse, TurnstileResponse.class);
+        } catch (JsonProcessingException ex) {
+            throw new TurnstileUnavailableException("turnstile_invalid_response", ex);
+        }
+
         if (response == null) {
             throw new TurnstileUnavailableException("turnstile_empty_response", null);
         }
+        log.info(
+                "CHECKPOINT BACKEND 2 - Hostname recibido: {}, Hostnames permitidos: {}",
+                response.hostname(),
+                properties.turnstileAllowedHostnames()
+        );
         if (!response.success()) {
+            log.info(
+                    "CHECKPOINT BACKEND 3 - Cloudflare devolvió success=false. Error codes: {}",
+                    response.errorCodes()
+            );
             log.warn("Turnstile rejected request: {}", response.errorCodes());
             throw new TurnstileRejectedException("turnstile_rejected");
         }
         if (!allowedHostname(response.hostname())) {
+            log.info("CHECKPOINT BACKEND 4 - Hostname rechazado.");
             log.warn("Turnstile rejected hostname: {}", response.hostname());
             throw new TurnstileRejectedException("turnstile_hostname_rejected");
         }
