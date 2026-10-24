@@ -13,13 +13,16 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    visualizer({
-      filename: 'dist/stats.json',
-      template: 'raw-data',
-      gzipSize: true,
-      brotliSize: true,
-      open: false,
-    }),
+    ...(process.env.ANALYZE
+      ? [
+          visualizer({
+            filename: 'dist/stats.json',
+            template: 'raw-data',
+            gzipSize: true,
+            open: false,
+          }),
+        ]
+      : []),
   ],
   resolve: {
     alias: {
