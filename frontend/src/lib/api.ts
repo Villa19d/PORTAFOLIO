@@ -10,12 +10,14 @@ export interface ProblemDetail {
 export class ApiError extends Error {
   public problem: ProblemDetail;
   public status: number;
+  public headers?: Headers;
 
-  constructor(problem: ProblemDetail, status: number) {
+  constructor(problem: ProblemDetail, status: number, headers?: Headers) {
     super(problem.detail || problem.title || 'API Error');
     this.name = 'ApiError';
     this.problem = problem;
     this.status = status;
+    this.headers = headers;
   }
 }
 

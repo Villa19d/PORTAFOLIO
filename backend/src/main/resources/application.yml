@@ -69,6 +69,11 @@ portfolio:
         bandwidths:
           - capacity: 3
             duration: PT1H
+      - method: POST
+        pathPattern: /api/admin/uploads/sign
+        bandwidths:
+          - capacity: 20
+            duration: PT1H
   contact:
     resend-api-key: ${RESEND_API_KEY:}
     to-email: ${CONTACT_TO_EMAIL:}
@@ -78,3 +83,9 @@ portfolio:
     daily-cap: ${CONTACT_DAILY_CAP:40}
     mode: ${CONTACT_MODE:resend}
     retention-days: ${CONTACT_RETENTION_DAYS:30}
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
+    upload-preset: ${CLOUDINARY_UPLOAD_PRESET:}
+    folder: ${CLOUDINARY_FOLDER:portfolio/projects}

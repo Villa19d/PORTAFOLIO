@@ -15,6 +15,9 @@
 | POST | `/api/admin/projects` | JWT | Create project. |
 | PUT | `/api/admin/projects/{id}` | JWT | Update project. |
 | DELETE | `/api/admin/projects/{id}` | JWT | Delete project. |
+| POST | `/api/admin/uploads/sign` | JWT | Get a short-lived Cloudinary direct-upload signature. |
+| GET | `/api/admin/messages` | JWT | List contact messages, newest first, paginated. |
+| DELETE | `/api/admin/messages/{id}` | JWT | Delete a contact message. |
 | POST | `/api/contact` | Public (Rate limit) | Send contact message. |
 
 ## Modelo `Project`
@@ -168,6 +171,68 @@
 
 ### DELETE `/api/admin/projects/{id}`
 **Response (204 No Content)**
+
+### POST `/api/admin/uploads/sign`
+**Response (200 OK)**
+```json
+{
+  "cloudName": "example-cloud",
+  "apiKey": "123456789012345",
+  "timestamp": 1792864800,
+  "folder": "portfolio/projects",
+  "uploadPreset": "portfolio_unsigned",
+  "signature": "0123456789abcdef0123456789abcdef01234567"
+}
+```
+
+The response is never cached. The API secret is used only on the server to
+generate the SHA-1 signature and is never returned.
+
+### GET `/api/admin/messages`
+Query parameters:
+
+| Parameter | Default | Constraints |
+|---|---:|---|
+| `page` | `0` | Must be greater than or equal to `0`. |
+| `size` | `20` | Must be between `1` and `50`. |
+
+Messages are ordered by `createdAt` descending. The sender IP and internal
+failure details are never included in the response.
+
+**Response (200 OK)**
+```json
+{
+  "content": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "name": "Juan Perez",
+      "email": "juan@example.com",
+      "message": "Hola, me interesa tu perfil.",
+      "status": "SENT",
+      "createdAt": "2026-10-24T18:00:00Z",
+      "sentAt": "2026-10-24T18:00:02Z"
+    }
+  ],
+  "totalElements": 1,
+  "totalPages": 1,
+  "size": 20,
+  "number": 0,
+  "last": true
+}
+```
+
+### DELETE `/api/admin/messages/{id}`
+**Response (204 No Content)**
+
+**Response (404 Not Found)**
+```json
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Contact message with id '123e4567-e89b-12d3-a456-426614174000' not found"
+}
+```
 
 ### POST `/api/contact`
 **Request**
