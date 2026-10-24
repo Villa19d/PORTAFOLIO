@@ -11,7 +11,7 @@ export interface TurnstileRenderOptions {
 export interface TurnstileApi {
   render: (container: HTMLElement, options: TurnstileRenderOptions) => string | number;
   reset: (widgetId?: string | number) => void;
-  remove?: (widgetId: string | number) => void;
+  remove: (widgetId: string | number) => void;
 }
 
 declare global {

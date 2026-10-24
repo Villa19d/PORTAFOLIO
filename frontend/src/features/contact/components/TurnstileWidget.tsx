@@ -84,57 +84,26 @@ export function TurnstileWidget({
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | number | undefined>(undefined);
+  const activatedRef = useRef(false);
   const [widgetState, setWidgetState] = useState<WidgetState>('idle');
   const language = i18n.language?.startsWith('en') ? 'en' : 'es';
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
-  const renderWidget = useCallback(() => {
-    if (!containerRef.current || !window.turnstile || !siteKey) {
-      if (!siteKey) {
-        setWidgetState('error');
-      }
-      return;
-    }
-
-    if (widgetIdRef.current !== undefined) {
-      window.turnstile.reset(widgetIdRef.current);
-      onToken(null);
-    }
-    containerRef.current.innerHTML = '';
-
-    widgetIdRef.current = window.turnstile.render(containerRef.current, {
-      sitekey: siteKey,
-      appearance: 'interaction-only',
-      theme,
-      language,
-      callback: (token) => onToken(token),
-      'expired-callback': () => {
-        onToken(null);
-        if (widgetIdRef.current !== undefined) {
-          window.turnstile?.reset(widgetIdRef.current);
-        }
-      },
-      'error-callback': () => {
-        onToken(null);
-        setWidgetState('error');
-      },
-    });
-    setWidgetState('ready');
-  }, [language, onToken, siteKey, theme]);
-
   const activate = useCallback(() => {
-    if (widgetState !== 'idle') {
+    if (activatedRef.current) return;
+    activatedRef.current = true;
+    if (!siteKey) {
+      setWidgetState('error');
       return;
     }
-
     setWidgetState('loading');
-    void loadTurnstileScript()
-      .then(renderWidget)
+    loadTurnstileScript()
+      .then(() => setWidgetState('ready'))
       .catch(() => {
         onToken(null);
         setWidgetState('error');
       });
-  }, [onToken, renderWidget, widgetState]);
+  }, [onToken, siteKey]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -157,10 +126,37 @@ export function TurnstileWidget({
   }, [activate]);
 
   useEffect(() => {
-    if (widgetState === 'ready') {
-      renderWidget();
-    }
-  }, [renderWidget, widgetState]);
+    if (widgetState !== 'ready') return;
+    const container = containerRef.current;
+    const api = window.turnstile;
+    if (!container || !api || !siteKey) return;
+
+    widgetIdRef.current = api.render(container, {
+      sitekey: siteKey,
+      appearance: 'interaction-only',
+      theme,
+      language,
+      callback: (token: string) => onToken(token),
+      'expired-callback': () => {
+        onToken(null);
+        if (widgetIdRef.current !== undefined) {
+          api.reset(widgetIdRef.current);
+        }
+      },
+      'error-callback': () => {
+        onToken(null);
+        setWidgetState('error');
+      },
+    });
+
+    return () => {
+      onToken(null);
+      if (widgetIdRef.current !== undefined) {
+        api.remove(widgetIdRef.current);
+      }
+      widgetIdRef.current = undefined;
+    };
+  }, [widgetState, siteKey, theme, language, onToken]);
 
   useEffect(() => {
     if (resetSignal === 0 || widgetIdRef.current === undefined) {
@@ -170,27 +166,15 @@ export function TurnstileWidget({
     onToken(null);
   }, [onToken, resetSignal]);
 
-  useEffect(() => {
-    return () => {
-      const widgetId = widgetIdRef.current;
-      if (widgetId === undefined) {
-        return;
-      }
-
-      window.turnstile?.remove?.(widgetId);
-      widgetIdRef.current = undefined;
-    };
-  }, []);
-
   return (
     <div
-      ref={containerRef}
       className="min-h-24"
       onFocusCapture={activate}
       aria-live="polite"
       aria-busy={widgetState === 'loading'}
       aria-disabled={disabled}
     >
+      <div ref={containerRef} />
       {widgetState === 'error' && (
         <div className="grid min-h-24 content-center gap-2 rounded-[--radius-sm] border border-border bg-surface-elevated p-3 text-sm text-text-muted">
           <p role="alert">{t('contact.turnstile.blocked')}</p>

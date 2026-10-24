@@ -42,7 +42,7 @@ describe('TurnstileWidget', () => {
   it('lazy-loads the script when the container intersects and renders explicitly', async () => {
     const onToken = vi.fn();
     const { container: rendered, unmount } = renderWidget(onToken);
-    const container = rendered.firstElementChild as HTMLElement;
+    const container = rendered.firstElementChild?.firstElementChild as HTMLElement;
     const observer = (IntersectionObserver as unknown as { instances: Array<{ triggerIntersection: (element: Element, value: boolean) => void }> }).instances.at(-1);
 
     expect(document.querySelector('script[data-turnstile-script]')).not.toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('TurnstileWidget', () => {
 
   it('shows the LinkedIn alternative when the script fails', async () => {
     const { container: rendered } = renderWidget();
-    const container = rendered.firstElementChild as HTMLElement;
+    const container = rendered.firstElementChild?.firstElementChild as HTMLElement;
     const observer = (IntersectionObserver as unknown as { instances: Array<{ triggerIntersection: (element: Element, value: boolean) => void }> }).instances.at(-1);
     await act(async () => {
       observer?.triggerIntersection(container, true);
@@ -105,7 +105,7 @@ describe('TurnstileWidget', () => {
       options.callback?.('generated-token');
       return 'widget-id';
     });
-    window.turnstile = { render: renderMock, reset: vi.fn() };
+    window.turnstile = { render: renderMock, reset: vi.fn(), remove: vi.fn() };
     await act(async () => {
       fireEvent.load(script!);
     });
