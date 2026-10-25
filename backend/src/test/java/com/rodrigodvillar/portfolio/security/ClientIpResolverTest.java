@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +22,47 @@ class ClientIpResolverTest {
         String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("192.168.1.50");
+    }
+
+    @ParameterizedTest(name = "XFF con menos de 3 IPs ({0}): debe hacer fallback a remoteAddr")
+    @ValueSource(strings = {
+            "203.0.113.195",
+            "203.0.113.195, 10.0.0.1"
+    })
+    @DisplayName("X-Forwarded-For con 1 o 2 entradas: fallback a remoteAddr")
+    void resolveIp_whenXForwardedForHasLessThanThreeHops_fallsBackToRemoteAddr(String shortXff) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("192.168.1.50");
+        request.addHeader("X-Forwarded-For", shortXff);
+
+        String ip = resolver.resolve(request);
+
+        assertThat(ip).isEqualTo("192.168.1.50");
+    }
+
+    @ParameterizedTest(name = "XFF vacío o en blanco: fallback a remoteAddr")
+    @ValueSource(strings = {"", "   "})
+    @DisplayName("X-Forwarded-For vacío o en blanco: fallback a remoteAddr")
+    void resolveIp_whenXForwardedForBlank_fallsBackToRemoteAddr(String emptyXff) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("192.168.1.50");
+        request.addHeader("X-Forwarded-For", emptyXff);
+
+        String ip = resolver.resolve(request);
+
+        assertThat(ip).isEqualTo("192.168.1.50");
+    }
+
+    @Test
+    @DisplayName("X-Forwarded-For con exactamente 3 entradas: extrae posición 0 (length - 3)")
+    void resolveIp_whenXForwardedForHasExactlyThreeHops_extractsClientIp() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.0.1");
+        request.addHeader("X-Forwarded-For", "203.0.113.50, 172.71.147.4, 10.27.84.220");
+
+        String ip = resolver.resolve(request);
+
+        assertThat(ip).isEqualTo("203.0.113.50");
     }
 
     @Test
@@ -59,7 +101,7 @@ class ClientIpResolverTest {
     }
 
     @Test
-    @DisplayName("X-Forwarded-For con varios saltos: debe extraer el elemento length - 3")
+    @DisplayName("X-Forwarded-For con varios saltos (5 entradas): debe extraer el elemento length - 3")
     void resolveIp_whenXForwardedForMultipleHops_extractsRightmostPublicIp() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
@@ -120,7 +162,7 @@ class ClientIpResolverTest {
     @DisplayName("X-Forwarded-For con los dos hops de Render devuelve el cliente público")
     void resolveIp_whenXForwardedForHasMultiplePrivateHops_usesFirstPublicFromRight() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("203.0.113.88"); // Socket público directo (no es proxy 10.x, 172.x, etc.)
+        request.setRemoteAddr("203.0.113.88");
         request.addHeader("X-Forwarded-For", "79.127.147.89, 172.71.147.4, 10.27.84.220");
 
         String ip = resolver.resolve(request);
