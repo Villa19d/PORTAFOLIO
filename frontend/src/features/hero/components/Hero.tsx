@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { m, type Variants } from 'motion/react';
 import { useSmoothScroll } from '../../../components/SmoothScrollProvider';
+import { useSound } from '../../sound/SoundContext';
 import { useCapabilities } from '../../../hooks/useCapabilities';
 import { MagneticButton } from '../../../components/ui/MagneticButton';
 import { HeroBackground } from './HeroBackground';
@@ -10,6 +11,7 @@ import { HeroPhoto } from './HeroPhoto';
 export function Hero() {
   const { t } = useTranslation('common');
   const { scrollTo } = useSmoothScroll();
+  const { play } = useSound();
   const { prefersReducedMotion } = useCapabilities();
   const sectionRef = useRef<HTMLElement | null>(null);
 
@@ -102,6 +104,8 @@ export function Hero() {
                   href="#projects"
                   onClick={(e) => {
                     e.preventDefault();
+                    play('click');
+                    play('whoosh');
                     scrollTo('#projects');
                   }}
                   className="inline-flex min-h-[44px] w-full items-center justify-center rounded-[var(--radius)] bg-accent px-6 py-3 font-medium text-bg shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none sm:w-auto"
@@ -116,6 +120,8 @@ export function Hero() {
                   href="#contact"
                   onClick={(e) => {
                     e.preventDefault();
+                    play('click');
+                    play('whoosh');
                     scrollTo('#contact');
                   }}
                   className="inline-flex min-h-[44px] w-full items-center justify-center rounded-[var(--radius)] border border-border-control bg-surface px-6 py-3 font-medium text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none sm:w-auto"

@@ -34,6 +34,12 @@
   "theme": {
     "toggle": "Toggle theme"
   },
+  "sound": {
+    "enable": "Enable sounds",
+    "disable": "Disable sounds",
+    "enabled": "Sounds enabled",
+    "disabled": "Sounds disabled"
+  },
   "contact": {
     "title": "Let's talk",
     "subtitle": "Have an idea, an opportunity, or a question? Send a message and I will get back to you soon.",

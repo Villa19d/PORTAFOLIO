@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MagneticButton } from '../../../components/ui/MagneticButton';
 import { TurnstileWidget } from './TurnstileWidget';
 import { API_BASE_URL, type ProblemDetail } from '../../../lib/api';
+import { useSound } from '../../sound/SoundContext';
 
 type ContactValues = {
   name: string;
@@ -54,6 +55,7 @@ function validate(values: ContactValues, t: (key: ValidationKey) => string): Con
 
 export function ContactForm() {
   const { t } = useTranslation('common');
+  const { play } = useSound();
   const [values, setValues] = useState<ContactValues>(initialValues);
   const [errors, setErrors] = useState<ContactErrors>({});
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
@@ -107,6 +109,7 @@ export function ContactForm() {
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setSubmitState('error');
+      play('error');
       return;
     }
 
@@ -114,6 +117,7 @@ export function ContactForm() {
     if (!turnstileToken) {
       setGeneralError(t('contact.errors.turnstile'));
       setSubmitState('error');
+      play('error');
       return;
     }
 
@@ -172,6 +176,7 @@ export function ContactForm() {
           setGeneralError(t('contact.errors.generic'));
         }
         setSubmitState('error');
+        play('error');
         return;
       }
 
@@ -179,6 +184,7 @@ export function ContactForm() {
       turnstileTokenRef.current = null;
       setResetSignal((current) => current + 1);
       setSubmitState('success');
+      play('success');
     } catch (error: unknown) {
       console.error('CHECKPOINT FRONTEND 4 - Error en el POST:', error);
       setGeneralError(
@@ -187,6 +193,7 @@ export function ContactForm() {
           : t('contact.errors.generic'),
       );
       setSubmitState('error');
+      play('error');
     } finally {
       window.clearTimeout(timeoutId);
       if (waitingTimerRef.current !== undefined) {
@@ -322,6 +329,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={disabled}
+          onClick={() => play('click')}
           className="rounded-[--radius-sm] bg-brand-gradient px-5 py-3 font-mono text-sm font-bold text-bg transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           {submitState === 'sending'

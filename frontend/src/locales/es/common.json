@@ -34,6 +34,12 @@
   "theme": {
     "toggle": "Cambiar tema"
   },
+  "sound": {
+    "enable": "Activar sonidos",
+    "disable": "Desactivar sonidos",
+    "enabled": "Sonidos activados",
+    "disabled": "Sonidos desactivados"
+  },
   "contact": {
     "title": "Hablemos",
     "subtitle": "¿Tienes una idea, una oportunidad o una pregunta? Escríbeme y te responderé pronto.",
