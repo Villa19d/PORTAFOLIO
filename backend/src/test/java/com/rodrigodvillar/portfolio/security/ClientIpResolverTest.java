@@ -18,7 +18,7 @@ class ClientIpResolverTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("192.168.1.50");
 
-        String ip = resolver.resolveIp(request);
+        String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("192.168.1.50");
     }
@@ -34,7 +34,7 @@ class ClientIpResolverTest {
         request.addHeader("X-Real-IP", "7.7.7.7");
         request.addHeader("Forwarded", "for=6.6.6.6");
 
-        String ip = resolver.resolveIp(request);
+        String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("198.51.100.2");
     }
@@ -52,7 +52,7 @@ class ClientIpResolverTest {
         request.setRemoteAddr("203.0.113.10");
         request.addHeader(headerName, fakeValue);
 
-        String ip = resolver.resolveIp(request);
+        String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("203.0.113.10");
         assertThat(ip).isNotEqualTo(fakeValue);
@@ -65,7 +65,7 @@ class ClientIpResolverTest {
         request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "9.9.9.9, 8.8.8.8, 198.51.100.77");
 
-        String ip = resolver.resolveIp(request);
+        String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("198.51.100.77");
     }
@@ -77,7 +77,7 @@ class ClientIpResolverTest {
         request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "198.51.100.1, 198.51.100.42, 10.0.0.2");
 
-        String ip = resolver.resolveIp(request);
+        String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("198.51.100.42");
     }
@@ -89,7 +89,7 @@ class ClientIpResolverTest {
         request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "<script>alert(1)</script>, invalid ip with spaces");
 
-        String ip = resolver.resolveIp(request);
+        String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("203.0.113.10");
     }
@@ -101,7 +101,7 @@ class ClientIpResolverTest {
         request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "203.0.113.5, malformed");
 
-        assertThat(resolver.resolveIp(request)).isEqualTo("203.0.113.5");
+        assertThat(resolver.resolve(request)).isEqualTo("203.0.113.5");
     }
 
     @Test
@@ -111,7 +111,7 @@ class ClientIpResolverTest {
         request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "198.51.100.1, 2001:db8:85a3::8a2e:370:7334");
 
-        String ip = resolver.resolveIp(request);
+        String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("2001:db8:85a3::8a2e:370:7334");
     }
@@ -123,7 +123,7 @@ class ClientIpResolverTest {
         request.setRemoteAddr("203.0.113.88"); // Socket público directo (no es proxy 10.x, 172.x, etc.)
         request.addHeader("X-Forwarded-For", "198.51.100.88, 10.0.0.5, 192.168.1.20");
 
-        String ip = resolver.resolveIp(request);
+        String ip = resolver.resolve(request);
 
         assertThat(ip).isEqualTo("198.51.100.88");
     }

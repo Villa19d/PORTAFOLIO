@@ -28,7 +28,7 @@ public class AdminDiagnosticsController {
     @Operation(summary = "Inspect client IP resolution")
     public ResponseEntity<ClientIpDiagnosticsResponse> clientIp(HttpServletRequest request) {
         ClientIpDiagnosticsResponse response = new ClientIpDiagnosticsResponse(
-                clientIpResolver.resolveIp(request),
+                clientIpResolver.resolve(request),
                 request.getRemoteAddr(),
                 request.getHeader("X-Forwarded-For"),
                 request.getHeader("X-Real-IP"),

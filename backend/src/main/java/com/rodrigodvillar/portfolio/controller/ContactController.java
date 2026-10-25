@@ -31,7 +31,7 @@ public class ContactController {
             @Valid @RequestBody ContactRequest request,
             HttpServletRequest httpRequest
     ) {
-        ContactMessage message = contactService.submit(request, clientIpResolver.resolveIp(httpRequest));
+        ContactMessage message = contactService.submit(request, clientIpResolver.resolve(httpRequest));
         return ResponseEntity.accepted().body(Map.of(
                 "id", message.getId(),
                 "status", message.getStatus()

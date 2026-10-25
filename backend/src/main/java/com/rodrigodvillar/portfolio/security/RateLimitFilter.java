@@ -62,7 +62,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         RateLimitProperties.Rule rule = matchingRule.get();
-        String ip = clientIpResolver.resolveIp(request);
+        String ip = clientIpResolver.resolve(request);
         String cacheKey = rule.method() + ":" + rule.pathPattern() + ":" + ip;
 
         Bucket bucket = bucketCache.get(cacheKey, key -> createNewBucket(rule));

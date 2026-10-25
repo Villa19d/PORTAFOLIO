@@ -13,7 +13,7 @@ public class ClientIpResolver {
      * The first public address found from right to left is the client address.
      * All other forwarding headers are intentionally ignored.
      */
-    public String resolveIp(HttpServletRequest request) {
+    public String resolve(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isBlank()) {
             String[] values = xForwardedFor.split(",");
