@@ -5,6 +5,7 @@ import { LanguageToggle } from '../LanguageToggle';
 import { useSmoothScroll } from '../SmoothScrollProvider';
 import { SoundToggle } from '../../features/sound/SoundToggle';
 import { useSound } from '../../features/sound/SoundContext';
+import { CommandPaletteTrigger } from '../../features/command-palette/CommandPaletteTrigger';
 
 const NAV_LINKS = [
   { key: 'home' as const, href: '#home' },
@@ -196,6 +197,7 @@ export function Navbar() {
             <LanguageToggle />
             <ThemeToggle />
             <SoundToggle />
+            <CommandPaletteTrigger />
           </div>
 
           {/* Mobile menu button */}
