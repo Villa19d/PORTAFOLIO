@@ -40,6 +40,20 @@
     "enabled": "Sounds enabled",
     "disabled": "Sounds disabled"
   },
+  "command": {
+    "open": "Open command palette",
+    "search": "Search commands",
+    "results": "Command results",
+    "noResults": "No matching commands.",
+    "home": "Go to Home",
+    "about": "Go to About",
+    "experience": "Go to Experience",
+    "projects": "Go to Projects",
+    "contact": "Go to Contact",
+    "theme": "Change theme",
+    "language": "Change language",
+    "sound": "Toggle sound"
+  },
   "contact": {
     "title": "Let's talk",
     "subtitle": "Have an idea, an opportunity, or a question? Send a message and I will get back to you soon.",

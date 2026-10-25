@@ -10,6 +10,8 @@ interface ScrollOptions {
 
 interface SmoothScrollContextType {
   scrollTo: (target: string | HTMLElement, options?: ScrollOptions) => void;
+  pause: () => void;
+  resume: () => void;
 }
 
 const SmoothScrollContext = createContext<SmoothScrollContextType | undefined>(undefined);
@@ -57,8 +59,11 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     }
   }, [lenisRef, prefersReducedMotion]);
 
+  const pause = useCallback(() => lenisRef?.stop(), [lenisRef]);
+  const resume = useCallback(() => lenisRef?.start(), [lenisRef]);
+
   return (
-    <SmoothScrollContext.Provider value={{ scrollTo }}>
+    <SmoothScrollContext.Provider value={{ scrollTo, pause, resume }}>
       {children}
     </SmoothScrollContext.Provider>
   );

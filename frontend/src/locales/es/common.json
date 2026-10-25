@@ -40,6 +40,20 @@
     "enabled": "Sonidos activados",
     "disabled": "Sonidos desactivados"
   },
+  "command": {
+    "open": "Abrir paleta de comandos",
+    "search": "Buscar comandos",
+    "results": "Resultados de comandos",
+    "noResults": "No hay comandos coincidentes.",
+    "home": "Ir a Inicio",
+    "about": "Ir a Sobre mí",
+    "experience": "Ir a Experiencia",
+    "projects": "Ir a Proyectos",
+    "contact": "Ir a Contacto",
+    "theme": "Cambiar tema",
+    "language": "Cambiar idioma",
+    "sound": "Activar o desactivar sonido"
+  },
   "contact": {
     "title": "Hablemos",
     "subtitle": "¿Tienes una idea, una oportunidad o una pregunta? Escríbeme y te responderé pronto.",
