@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from '../ThemeToggle';
 import { LanguageToggle } from '../LanguageToggle';
 import { useSmoothScroll } from '../SmoothScrollProvider';
+import { SoundToggle } from '../../features/sound/SoundToggle';
+import { useSound } from '../../features/sound/SoundContext';
 
 const NAV_LINKS = [
   { key: 'home' as const, href: '#home' },
@@ -17,6 +19,7 @@ type NavKey = (typeof NAV_LINKS)[number]['key'];
 export function Navbar() {
   const { t } = useTranslation('common');
   const { scrollTo } = useSmoothScroll();
+  const { play } = useSound();
 
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<NavKey>('home');
@@ -119,6 +122,7 @@ export function Navbar() {
   }, [menuOpen, closeMenu]);
 
   const handleNavClick = (href: string) => {
+    play('whoosh');
     scrollTo(href);
     if (menuOpen) closeMenu();
   };
@@ -150,6 +154,7 @@ export function Navbar() {
             href="#home"
             onClick={(e) => {
               e.preventDefault();
+              play('click');
               handleNavClick('#home');
             }}
             className="inline-flex w-[8.75rem] shrink-0 items-center whitespace-nowrap font-mono text-xl font-bold text-text transition-opacity hover:opacity-80"
@@ -168,6 +173,7 @@ export function Navbar() {
                   href={href}
                   onClick={(e) => {
                     e.preventDefault();
+                    play('click');
                     handleNavClick(href);
                   }}
                   aria-current={activeSection === key ? 'true' : undefined}
@@ -189,6 +195,7 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-3">
             <LanguageToggle />
             <ThemeToggle />
+            <SoundToggle />
           </div>
 
           {/* Mobile menu button */}
@@ -248,6 +255,7 @@ export function Navbar() {
                     href={href}
                     onClick={(e) => {
                       e.preventDefault();
+                      play('click');
                       handleNavClick(href);
                     }}
                     aria-current={activeSection === key ? 'true' : undefined}
@@ -266,6 +274,7 @@ export function Navbar() {
             <div className="flex items-center gap-3 px-8 pt-4 border-t border-border mt-4">
               <LanguageToggle />
               <ThemeToggle />
+              <SoundToggle />
             </div>
           </div>
         )}

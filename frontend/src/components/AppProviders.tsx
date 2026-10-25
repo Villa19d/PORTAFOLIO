@@ -5,6 +5,7 @@ import { SmoothScrollProvider } from './SmoothScrollProvider';
 import { CursorLoader } from './cursor/CursorLoader';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../lib/i18n';
+import { SoundProvider } from '../features/sound/SoundContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -13,8 +14,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <LazyMotion features={domAnimation} strict>
           <MotionConfig reducedMotion="user">
             <SmoothScrollProvider>
-              {children}
-              <CursorLoader />
+              <SoundProvider>
+                {children}
+                <CursorLoader />
+              </SoundProvider>
             </SmoothScrollProvider>
           </MotionConfig>
         </LazyMotion>
