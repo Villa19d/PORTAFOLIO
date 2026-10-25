@@ -24,17 +24,19 @@ class ClientIpResolverTest {
     }
 
     @Test
-    @DisplayName("CF-Connecting-IP falsificada: debe ignorarse")
-    void resolveIp_whenCfConnectingIpPresent_ignoresCfConnectingIp() {
+    @DisplayName("Cabeceras alternativas falsificadas: se ignoran frente a XFF")
+    void resolveIp_whenAlternativeHeadersPresent_usesRightmostXff() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
+        request.addHeader("X-Forwarded-For", "198.51.100.1, 198.51.100.2");
         request.addHeader("CF-Connecting-IP", "203.0.113.195");
         request.addHeader("True-Client-IP", "8.8.8.8");
         request.addHeader("X-Real-IP", "7.7.7.7");
+        request.addHeader("Forwarded", "for=6.6.6.6");
 
         String ip = resolver.resolveIp(request);
 
-        assertThat(ip).isEqualTo("203.0.113.10");
+        assertThat(ip).isEqualTo("198.51.100.2");
     }
 
     @ParameterizedTest(name = "Cabecera no confiable {0} con valor falso {1} debe ser ignorada ante proxy confiable")
@@ -44,26 +46,23 @@ class ClientIpResolverTest {
             "Forwarded, for=3.4.5.6",
             "X-Client-IP, 4.5.6.7"
     })
-    @DisplayName("Cliente envía cabeceras no confiables falsificadas: deben ser ignoradas")
+    @DisplayName("Cliente envía cabeceras no confiables falsificadas: deben ignorarse")
     void resolveIp_whenUntrustedHeadersSent_ignoresThem(String headerName, String fakeValue) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        // Conexión proveniente de proxy interno, cliente inyecta cabeceras espurias
-        request.setRemoteAddr("10.0.0.1");
+        request.setRemoteAddr("203.0.113.10");
         request.addHeader(headerName, fakeValue);
 
         String ip = resolver.resolveIp(request);
 
-        // Al no existir CF-Connecting-IP ni XFF válido, debe caer al socket
-        assertThat(ip).isEqualTo("10.0.0.1");
+        assertThat(ip).isEqualTo("203.0.113.10");
         assertThat(ip).isNotEqualTo(fakeValue);
     }
 
     @Test
-    @DisplayName("X-Forwarded-For con varios saltos: debe extraer el rightmost no privado añadido por el proxy")
+    @DisplayName("X-Forwarded-For con varios saltos: debe extraer siempre el rightmost")
     void resolveIp_whenXForwardedForMultipleHops_extractsRightmostPublicIp() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("10.0.0.5"); // Proxy interno confiable de Render
-        // Cadena: spoofed1, spoofed2, real_client_ip
+        request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "9.9.9.9, 8.8.8.8, 198.51.100.77");
 
         String ip = resolver.resolveIp(request);
@@ -72,11 +71,10 @@ class ClientIpResolverTest {
     }
 
     @Test
-    @DisplayName("X-Forwarded-For usa estrictamente la IP rightmost añadida por Render")
+    @DisplayName("X-Forwarded-For usa estrictamente el valor rightmost")
     void resolveIp_whenXForwardedForHasMultipleHops_usesRightmostValue() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("10.0.0.1");
-        // Cadena: spoofed, ip_publica_real, proxy_interno_intermedio
+        request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "9.9.9.9, 198.51.100.42, 10.0.0.2");
 
         String ip = resolver.resolveIp(request);
@@ -85,32 +83,32 @@ class ClientIpResolverTest {
     }
 
     @Test
-    @DisplayName("X-Forwarded-For con basura o caracteres maliciosos: no crashea e ignora la basura")
-    void resolveIp_whenXForwardedForContainsGarbage_ignoresAndFallsBackToRemoteAddr() {
+    @DisplayName("X-Forwarded-For devuelve literalmente el último valor recibido")
+    void resolveIp_whenXForwardedForContainsGarbage_returnsRightmostValue() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("10.0.0.1");
+        request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "<script>alert(1)</script>, invalid ip with spaces");
 
         String ip = resolver.resolveIp(request);
 
-        assertThat(ip).isEqualTo("10.0.0.1");
+        assertThat(ip).isEqualTo("invalid ip with spaces");
     }
 
     @Test
-    @DisplayName("X-Forwarded-For con último valor malformado: no usa una IP anterior inyectada")
-    void resolveIp_whenRightmostXForwardedForIsMalformed_fallsBackToRemoteAddr() {
+    @DisplayName("X-Forwarded-For con último valor malformado: conserva el valor rightmost")
+    void resolveIp_whenRightmostXForwardedForIsMalformed_returnsRightmostValue() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("10.0.0.1");
+        request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "203.0.113.5, malformed");
 
-        assertThat(resolver.resolveIp(request)).isEqualTo("10.0.0.1");
+        assertThat(resolver.resolveIp(request)).isEqualTo("malformed");
     }
 
     @Test
     @DisplayName("X-Forwarded-For con IPv6 válida: debe resolver correctamente la dirección IPv6")
     void resolveIp_whenXForwardedForContainsValidIpv6_extractsIpv6() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("10.0.0.1");
+        request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "9.9.9.9, 2001:db8:85a3::8a2e:370:7334");
 
         String ip = resolver.resolveIp(request);
@@ -119,15 +117,14 @@ class ClientIpResolverTest {
     }
 
     @Test
-    @DisplayName("Conexión directa no confiable con XFF: descarta XFF por venir de socket no confiable")
-    void resolveIp_whenUntrustedSocketSendsXff_ignoresXff() {
+    @DisplayName("X-Forwarded-For prevalece aunque remoteAddr no pertenezca a una subred conocida")
+    void resolveIp_whenRemoteAddrIsUnknownProxy_usesRightmostXff() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.88"); // Socket público directo (no es proxy 10.x, 172.x, etc.)
-        request.addHeader("X-Forwarded-For", "9.9.9.9");
+        request.addHeader("X-Forwarded-For", "9.9.9.9, 198.51.100.88");
 
         String ip = resolver.resolveIp(request);
 
-        assertThat(ip).isEqualTo("203.0.113.88");
-        assertThat(ip).isNotEqualTo("9.9.9.9");
+        assertThat(ip).isEqualTo("198.51.100.88");
     }
 }
