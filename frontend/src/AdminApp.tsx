@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './AuthProvider';
 import AdminLogin from './AdminLogin';
+import MessagesView from './MessagesView';
 import ProjectsView from './ProjectsView';
 
 type AdminView = 'projects' | 'messages';
@@ -112,19 +113,8 @@ function AuthenticatedAdminApp() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-10">
-        {view === 'projects' ? <ProjectsView /> : <MessagesPlaceholder />}
+        {view === 'projects' ? <ProjectsView /> : <MessagesView />}
       </main>
     </div>
-  );
-}
-
-function MessagesPlaceholder() {
-  return (
-    <section aria-labelledby="messages-title">
-      <h1 className="font-display text-3xl font-semibold" id="messages-title">
-        Mensajes
-      </h1>
-      <p className="mt-3 text-text-muted">La gestión de mensajes estará disponible próximamente.</p>
-    </section>
   );
 }
