@@ -32,7 +32,7 @@ describe('AdminLogin', () => {
       </AuthProvider>,
     );
 
-    await user.type(screen.getByLabelText('Correo'), 'admin@example.com');
+    await user.type(screen.getByLabelText('Usuario'), 'admin');
     await user.type(screen.getByLabelText('Contraseña'), 'wrong-password');
     await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
 

@@ -55,14 +55,14 @@ export default function AdminLogin() {
         )}
 
         <label className="block text-sm" htmlFor="admin-username">
-          Correo
+          Usuario
           <input
             autoComplete="username"
             className="mt-2 w-full rounded-md border border-border-control bg-bg px-3 py-2"
             id="admin-username"
             onChange={(event) => setUsername(event.target.value)}
             required
-            type="email"
+            type="text"
             value={username}
           />
         </label>
