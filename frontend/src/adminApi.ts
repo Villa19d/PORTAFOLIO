@@ -53,7 +53,7 @@ async function refreshAccessToken(): Promise<TokenResponse> {
 
 export async function loginAdmin(username: string, password: string): Promise<TokenResponse> {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username: username.trim(), password }),
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
