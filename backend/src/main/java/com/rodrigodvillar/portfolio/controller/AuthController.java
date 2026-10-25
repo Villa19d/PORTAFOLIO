@@ -17,6 +17,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
@@ -24,6 +26,7 @@ import java.util.Arrays;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final JwtService jwtService;
     private final SecurityProperties securityProperties;
     private final PasswordEncoder passwordEncoder;
@@ -41,6 +44,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        log.info("Login request reached AuthController for username={}", request.username());
         boolean match = false;
         if (securityProperties.adminUsername().equals(request.username())) {
             match = passwordEncoder.matches(request.password(), securityProperties.adminPasswordHash());
@@ -90,7 +94,7 @@ public class AuthController {
                     .body(new TokenResponse(newAccessToken, securityProperties.accessTtlSeconds()));
 
         } catch (JwtException e) {
-            e.printStackTrace();
+            log.warn("Refresh token rejected: type={}, message={}", e.getClass().getSimpleName(), e.getMessage());
             return unauthorizedProblemDetail();
         }
     }
@@ -136,4 +140,3 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(pd);
     }
 }
-

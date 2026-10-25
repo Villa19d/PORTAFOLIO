@@ -10,12 +10,15 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    private static final Logger log = LoggerFactory.getLogger(CustomAuthenticationEntryPoint.class);
     private final ObjectMapper objectMapper;
 
     public CustomAuthenticationEntryPoint(ObjectMapper objectMapper) {
@@ -24,6 +27,16 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+        boolean hasBearerToken = request.getHeader("Authorization") != null
+                && request.getHeader("Authorization").startsWith("Bearer ");
+        log.warn(
+                "Authentication rejected: method={}, path={}, hasBearerToken={}, origin={}, reason={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                hasBearerToken,
+                request.getHeader("Origin"),
+                authException.getMessage()
+        );
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Acceso no autorizado");
         problemDetail.setInstance(java.net.URI.create(request.getRequestURI()));
 
