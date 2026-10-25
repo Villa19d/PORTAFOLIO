@@ -6,6 +6,7 @@ import { ContactForm } from './features/contact/components/ContactForm';
 import { Hero } from './features/hero/components/Hero';
 import { SITE_CONFIG } from './data/site';
 import { TerminalLauncher, openTerminal } from './features/terminal/TerminalLauncher';
+import { BootIntroLauncher } from './features/boot-intro/BootIntroLauncher';
 
 const LazyAboutSection = lazy(() =>
   import('./features/about/AboutSection').then(({ AboutSection }) => ({
@@ -262,6 +263,7 @@ export default function App() {
         </div>
       </footer>
       <TerminalLauncher />
+      <BootIntroLauncher />
     </div>
   );
 }

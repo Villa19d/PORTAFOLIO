@@ -36,3 +36,8 @@ Por ahora, solo se encuentra configurada la base de datos local mediante Docker.
    ```bash
    docker compose up -d db
    ```
+
+
+
+
+   
