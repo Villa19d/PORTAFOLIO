@@ -5,6 +5,7 @@ import { useSmoothScroll } from '../../components/SmoothScrollProvider';
 import { useTheme } from '../../components/ThemeProvider';
 import { useSound } from '../sound/SoundContext';
 import { fuzzyMatch, type CommandSearchItem } from './fuzzySearch';
+import { openTerminal } from '../terminal/TerminalLauncher';
 
 type CommandPaletteProps = { onClose: () => void };
 
@@ -28,6 +29,7 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
     { id: 'theme', label: t('command.theme'), keywords: ['tema', 'theme', 'dark', 'light'] },
     { id: 'language', label: t('command.language'), keywords: ['idioma', 'language', 'es', 'en'] },
     { id: 'sound', label: t('command.sound'), keywords: ['sonido', 'sound', 'audio'] },
+    { id: 'terminal', label: t('command.terminal'), keywords: ['terminal', 'cli', 'console', 'consola'] },
     { id: 'linkedin', label: 'LinkedIn', keywords: ['linkedin', 'social'] },
     { id: 'github', label: 'GitHub', keywords: ['github', 'code', 'codigo'] },
   ], [t]);
@@ -62,6 +64,7 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
     else if (id === 'theme') toggleTheme();
     else if (id === 'language') i18n.changeLanguage(i18n.language.startsWith('es') ? 'en' : 'es');
     else if (id === 'sound') toggleSound();
+    else if (id === 'terminal') openTerminal();
     else if (id === 'linkedin') window.open(SITE_CONFIG.linkedinUrl, '_blank', 'noopener,noreferrer');
     else if (id === 'github') window.open('https://github.com/Villa19d/PORTAFOLIO', '_blank', 'noopener,noreferrer');
     close();

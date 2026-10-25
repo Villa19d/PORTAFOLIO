@@ -5,6 +5,7 @@ import { Section } from './components/layout/Section';
 import { ContactForm } from './features/contact/components/ContactForm';
 import { Hero } from './features/hero/components/Hero';
 import { SITE_CONFIG } from './data/site';
+import { TerminalLauncher, openTerminal } from './features/terminal/TerminalLauncher';
 
 const LazyAboutSection = lazy(() =>
   import('./features/about/AboutSection').then(({ AboutSection }) => ({
@@ -236,6 +237,9 @@ export default function App() {
             &copy; {currentYear} {SITE_CONFIG.authorName}. {t('footer.rights')}
           </span>
           <div className="flex items-center gap-6">
+            <button type="button" onClick={openTerminal} className="font-mono text-xs opacity-70 transition-opacity hover:text-accent hover:opacity-100" aria-label={t('terminal.open')}>
+              {'>_'}
+            </button>
             {SITE_CONFIG.githubUrl && (
               <a
                 href={SITE_CONFIG.githubUrl}
@@ -257,6 +261,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <TerminalLauncher />
     </div>
   );
 }

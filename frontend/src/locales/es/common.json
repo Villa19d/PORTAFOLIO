@@ -53,6 +53,13 @@
     "theme": "Cambiar tema",
     "language": "Cambiar idioma",
     "sound": "Activar o desactivar sonido"
+    ,"terminal": "Abrir terminal"
+  },
+  "terminal": {
+    "title": "Terminal",
+    "open": "Abrir terminal",
+    "close": "Cerrar terminal",
+    "input": "Comando de terminal"
   },
   "contact": {
     "title": "Hablemos",

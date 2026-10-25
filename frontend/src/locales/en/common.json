@@ -53,6 +53,13 @@
     "theme": "Change theme",
     "language": "Change language",
     "sound": "Toggle sound"
+    ,"terminal": "Open terminal"
+  },
+  "terminal": {
+    "title": "Terminal",
+    "open": "Open terminal",
+    "close": "Close terminal",
+    "input": "Terminal command"
   },
   "contact": {
     "title": "Let's talk",
