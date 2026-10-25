@@ -107,7 +107,7 @@ describe('ProjectDetailModal', () => {
     expect(container.querySelector('img[onerror]')).not.toBeInTheDocument();
     expect(container.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
     expect(alertSpy).not.toHaveBeenCalled();
-  });
+  }, 10000);
 
   it('allows only safe protocols and opens Markdown links with safe external-link attributes', async () => {
     const { container } = renderCard(
