@@ -499,6 +499,28 @@ async function runFullSmoke() {
       const start = performance.now();
       let got429 = false;
       let blockedIndex = -1;
+      const control = await fetchWithTimeout(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: FRONT_ORIGIN
+        },
+        body: JSON.stringify({
+          username: `probe_control_${testCase.code}`,
+          password: 'ProbeWrongPassword!'
+        })
+      });
+
+      if (!control.res || control.res.status === 429) {
+        const duration = Math.round(performance.now() - start);
+        const detail = [
+          'FALLO CRÍTICO: el bucket ya estaba bloqueado antes de la ronda anti-spoofing.',
+          'Esto indica un rate limit indiscriminado o un estado compartido entre clientes.',
+          `La petición de control devolvió HTTP ${control.res?.status ?? 'ERR'} en lugar de una respuesta no limitada.`
+        ].join('\n');
+        recordResult(testCase.code, `SPOOFING: Resistencia ante '${testCase.header}' falsificada`, false, duration, detail, true);
+        continue;
+      }
 
       for (let i = 1; i <= 8; i++) {
         const fakeVal = testCase.generate(i);
