@@ -59,7 +59,7 @@ class ClientIpResolverTest {
     }
 
     @Test
-    @DisplayName("X-Forwarded-For con varios saltos: debe extraer siempre el rightmost")
+    @DisplayName("X-Forwarded-For con varios saltos: debe extraer la primera IP pública desde la derecha")
     void resolveIp_whenXForwardedForMultipleHops_extractsRightmostPublicIp() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
@@ -71,37 +71,37 @@ class ClientIpResolverTest {
     }
 
     @Test
-    @DisplayName("X-Forwarded-For usa estrictamente el valor rightmost")
-    void resolveIp_whenXForwardedForHasMultipleHops_usesRightmostValue() {
+    @DisplayName("X-Forwarded-For ignora balanceadores privados desde la derecha")
+    void resolveIp_whenXForwardedForHasPrivateLoadBalancer_usesPreviousPublicIp() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
-        request.addHeader("X-Forwarded-For", "9.9.9.9, 198.51.100.42, 10.0.0.2");
+        request.addHeader("X-Forwarded-For", "198.51.100.1, 198.51.100.42, 10.0.0.2");
 
         String ip = resolver.resolveIp(request);
 
-        assertThat(ip).isEqualTo("10.0.0.2");
+        assertThat(ip).isEqualTo("198.51.100.42");
     }
 
     @Test
-    @DisplayName("X-Forwarded-For devuelve literalmente el último valor recibido")
-    void resolveIp_whenXForwardedForContainsGarbage_returnsRightmostValue() {
+    @DisplayName("X-Forwarded-For ignora valores basura y continúa hacia la izquierda")
+    void resolveIp_whenXForwardedForContainsGarbage_skipsInvalidValues() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "<script>alert(1)</script>, invalid ip with spaces");
 
         String ip = resolver.resolveIp(request);
 
-        assertThat(ip).isEqualTo("invalid ip with spaces");
+        assertThat(ip).isEqualTo("203.0.113.10");
     }
 
     @Test
-    @DisplayName("X-Forwarded-For con último valor malformado: conserva el valor rightmost")
-    void resolveIp_whenRightmostXForwardedForIsMalformed_returnsRightmostValue() {
+    @DisplayName("X-Forwarded-For con último valor malformado: usa la primera IP pública")
+    void resolveIp_whenRightmostXForwardedForIsMalformed_skipsInvalidValue() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
         request.addHeader("X-Forwarded-For", "203.0.113.5, malformed");
 
-        assertThat(resolver.resolveIp(request)).isEqualTo("malformed");
+        assertThat(resolver.resolveIp(request)).isEqualTo("203.0.113.5");
     }
 
     @Test
@@ -109,7 +109,7 @@ class ClientIpResolverTest {
     void resolveIp_whenXForwardedForContainsValidIpv6_extractsIpv6() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
-        request.addHeader("X-Forwarded-For", "9.9.9.9, 2001:db8:85a3::8a2e:370:7334");
+        request.addHeader("X-Forwarded-For", "198.51.100.1, 2001:db8:85a3::8a2e:370:7334");
 
         String ip = resolver.resolveIp(request);
 
@@ -117,11 +117,11 @@ class ClientIpResolverTest {
     }
 
     @Test
-    @DisplayName("X-Forwarded-For prevalece aunque remoteAddr no pertenezca a una subred conocida")
-    void resolveIp_whenRemoteAddrIsUnknownProxy_usesRightmostXff() {
+    @DisplayName("X-Forwarded-For con balanceadores Render anidados devuelve el cliente público")
+    void resolveIp_whenXForwardedForHasMultiplePrivateHops_usesFirstPublicFromRight() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.88"); // Socket público directo (no es proxy 10.x, 172.x, etc.)
-        request.addHeader("X-Forwarded-For", "9.9.9.9, 198.51.100.88");
+        request.addHeader("X-Forwarded-For", "198.51.100.88, 10.0.0.5, 192.168.1.20");
 
         String ip = resolver.resolveIp(request);
 

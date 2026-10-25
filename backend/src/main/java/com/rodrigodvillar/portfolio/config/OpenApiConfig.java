@@ -12,7 +12,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI portfolioOpenAPI() {
         return new OpenAPI()
-                .addServersItem(new io.swagger.v3.oas.models.servers.Server().url("/"))
+                .addServersItem(new io.swagger.v3.oas.models.servers.Server().url("https://api.rodrigodvillar.com"))
                 .info(new Info().title("Portfolio API")
                         .description("API for Rodrigo Del Villar's portfolio")
                         .version("1.0.0")
