@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './AuthProvider';
 import AdminLogin from './AdminLogin';
 import MessagesView from './MessagesView';
 import ProjectsView from './ProjectsView';
 
 type AdminView = 'projects' | 'messages';
+
+const adminQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function getViewFromHash(): AdminView {
   return window.location.hash === '#/messages' ? 'messages' : 'projects';
@@ -22,9 +32,11 @@ function setRobotsMeta() {
 
 export default function AdminApp() {
   return (
-    <AuthProvider>
-      <AuthenticatedAdminApp />
-    </AuthProvider>
+    <QueryClientProvider client={adminQueryClient}>
+      <AuthProvider>
+        <AuthenticatedAdminApp />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -88,11 +88,11 @@
   | `X-Forwarded-For` | Cliente / Cloudflare / Render | **Concatena (Append), NO sobrescribe.** Render añade la IP real al final de la lista. | [Render Proxy Documentation](https://render.com/docs/web-services) | **SÓLO el rightmost si proviene de proxy interno confiable (Fallback)** |
 
 - **Decisión:**
-  1. Se eliminan `True-Client-IP`, `X-Real-IP` y `Forwarded` del resolver de IP de la aplicación.
-  2. Se establece `CF-Connecting-IP` como **fuente única autoritativa documentada** en el entorno de producción.
-  3. Como fallback para pruebas locales y entornos sin Cloudflare, se evalúa `X-Forwarded-For` únicamente si el socket TCP remoto proviene de un proxy interno privado (`isTrustedProxy`), extrayendo el elemento *rightmost* público.
-  4. En Tomcat se mantiene `server.forward-headers-strategy: native` con `internal-proxies` configurados en `application.yml`.
-- **Consecuencia:** Cero evasión del rate limit por inyección de cabeceras arbitrarias. Los ataques de fuerza bruta son mitigados de forma confiable independientemente de qué cabecera intente falsificar el atacante.
+  1. Se eliminan `CF-Connecting-IP`, `True-Client-IP`, `X-Real-IP` y `Forwarded` del resolver: la aplicación no confía en ninguna de esas cabeceras porque una petición directa al origen de Render puede incluirlas arbitrariamente.
+  2. Render es la infraestructura de borde confiable y añade la IP real del cliente al final de `X-Forwarded-For`. El resolver usa únicamente el valor válido situado más a la derecha.
+  3. Si no existe un `X-Forwarded-For` utilizable, se usa `request.getRemoteAddr()` como fallback de la conexión TCP.
+  4. Se desactiva el procesamiento `native` de cabeceras reenviadas en Tomcat (`server.forward-headers-strategy: none`) para que `remoteAddr` conserve el peer TCP original y nunca sea una decisión basada en una cabecera ya reescrita.
+- **Consecuencia:** Las cabeceras falsificables no alteran la clave del rate limit. La IP usada en producción depende de la cadena `X-Forwarded-For` que Render completa en su borde; en acceso directo sin esa cadena se conserva la IP del socket.
 
 
 ## 13. Infraestructura (Sprint 7)
