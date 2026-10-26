@@ -30,6 +30,7 @@ Objetivo: impresionar a reclutadores y usuarios con un diseño moderno, interact
 - Máximo un `<Canvas>` WebGL activo a la vez.
 - Respetar `prefers-reduced-motion` en toda animación no esencial.
 - Animar solo `transform` y `opacity` salvo justificación.
+- - Todo efecto costoso debe poder apagarse con `data-perf=lite` (CSS en el bloque `[data-perf="lite"]` de `index.css`, o desmontaje por JS con `useCapabilities().canUseHeavyEffects`).
 
 ## 5. Convenciones de código
 **General:** nombres en inglés en el código; textos de UI en i18n (ES por defecto, EN); sin `console.log` olvidados; sin código comentado; sin secretos en el repo.

@@ -11,6 +11,7 @@ interface HeroBackgroundProps {
  * - Base Layer: Pure CSS animated mesh gradients & subtle radial masked tech grid (zero JS).
  * - Interactive Layer: Spotlight tracking cursor only when canUseHeavyEffects is true.
  * - Automatically pauses CSS animations when Hero is outside the viewport.
+ * - In lite tier the blobs are hidden and replaced by a static gradient (see index.css).
  */
 export function HeroBackground({ containerRef }: HeroBackgroundProps) {
   const { canUseHeavyEffects, prefersReducedMotion } = useCapabilities();
@@ -37,14 +38,14 @@ export function HeroBackground({ containerRef }: HeroBackgroundProps) {
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 z-0 overflow-hidden ${
+      className={`hero-background pointer-events-none absolute inset-0 z-0 overflow-hidden ${
         !isInViewport ? 'hero-paused' : ''
       }`}
       aria-hidden="true"
       data-testid="hero-background"
     >
       {/* Base CSS Mesh: 3 drifting radial gradient blobs */}
-      <div className="absolute inset-0">
+      <div className="hero-blobs absolute inset-0">
         {/* Blob 1: Cyan accent (top-left) */}
         <div
           className={`absolute -top-[15%] -left-[10%] h-[400px] w-[400px] rounded-full bg-accent/20 blur-[100px] sm:h-[500px] sm:w-[500px] lg:h-[650px] lg:w-[650px] ${

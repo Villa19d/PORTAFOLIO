@@ -8,20 +8,25 @@ import { MagneticButton } from '../../../components/ui/MagneticButton';
 import { HeroBackground } from './HeroBackground';
 import { HeroPhoto } from './HeroPhoto';
 
+const LITE_MOTION_SCALE = 0.4;
+
 export function Hero() {
   const { t } = useTranslation('common');
   const { scrollTo } = useSmoothScroll();
   const { play } = useSound();
-  const { prefersReducedMotion } = useCapabilities();
+  const { prefersReducedMotion, perfTier } = useCapabilities();
   const sectionRef = useRef<HTMLElement | null>(null);
+
+  // 1 in full tier (unchanged values), 0 with reduced motion, shorter entrances in lite tier.
+  const motionScale = prefersReducedMotion ? 0 : perfTier === 'lite' ? LITE_MOTION_SCALE : 1;
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: prefersReducedMotion ? 0 : 0.12,
-        delayChildren: prefersReducedMotion ? 0 : 0.15,
+        staggerChildren: 0.12 * motionScale,
+        delayChildren: 0.15 * motionScale,
       },
     },
   };
@@ -32,7 +37,7 @@ export function Hero() {
       opacity: 1,
       y: 0,
       transition: {
-        duration: prefersReducedMotion ? 0 : 0.55,
+        duration: 0.55 * motionScale,
         ease: [0.2, 0.8, 0.2, 1],
       },
     },
@@ -138,9 +143,9 @@ export function Hero() {
             initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{
-              duration: prefersReducedMotion ? 0 : 0.7,
+              duration: 0.7 * motionScale,
               ease: [0.2, 0.8, 0.2, 1],
-              delay: prefersReducedMotion ? 0 : 0.1,
+              delay: 0.1 * motionScale,
             }}
           >
             <HeroPhoto />
