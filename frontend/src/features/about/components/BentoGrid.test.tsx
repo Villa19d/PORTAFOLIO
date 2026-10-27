@@ -36,10 +36,8 @@ describe('BentoGrid motion preferences', () => {
     expect(tile.style.transform).not.toContain('12px');
   });
 
-  it('starts from the hidden variant when entrance motion is not skipped', () => {
-    entrance.skipEntrance = false;
-
-    render(
+  it('renders tiles without variants when entrance motion is skipped (About must stay visible)', () => {
+    const { container } = render(
       <I18nextProvider i18n={i18n}>
         <BentoGrid>
           <BentoTile label="Intro tile">
@@ -49,10 +47,15 @@ describe('BentoGrid motion preferences', () => {
       </I18nextProvider>,
     );
 
+    // The wrapper must not carry variants when skipEntrance is true; otherwise
+    // descendants can inherit a `hidden` state and the section renders empty.
+    const group = container.querySelector('[role="group"]');
+    expect(group).not.toBeNull();
+    expect(group?.querySelector('[style*="opacity: 0"]')).toBeNull();
+
     const tile = screen.getByRole('region', { name: 'Intro tile' });
-    // In a real browser motion hides the tile until it enters the viewport.
-    // jsdom does not run IntersectionObserver, so we only assert the node exists
-    // and is reachable (the hidden variant is applied by motion at runtime).
-    expect(tile).toBeInTheDocument();
+    // Motion stores variants in an internal prop; the DOM should have no
+    // leftover transform/opacity from an unresolved variant.
+    expect(tile.style.opacity === '' || tile.style.opacity === '1').toBe(true);
   });
 });

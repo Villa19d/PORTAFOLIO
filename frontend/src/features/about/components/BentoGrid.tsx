@@ -12,6 +12,10 @@ export function BentoGrid({ children, containerRef }: BentoGridProps) {
   const { t } = useTranslation('common');
   const { skipEntrance } = useEntranceMotion();
 
+  // When entrance motion is skipped we render the grid with NO variants and
+  // NO whileInView, so no descendant can inherit a `hidden` state. This keeps
+  // the section content visible in lite tier / reduced motion regardless of
+  // when the tier is resolved.
   return (
     <m.div
       ref={containerRef}
@@ -19,16 +23,20 @@ export function BentoGrid({ children, containerRef }: BentoGridProps) {
       aria-label={t('about.sectionLabel')}
       initial={skipEntrance ? false : 'hidden'}
       whileInView={skipEntrance ? undefined : 'visible'}
-      viewport={{ once: true, amount: 0.12 }}
-      variants={{
-        hidden: {},
-        visible: {
-          transition: {
-            delayChildren: 0.04,
-            staggerChildren: 0.075,
-          },
-        },
-      }}
+      viewport={skipEntrance ? undefined : { once: true, amount: 0.12 }}
+      variants={
+        skipEntrance
+          ? undefined
+          : {
+              hidden: {},
+              visible: {
+                transition: {
+                  delayChildren: 0.04,
+                  staggerChildren: 0.075,
+                },
+              },
+            }
+      }
       className="
         grid
         grid-cols-1
