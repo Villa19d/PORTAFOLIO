@@ -1,4 +1,12 @@
-import { lazy, Suspense, useRef, type ComponentType, type SVGProps } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type SVGProps,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { SITE_CONFIG } from '../../data/site';
 import { PROFILE_BASE_DATA } from '../../data/profile-base';
@@ -30,9 +38,23 @@ const stackIconById: Record<string, StackIcon> = {
   docker: DockerIcon,
 };
 
+/**
+ * Once true, stays true for the lifetime of the component. Used to keep a
+ * lazy heavy effect mounted after it has been downloaded once, so the tree
+ * does not change when the performance tier flips back to lite.
+ */
+function useLatchedTrue(value: boolean): boolean {
+  const [latched, setLatched] = useState(value);
+  useEffect(() => {
+    if (value && !latched) setLatched(true);
+  }, [value, latched]);
+  return latched || value;
+}
+
 export function AboutSection() {
   const { t, i18n } = useTranslation('common');
   const { canUseHeavyEffects } = useCapabilities();
+  const shouldRenderGlow = useLatchedTrue(canUseHeavyEffects);
   const bentoRef = useRef<HTMLDivElement>(null);
   const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
   const links = [
@@ -55,9 +77,7 @@ export function AboutSection() {
           <p className="font-mono text-sm uppercase tracking-widest text-accent">
             {t('about.introLabel')}
           </p>
-          <h3 className="font-display text-3xl font-bold text-text">
-            {t('hero.name')}
-          </h3>
+          <h3 className="font-display text-3xl font-bold text-text">{t('hero.name')}</h3>
           <p className="text-lg text-text-muted">{t('hero.role')}</p>
           <p className="max-w-prose text-sm leading-relaxed text-text-muted">
             {PROFILE_BASE_DATA.bio[lang]}
@@ -80,7 +100,10 @@ export function AboutSection() {
                 {Icon ? (
                   <Icon className="h-6 w-6 text-accent transition-transform duration-200 motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3" />
                 ) : (
-                  <span aria-hidden="true" className="flex h-6 min-w-6 items-center justify-center font-mono text-xs font-bold text-accent transition-transform duration-200 motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-6 min-w-6 items-center justify-center font-mono text-xs font-bold text-accent transition-transform duration-200 motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3"
+                  >
                     {monogram}
                   </span>
                 )}
@@ -112,9 +135,7 @@ export function AboutSection() {
       <BentoTile label={t('about.cvLabel')} className="col-span-1 lg:row-span-1 !p-0 flex flex-col justify-center">
         <CvTile />
         {!PROFILE_BASE_DATA.cv[lang] && (
-          <p className="px-4 text-center text-xs text-text-muted">
-            {t('about.cvUnavailable')}
-          </p>
+          <p className="px-4 text-center text-xs text-text-muted">{t('about.cvUnavailable')}</p>
         )}
       </BentoTile>
 
@@ -147,9 +168,9 @@ export function AboutSection() {
 
       <div className="relative isolate">
         {bentoGrid}
-        {canUseHeavyEffects && (
+        {shouldRenderGlow && (
           <Suspense fallback={null}>
-            <BentoGlow containerRef={bentoRef} />
+            <BentoGlow containerRef={bentoRef} enabled={canUseHeavyEffects} />
           </Suspense>
         )}
       </div>

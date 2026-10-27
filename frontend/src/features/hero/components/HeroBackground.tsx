@@ -9,7 +9,7 @@ interface HeroBackgroundProps {
 /**
  * Layered Hero background.
  * - Base Layer: Pure CSS animated mesh gradients & subtle radial masked tech grid (zero JS).
- * - Interactive Layer: Spotlight tracking cursor only when canUseHeavyEffects is true.
+ * - Interactive Layer: Spotlight rendered always, enabled only when canUseHeavyEffects.
  * - Automatically pauses CSS animations when Hero is outside the viewport.
  * - In lite tier the blobs are hidden and replaced by a static gradient (see index.css).
  */
@@ -17,7 +17,6 @@ export function HeroBackground({ containerRef }: HeroBackgroundProps) {
   const { canUseHeavyEffects, prefersReducedMotion } = useCapabilities();
   const [isInViewport, setIsInViewport] = useState(true);
 
-  // Pause CSS animations when Hero is scrolled out of view to save GPU/CPU cycles
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -29,7 +28,7 @@ export function HeroBackground({ containerRef }: HeroBackgroundProps) {
           setIsInViewport(entry.isIntersecting);
         }
       },
-      { threshold: 0 }
+      { threshold: 0 },
     );
 
     observer.observe(container);
@@ -44,23 +43,17 @@ export function HeroBackground({ containerRef }: HeroBackgroundProps) {
       aria-hidden="true"
       data-testid="hero-background"
     >
-      {/* Base CSS Mesh: 3 drifting radial gradient blobs */}
       <div className="hero-blobs absolute inset-0">
-        {/* Blob 1: Cyan accent (top-left) */}
         <div
           className={`absolute -top-[15%] -left-[10%] h-[400px] w-[400px] rounded-full bg-accent/20 blur-[100px] sm:h-[500px] sm:w-[500px] lg:h-[650px] lg:w-[650px] ${
             prefersReducedMotion ? '' : 'hero-blob-1'
           }`}
         />
-
-        {/* Blob 2: Secondary green accent (middle-right) */}
         <div
           className={`absolute top-[25%] -right-[15%] h-[350px] w-[350px] rounded-full bg-accent-2/15 blur-[110px] sm:h-[450px] sm:w-[450px] lg:h-[600px] lg:w-[600px] ${
             prefersReducedMotion ? '' : 'hero-blob-2'
           }`}
         />
-
-        {/* Blob 3: Soft cyan ambiance (bottom-center) */}
         <div
           className={`absolute -bottom-[10%] left-[25%] h-[300px] w-[300px] rounded-full bg-accent/10 blur-[90px] sm:h-[400px] sm:w-[400px] lg:h-[500px] lg:w-[500px] ${
             prefersReducedMotion ? '' : 'hero-blob-3'
@@ -68,7 +61,6 @@ export function HeroBackground({ containerRef }: HeroBackgroundProps) {
         />
       </div>
 
-      {/* Subtle tech grid with radial falloff mask */}
       <div
         className="absolute inset-0 opacity-[0.22] dark:opacity-[0.16]"
         style={{
@@ -82,8 +74,8 @@ export function HeroBackground({ containerRef }: HeroBackgroundProps) {
         }}
       />
 
-      {/* Interactive spotlight: only mounted if hardware capabilities allow */}
-      {canUseHeavyEffects && <HeroSpotlight containerRef={containerRef} />}
+      {/* Always mounted; internal listeners react to `enabled` toggles. */}
+      <HeroSpotlight containerRef={containerRef} enabled={canUseHeavyEffects} />
     </div>
   );
 }

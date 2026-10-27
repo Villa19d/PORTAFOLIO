@@ -57,4 +57,33 @@ describe('AboutSection deferred glow', () => {
 
     expect(await screen.findByTestId('bento-glow-overlay')).toBeInTheDocument();
   });
+
+  it('keeps the glow overlay mounted but disabled when transitioning to lite', async () => {
+    vi.mocked(useCapabilities).mockReturnValue(desktopCapabilities);
+
+    const { rerender } = render(
+      <I18nextProvider i18n={i18n}>
+        <AboutSection />
+      </I18nextProvider>,
+    );
+
+    const glow = await screen.findByTestId('bento-glow-overlay');
+    expect(glow).toHaveAttribute('data-glow-enabled', 'true');
+
+    vi.mocked(useCapabilities).mockReturnValue({
+      ...desktopCapabilities,
+      canUseHeavyEffects: false,
+      perfTier: 'lite',
+    });
+
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <AboutSection />
+      </I18nextProvider>,
+    );
+
+    const glowAfter = screen.getByTestId('bento-glow-overlay');
+    expect(glowAfter).toBe(glow);
+    expect(glowAfter).toHaveAttribute('data-glow-enabled', 'false');
+  });
 });

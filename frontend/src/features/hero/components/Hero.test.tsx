@@ -10,7 +10,7 @@ import * as capabilitiesModule from '../../../hooks/useCapabilities';
 const mockScrollTo = vi.fn();
 vi.mock('../../../components/SmoothScrollProvider', async () => {
   const actual = await vi.importActual<typeof import('../../../components/SmoothScrollProvider')>(
-    '../../../components/SmoothScrollProvider'
+    '../../../components/SmoothScrollProvider',
   );
   return {
     ...actual,
@@ -28,7 +28,7 @@ function renderHero() {
           <Hero />
         </SmoothScrollProvider>
       </ThemeProvider>
-    </I18nextProvider>
+    </I18nextProvider>,
   );
 }
 
@@ -53,7 +53,7 @@ describe('Hero Component', () => {
     expect(heading).toHaveTextContent(/Rodrigo Del Villar/i);
     expect(screen.getByText(/Desarrollador Full-Stack/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Construyo aplicaciones web rápidas y seguras/i)
+      screen.getByText(/Construyo aplicaciones web rápidas y seguras/i),
     ).toBeInTheDocument();
   });
 
@@ -64,7 +64,7 @@ describe('Hero Component', () => {
     expect(screen.getByText(/Hi, I'm/i)).toBeInTheDocument();
     expect(screen.getByText(/Full-Stack Developer/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/I build fast, secure web applications/i)
+      screen.getByText(/I build fast, secure web applications/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /View projects/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Contact me/i })).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('Hero Component', () => {
     expect(webpSource).toBeInTheDocument();
   });
 
-  it('mounts interactive spotlight only when canUseHeavyEffects is true', () => {
+  it('renders the interactive spotlight enabled when canUseHeavyEffects is true', () => {
     vi.spyOn(capabilitiesModule, 'useCapabilities').mockReturnValue({
       hasFinePointer: true,
       isDesktopLayout: true,
@@ -118,10 +118,12 @@ describe('Hero Component', () => {
     });
 
     renderHero();
-    expect(screen.getByTestId('hero-spotlight')).toBeInTheDocument();
+    const spotlight = screen.getByTestId('hero-spotlight');
+    expect(spotlight).toBeInTheDocument();
+    expect(spotlight).toHaveAttribute('data-spotlight-enabled', 'true');
   });
 
-  it('does NOT mount interactive spotlight in mobile emulation or reduced motion (canUseHeavyEffects=false)', () => {
+  it('renders the spotlight mounted but disabled in mobile emulation or reduced motion', () => {
     vi.spyOn(capabilitiesModule, 'useCapabilities').mockReturnValue({
       hasFinePointer: false,
       isDesktopLayout: false,
@@ -131,11 +133,13 @@ describe('Hero Component', () => {
     });
 
     renderHero();
-    expect(screen.queryByTestId('hero-spotlight')).not.toBeInTheDocument();
+    const spotlight = screen.getByTestId('hero-spotlight');
+    expect(spotlight).toBeInTheDocument();
+    expect(spotlight).toHaveAttribute('data-spotlight-enabled', 'false');
     expect(screen.getByTestId('hero-background')).toBeInTheDocument();
   });
 
-  it('does NOT mount interactive spotlight in lite tier even on a capable desktop', () => {
+  it('renders the spotlight mounted but disabled in lite tier on a capable desktop', () => {
     vi.spyOn(capabilitiesModule, 'useCapabilities').mockReturnValue({
       hasFinePointer: true,
       isDesktopLayout: true,
@@ -145,7 +149,9 @@ describe('Hero Component', () => {
     });
 
     renderHero();
-    expect(screen.queryByTestId('hero-spotlight')).not.toBeInTheDocument();
+    const spotlight = screen.getByTestId('hero-spotlight');
+    expect(spotlight).toBeInTheDocument();
+    expect(spotlight).toHaveAttribute('data-spotlight-enabled', 'false');
     expect(screen.getByTestId('hero-background')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Rodrigo Del Villar/i);
   });

@@ -1,7 +1,8 @@
-import { LazyMotion, domAnimation, m, useReducedMotion } from 'motion/react';
+import { LazyMotion, domAnimation, m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { Section } from '../../components/layout/Section';
 import { PROFILE_DATA, type TimelineEntryKind } from '../../data/profile';
+import { useEntranceMotion } from '../../hooks/useEntranceMotion';
 import { formatTimelinePeriod, sortTimelineEntries } from './utils/timeline';
 
 const kindStyles: Record<TimelineEntryKind, string> = {
@@ -12,7 +13,7 @@ const kindStyles: Record<TimelineEntryKind, string> = {
 
 export function ExperienceSection() {
   const { t, i18n } = useTranslation('common');
-  const prefersReducedMotion = useReducedMotion() ?? false;
+  const { skipEntrance } = useEntranceMotion();
   const language = i18n.language?.startsWith('en') ? 'en' : 'es';
   const entries = sortTimelineEntries(PROFILE_DATA.timeline);
 
@@ -36,8 +37,8 @@ export function ExperienceSection() {
           {entries.map((entry, index) => (
             <m.li
               key={entry.id}
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
-              whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+              initial={skipEntrance ? false : { opacity: 0, y: 18 }}
+              whileInView={skipEntrance ? undefined : { opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.16 }}
               transition={{ duration: 0.42, delay: Math.min(index * 0.045, 0.27), ease: 'easeOut' }}
               className="relative pl-7 sm:pl-10"
@@ -78,7 +79,10 @@ export function ExperienceSection() {
                         key={`${entry.id}-bullet-${bulletIndex}`}
                         className="flex gap-3 text-sm leading-relaxed text-text-muted sm:text-base"
                       >
-                        <span aria-hidden="true" className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent/80" />
+                        <span
+                          aria-hidden="true"
+                          className="mt-[0.65em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent/80"
+                        />
                         <span>{bullet[language]}</span>
                       </li>
                     ))}

@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from 'react';
-import { m, useReducedMotion } from 'motion/react';
+import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { useEntranceMotion } from '../../../hooks/useEntranceMotion';
 
 interface BentoGridProps {
   children: ReactNode;
@@ -9,15 +10,15 @@ interface BentoGridProps {
 
 export function BentoGrid({ children, containerRef }: BentoGridProps) {
   const { t } = useTranslation('common');
-  const prefersReducedMotion = useReducedMotion();
+  const { skipEntrance } = useEntranceMotion();
 
   return (
     <m.div
       ref={containerRef}
       role="group"
       aria-label={t('about.sectionLabel')}
-      initial={prefersReducedMotion ? false : 'hidden'}
-      whileInView={prefersReducedMotion ? undefined : 'visible'}
+      initial={skipEntrance ? false : 'hidden'}
+      whileInView={skipEntrance ? undefined : 'visible'}
       viewport={{ once: true, amount: 0.12 }}
       variants={{
         hidden: {},

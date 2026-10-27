@@ -34,6 +34,8 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
   const linkTabIndex = isActive ? undefined : -1;
   const repoUrl = getSafeExternalUrl(project.repoUrl);
   const liveUrl = getSafeExternalUrl(project.liveUrl);
+  const tiltEnabled = isActive && canUseHeavyEffects;
+
   const cardContent = (
     <>
       <div className="project-card__media">
@@ -119,11 +121,7 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
   return (
     <>
       <article className="project-card">
-        {isActive && canUseHeavyEffects ? (
-          <TiltSurface>{cardContent}</TiltSurface>
-        ) : (
-          cardContent
-        )}
+        <TiltSurface enabled={tiltEnabled}>{cardContent}</TiltSurface>
       </article>
       {isDetailOpen && (
         <ProjectDetailModal

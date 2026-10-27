@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import Lenis from 'lenis';
 import { useCapabilities } from '../hooks/useCapabilities';
 
@@ -16,12 +23,22 @@ interface SmoothScrollContextType {
 
 const SmoothScrollContext = createContext<SmoothScrollContextType | undefined>(undefined);
 
+const LENIS_HTML_CLASSES = ['lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped'];
+
+function clearLenisHtmlClasses() {
+  const root = document.documentElement;
+  LENIS_HTML_CLASSES.forEach((name) => root.classList.remove(name));
+}
+
 export function SmoothScrollProvider({ children }: { children: ReactNode }) {
-  const { prefersReducedMotion } = useCapabilities();
+  const { prefersReducedMotion, perfTier } = useCapabilities();
   const [lenisRef, setLenisRef] = useState<Lenis | null>(null);
+  const shouldUseLenis = !prefersReducedMotion && perfTier === 'full';
 
   useEffect(() => {
-    if (prefersReducedMotion) {
+    if (!shouldUseLenis) {
+      // Defensive cleanup if a Lenis instance ever survived a race.
+      clearLenisHtmlClasses();
       return;
     }
 
@@ -34,30 +51,33 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
 
     return () => {
       lenis.destroy();
+      clearLenisHtmlClasses();
       setLenisRef(null);
     };
-  }, [prefersReducedMotion]);
+  }, [shouldUseLenis]);
 
-  const scrollTo = useCallback((target: string | HTMLElement, options?: ScrollOptions) => {
-    if (lenisRef) {
-      lenisRef.scrollTo(target, options);
-    } else {
-      // Fallback nativo
-      let element: HTMLElement | null = null;
-      if (typeof target === 'string') {
-        element = document.querySelector(target);
+  const scrollTo = useCallback(
+    (target: string | HTMLElement, options?: ScrollOptions) => {
+      if (lenisRef) {
+        lenisRef.scrollTo(target, options);
       } else {
-        element = target;
-      }
+        let element: HTMLElement | null = null;
+        if (typeof target === 'string') {
+          element = document.querySelector(target);
+        } else {
+          element = target;
+        }
 
-      if (element) {
-        element.scrollIntoView({
-          behavior: prefersReducedMotion ? 'auto' : 'smooth',
-          block: 'start',
-        });
+        if (element) {
+          element.scrollIntoView({
+            behavior: prefersReducedMotion ? 'auto' : 'smooth',
+            block: 'start',
+          });
+        }
       }
-    }
-  }, [lenisRef, prefersReducedMotion]);
+    },
+    [lenisRef, prefersReducedMotion],
+  );
 
   const pause = useCallback(() => lenisRef?.stop(), [lenisRef]);
   const resume = useCallback(() => lenisRef?.start(), [lenisRef]);
