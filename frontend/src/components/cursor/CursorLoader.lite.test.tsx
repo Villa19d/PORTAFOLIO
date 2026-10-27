@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CursorLoader } from './CursorLoader';
 
@@ -6,6 +6,10 @@ const perf = vi.hoisted(() => ({ tier: 'full' as 'lite' | 'full' }));
 
 vi.mock('../../hooks/usePerformanceTier', () => ({
   usePerformanceTier: () => perf.tier,
+}));
+
+vi.mock('./CustomCursor', () => ({
+  CustomCursor: () => <div data-testid="custom-cursor" />,
 }));
 
 describe('CursorLoader performance tiers', () => {
@@ -32,14 +36,12 @@ describe('CursorLoader performance tiers', () => {
     const { container } = render(<CursorLoader />);
 
     expect(container).toBeEmptyDOMElement();
-    expect(document.documentElement).not.toHaveClass('custom-cursor-active');
+    expect(screen.queryByTestId('custom-cursor')).not.toBeInTheDocument();
   });
 
   it('mounts the custom cursor in full tier on a capable desktop', async () => {
-    const { container } = render(<CursorLoader />);
+    render(<CursorLoader />);
 
-    await waitFor(() => {
-      expect(container.querySelector('.custom-cursor-dot')).toBeInTheDocument();
-    });
+    expect(await screen.findByTestId('custom-cursor')).toBeInTheDocument();
   });
 });

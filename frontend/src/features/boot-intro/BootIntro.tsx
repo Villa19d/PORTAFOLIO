@@ -42,6 +42,7 @@ export function BootIntro({ onDone }: BootIntroProps) {
 
   return (
     <div
+      role="presentation"
       aria-hidden={exiting}
       className={[
         'fixed inset-0 z-[9999] flex items-center justify-center bg-bg px-6',

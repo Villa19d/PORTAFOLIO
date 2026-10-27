@@ -45,12 +45,15 @@ function prefersReducedMotion() {
 export function SoundProvider({ children }: { children: ReactNode }) {
   const [enabled, setEnabled] = useState(readStoredPreference);
   const engineRef = useRef<SoundEngine | null>(null);
-  const loadingRef = useRef<Promise<SoundEngine> | null>(null);
+  const loadingRef = useRef<Promise<SoundEngine | null> | null>(null);
+  const mountedRef = useRef(true);
 
-  const loadEngine = useCallback(() => {
+  const loadEngine = useCallback((): Promise<SoundEngine | null> => {
     if (engineRef.current) return Promise.resolve(engineRef.current);
     if (!loadingRef.current) {
       loadingRef.current = import('./soundEngine').then(({ createSoundEngine }) => {
+        // The provider may have unmounted while the chunk was loading.
+        if (!mountedRef.current) return null;
         const engine = createSoundEngine();
         engineRef.current = engine;
         return engine;
@@ -68,7 +71,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         // Sound remains usable when storage is unavailable.
       }
       if (next) {
-        void loadEngine().then((engine) => engine.play('click'));
+        void loadEngine().then((engine) => engine?.play('click'));
       } else {
         engineRef.current?.suspend();
       }
@@ -86,7 +89,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         return;
       }
       void loadEngine().then((engine) => {
-        if (document.visibilityState !== 'hidden') engine.play(sound);
+        if (engine && document.visibilityState !== 'hidden') engine.play(sound);
       });
     },
     [enabled, loadEngine]
@@ -105,7 +108,13 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, [enabled]);
 
   useEffect(() => {
-    return () => engineRef.current?.close();
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      engineRef.current?.close();
+      engineRef.current = null;
+      loadingRef.current = null;
+    };
   }, []);
 
   const value = useMemo(() => ({ enabled, toggle, play }), [enabled, play, toggle]);
