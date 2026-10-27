@@ -41,6 +41,7 @@ describe('Hero Component', () => {
       isDesktopLayout: true,
       prefersReducedMotion: false,
       canUseHeavyEffects: true,
+      perfTier: 'full',
     });
   });
 
@@ -113,6 +114,7 @@ describe('Hero Component', () => {
       isDesktopLayout: true,
       prefersReducedMotion: false,
       canUseHeavyEffects: true,
+      perfTier: 'full',
     });
 
     renderHero();
@@ -125,10 +127,26 @@ describe('Hero Component', () => {
       isDesktopLayout: false,
       prefersReducedMotion: true,
       canUseHeavyEffects: false,
+      perfTier: 'full',
     });
 
     renderHero();
     expect(screen.queryByTestId('hero-spotlight')).not.toBeInTheDocument();
     expect(screen.getByTestId('hero-background')).toBeInTheDocument();
+  });
+
+  it('does NOT mount interactive spotlight in lite tier even on a capable desktop', () => {
+    vi.spyOn(capabilitiesModule, 'useCapabilities').mockReturnValue({
+      hasFinePointer: true,
+      isDesktopLayout: true,
+      prefersReducedMotion: false,
+      canUseHeavyEffects: false,
+      perfTier: 'lite',
+    });
+
+    renderHero();
+    expect(screen.queryByTestId('hero-spotlight')).not.toBeInTheDocument();
+    expect(screen.getByTestId('hero-background')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Rodrigo Del Villar/i);
   });
 });

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { usePerformanceTier } from './usePerformanceTier';
 
 function createMatchMedia(query: string) {
   return {
@@ -38,6 +39,8 @@ export function useCapabilities() {
     reducedMotionMedia.getServerSnapshot
   );
 
+  const perfTier = usePerformanceTier();
+
   // Check saveData safely
   const saveData = (() => {
     if (typeof navigator !== 'undefined' && 'connection' in navigator) {
@@ -49,15 +52,17 @@ export function useCapabilities() {
 
   /**
    * canUseHeavyEffects debe evaluarse ANTES de cualquier import() dinámico de código 3D.
-   * Si es false, no se debe descargar código pesado.
+   * Si es false, no se debe descargar código pesado. Es false en modo lite
+   * (equipo que no aguanta, medido o forzado con ?perf=lite).
    */
   const canUseHeavyEffects =
-    hasFinePointer && isDesktopLayout && !prefersReducedMotion && !saveData;
+    hasFinePointer && isDesktopLayout && !prefersReducedMotion && !saveData && perfTier === 'full';
 
   return {
     hasFinePointer,
     isDesktopLayout,
     prefersReducedMotion,
     canUseHeavyEffects,
+    perfTier,
   };
 }

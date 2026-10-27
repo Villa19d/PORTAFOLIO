@@ -130,8 +130,9 @@ export function Navbar() {
 
   return (
     <header
+      data-scrolled={scrolled}
       className={[
-        'fixed top-0 inset-x-0 z-50 transition-all duration-300',
+        'site-header fixed top-0 inset-x-0 z-50 transition-all duration-300',
         scrolled
           ? 'bg-surface/80 backdrop-blur-md border-b border-border shadow-nav'
           : 'bg-transparent border-b border-transparent',

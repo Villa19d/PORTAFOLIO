@@ -24,6 +24,7 @@ describe('MagneticButton', () => {
       isDesktopLayout: true,
       prefersReducedMotion: true,
       canUseHeavyEffects: false,
+      perfTier: 'full',
     });
     const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect');
 
@@ -45,6 +46,7 @@ describe('MagneticButton', () => {
       isDesktopLayout: true,
       prefersReducedMotion: false,
       canUseHeavyEffects: true,
+      perfTier: 'full',
     });
     const link = render(
       <MagneticButton>

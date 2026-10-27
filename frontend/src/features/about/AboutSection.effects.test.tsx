@@ -18,6 +18,7 @@ const desktopCapabilities = {
   isDesktopLayout: true,
   prefersReducedMotion: false,
   canUseHeavyEffects: true,
+  perfTier: 'full' as const,
 };
 
 beforeEach(() => {

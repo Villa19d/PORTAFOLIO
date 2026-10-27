@@ -10,11 +10,15 @@ const suspendMock = vi.fn();
 const resumeMock = vi.fn();
 const closeMock = vi.fn();
 const oscillatorMock = vi.fn();
+const audioContextCreatedMock = vi.fn();
 
 class MockAudioContext {
   state = 'running';
   currentTime = 0;
   destination = {};
+  constructor() {
+    audioContextCreatedMock();
+  }
   createOscillator() {
     oscillatorMock();
     return {
@@ -101,5 +105,21 @@ describe('sound controls', () => {
     const oscillatorCountAfterActivation = oscillatorMock.mock.calls.length;
     fireEvent.click(screen.getByRole('button', { name: 'Play tick' }));
     expect(oscillatorMock).toHaveBeenCalledTimes(oscillatorCountAfterActivation);
+  });
+
+  it('does not create the AudioContext when the provider unmounts before the engine loads', async () => {
+    const { unmount } = render(
+      <I18nextProvider i18n={i18n}>
+        <SoundProvider>
+          <SoundToggle />
+        </SoundProvider>
+      </I18nextProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button'));
+    unmount();
+    await vi.dynamicImportSettled();
+
+    expect(audioContextCreatedMock).not.toHaveBeenCalled();
   });
 });

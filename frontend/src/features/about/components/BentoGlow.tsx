@@ -53,7 +53,7 @@ export default function BentoGlow({ containerRef }: BentoGlowProps) {
     <div
       aria-hidden="true"
       data-testid="bento-glow-overlay"
-      className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-[--radius-lg]"
+      className="bento-glow pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-[--radius-lg]"
     >
       <div
         ref={glowRef}

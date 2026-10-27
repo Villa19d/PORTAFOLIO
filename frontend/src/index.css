@@ -791,3 +791,44 @@
 .hero-paused .hero-blob-3 {
   animation-play-state: paused;
 }
+
+
+/* ==========================================================================
+   Performance tier "lite"
+   usePerformanceTier sets <html data-perf="lite"> when the device cannot paint
+   fast enough (or with ?perf=lite). Every CSS-level degradation lives here.
+   JS-level effects (spotlight, cursor, magnetic, tilt) are unmounted through
+   useCapabilities().canUseHeavyEffects instead.
+   ========================================================================== */
+[data-perf="lite"] .hero-blobs {
+  display: none;
+}
+
+[data-perf="lite"] .hero-background {
+  background:
+    radial-gradient(
+      ellipse 45% 50% at 5% 10%,
+      color-mix(in srgb, var(--accent-primary) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 40% 50% at 95% 45%,
+      color-mix(in srgb, var(--accent-secondary) 10%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 35% 40% at 40% 100%,
+      color-mix(in srgb, var(--accent-primary) 8%, transparent),
+      transparent 70%
+    );
+}
+
+[data-perf="lite"] .site-header[data-scrolled="true"] {
+  background-color: var(--surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+[data-perf="lite"] .bento-glow {
+  display: none;
+}

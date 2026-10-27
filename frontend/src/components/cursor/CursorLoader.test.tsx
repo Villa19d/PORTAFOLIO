@@ -27,6 +27,7 @@ describe('CursorLoader', () => {
       isDesktopLayout: false,
       prefersReducedMotion: true,
       canUseHeavyEffects: false,
+      perfTier: 'full',
     });
   });
 
@@ -43,6 +44,7 @@ describe('CursorLoader', () => {
       isDesktopLayout: true,
       prefersReducedMotion: false,
       canUseHeavyEffects: true,
+      perfTier: 'full',
     });
 
     render(<CursorLoader />);

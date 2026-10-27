@@ -97,3 +97,16 @@
 
 ## 13. Infraestructura (Sprint 7)
 **Render:** NitroStore se moverá a una cuenta separada (vinculada al mismo GitHub) para no agotar las 750 horas gratuitas. Límite: antes de enviar el portafolio a reclutadores. UptimeRobot se mantiene en el portafolio.
+
+
+
+## 14. Rendimiento adaptativo: modo lite (Ticket 11.0)
+- **Contexto:** `canUseHeavyEffects` decidía por tipo de dispositivo (puntero fino, escritorio, sin reduced motion, sin saveData), no por capacidad real de pintar. En un equipo sin aceleración por GPU (caso reproducido en Brave) las animaciones van lentas aunque el dispositivo parezca potente. Es prerrequisito de los sprints 3D (S11, S12).
+- **Decisión:**
+  1. `usePerformanceTier` (`src/hooks/`) mide fps con `requestAnimationFrame` durante ~2 s, empezando tras `load`, un momento idle y ~1 s de gracia, y solo con la pestaña visible (si se oculta, descarta la muestra y la reinicia al volver). Se ignora el primer medio segundo, se calcula el fps de cada ventana de 500 ms y se decide con la **mediana**: menos de 40 fps (`LITE_FPS_THRESHOLD`) => `lite`.
+  2. También es `lite` si `navigator.hardwareConcurrency <= 2` o `navigator.deviceMemory <= 2` (lectura segura de tipos, sin medir).
+  3. Orden de precedencia: `?perf=lite|full` en la URL, luego la decisión guardada en `sessionStorage` (`portfolio-perf-tier`), luego hardware, luego medición. `?perf=` es solo para pruebas y **no** escribe en `sessionStorage`, para no dejar al usuario atrapado en un modo forzado.
+  4. Al decidir `lite` se escribe `document.documentElement.dataset.perf = "lite"`; en `full` se elimina el atributo. La decisión medida se guarda en `sessionStorage` (con `try/catch`) para no medir de nuevo en la sesión.
+  5. El estado es un store externo leído con `useSyncExternalStore`, integrado en `useCapabilities`: `canUseHeavyEffects` es `false` en lite, se mantienen las banderas existentes y se exporta `perfTier`.
+  6. En lite: fondo del Hero estático (gradiente sin animación), sin spotlight, sin cursor personalizado, sin botones magnéticos, sin tilt, sin resplandor del Bento, `backdrop-filter` del Navbar sustituido por fondo sólido y duraciones de entrada del Hero reducidas. El CSS vive en un único bloque `[data-perf="lite"]` de `index.css`; el resto se desmonta por JS con `canUseHeavyEffects`.
+- **Consecuencia:** Los equipos buenos no ven cambios (en full no se altera ningún valor). Las decisiones sincrónicas (URL, sesión, hardware) aplican `data-perf` en el primer render, antes del primer pintado de React. La medición llega unos 3 s después de la carga, así que en la primera visita las animaciones de entrada ya habrán corrido; el beneficio es sobre todo para el resto de la sesión y las visitas siguientes. Una medición puede dar falsos positivos (picos puntuales de CPU) o falsos negativos; se acepta porque el modo lite solo degrada efectos, nunca contenido. El código de medición añade unos pocos bytes al bundle; su impacto sobre el chunk de entrada de S7.3b se evalúa con `dist/stats.json` al cierre del sprint.

@@ -41,3 +41,8 @@ lesson.txt
 .neon
 neon.ts
 TestBcrypt.java
+
+CONTEXT_PACK.md
+backend/make-context-pack.ps1
+body.json
+context_for_chalan.md

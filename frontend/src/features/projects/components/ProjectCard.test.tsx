@@ -63,6 +63,7 @@ describe('ProjectCard', () => {
       isDesktopLayout: true,
       prefersReducedMotion: false,
       canUseHeavyEffects: true,
+      perfTier: 'full',
     });
     const { container, rerender } = renderCard();
 
@@ -82,6 +83,21 @@ describe('ProjectCard', () => {
       isDesktopLayout: true,
       prefersReducedMotion: true,
       canUseHeavyEffects: false,
+      perfTier: 'full',
+    });
+
+    const { container } = renderCard();
+
+    expect(container.querySelector('.tilt-surface')).not.toBeInTheDocument();
+  });
+
+  it('does not mount TiltSurface in lite tier', () => {
+    vi.spyOn(capabilitiesModule, 'useCapabilities').mockReturnValue({
+      hasFinePointer: true,
+      isDesktopLayout: true,
+      prefersReducedMotion: false,
+      canUseHeavyEffects: false,
+      perfTier: 'lite',
     });
 
     const { container } = renderCard();

@@ -59,6 +59,7 @@ describe('ProjectDetailModal', () => {
       isDesktopLayout: false,
       prefersReducedMotion: false,
       canUseHeavyEffects: false,
+      perfTier: 'full',
     });
     restoreCapabilities = () => capabilitiesSpy.mockRestore();
     Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
