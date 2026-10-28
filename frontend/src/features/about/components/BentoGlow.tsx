@@ -2,18 +2,26 @@ import { useEffect, useRef, type RefObject } from 'react';
 
 interface BentoGlowProps {
   containerRef: RefObject<HTMLDivElement | null>;
+  /**
+   * When false, the overlay keeps the same DOM but stops reacting to pointer
+   * events. Used to disable the effect in lite tier without unmounting.
+   */
+  enabled?: boolean;
 }
 
-export default function BentoGlow({ containerRef }: BentoGlowProps) {
+export default function BentoGlow({ containerRef, enabled = true }: BentoGlowProps) {
   const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
     const glow = glowRef.current;
 
-    if (!container || !glow) {
+    if (!enabled) {
+      if (glow) glow.style.opacity = '0';
       return;
     }
+
+    const container = containerRef.current;
+    if (!container || !glow) return;
 
     let bounds: DOMRect | null = null;
 
@@ -22,9 +30,7 @@ export default function BentoGlow({ containerRef }: BentoGlowProps) {
     };
 
     const handlePointerMove = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse' || !bounds) {
-        return;
-      }
+      if (event.pointerType !== 'mouse' || !bounds) return;
 
       const x = event.clientX - bounds.left;
       const y = event.clientY - bounds.top;
@@ -47,12 +53,13 @@ export default function BentoGlow({ containerRef }: BentoGlowProps) {
       container.removeEventListener('pointermove', handlePointerMove);
       container.removeEventListener('pointerleave', hideGlow);
     };
-  }, [containerRef]);
+  }, [containerRef, enabled]);
 
   return (
     <div
       aria-hidden="true"
       data-testid="bento-glow-overlay"
+      data-glow-enabled={enabled ? 'true' : 'false'}
       className="bento-glow pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-[--radius-lg]"
     >
       <div

@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from 'react';
-import { m, useReducedMotion } from 'motion/react';
+import { m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { useEntranceMotion } from '../../../hooks/useEntranceMotion';
 
 interface BentoGridProps {
   children: ReactNode;
@@ -9,25 +10,35 @@ interface BentoGridProps {
 
 export function BentoGrid({ children, containerRef }: BentoGridProps) {
   const { t } = useTranslation('common');
-  const prefersReducedMotion = useReducedMotion();
+  const { skipEntrance } = useEntranceMotion();
 
+  // When entrance motion is skipped we force the final state and drop all
+  // variants. `animate` is explicit so motion overwrites any inline style
+  // left by a previous entrance animation that already ran (full -> lite
+  // transition in low-GPU browsers). This is the fix for the About section
+  // staying at opacity: 0 in Brave / lite tier.
   return (
     <m.div
       ref={containerRef}
       role="group"
       aria-label={t('about.sectionLabel')}
-      initial={prefersReducedMotion ? false : 'hidden'}
-      whileInView={prefersReducedMotion ? undefined : 'visible'}
-      viewport={{ once: true, amount: 0.12 }}
-      variants={{
-        hidden: {},
-        visible: {
-          transition: {
-            delayChildren: 0.04,
-            staggerChildren: 0.075,
-          },
-        },
-      }}
+      initial={skipEntrance ? false : 'hidden'}
+      animate={skipEntrance ? { opacity: 1 } : undefined}
+      whileInView={skipEntrance ? undefined : 'visible'}
+      viewport={skipEntrance ? undefined : { once: true, amount: 0.12 }}
+      variants={
+        skipEntrance
+          ? undefined
+          : {
+              hidden: {},
+              visible: {
+                transition: {
+                  delayChildren: 0.04,
+                  staggerChildren: 0.075,
+                },
+              },
+            }
+      }
       className="
         grid
         grid-cols-1

@@ -1,13 +1,20 @@
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useRef } from 'react';
+import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef } from 'react';
 import { m, useMotionValue, useSpring, useTransform } from 'motion/react';
 
 interface TiltSurfaceProps {
   children: ReactNode;
+  /**
+   * When false, the same DOM tree is kept but pointer listeners are not
+   * attached and motion values are settled at rest. Used to disable the
+   * effect in lite tier / reduced motion without unmounting (which would
+   * remount children and lose state, e.g. Swiper slide position).
+   */
+  enabled?: boolean;
 }
 
 const MAX_ROTATION = 8;
 
-export function TiltSurface({ children }: TiltSurfaceProps) {
+export function TiltSurface({ children, enabled = true }: TiltSurfaceProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const boundsRef = useRef<DOMRect | null>(null);
   const isPointerDownRef = useRef(false);
@@ -21,6 +28,16 @@ export function TiltSurface({ children }: TiltSurfaceProps) {
   const glareY = useTransform(springY, [-1, 1], ['-20%', '20%']);
   const glareOpacity = useTransform(springX, (x) => Math.min(0.28, Math.abs(x) * 0.2));
 
+  // Settle motion values when disabled so the surface returns to rest
+  // without needing any listener. Also clear stale pointer state.
+  useEffect(() => {
+    if (enabled) return;
+    pointerX.set(0);
+    pointerY.set(0);
+    boundsRef.current = null;
+    isPointerDownRef.current = false;
+  }, [enabled, pointerX, pointerY]);
+
   const resetTilt = () => {
     pointerX.set(0);
     pointerY.set(0);
@@ -31,7 +48,6 @@ export function TiltSurface({ children }: TiltSurfaceProps) {
       boundsRef.current = null;
       return;
     }
-
     boundsRef.current = surfaceRef.current?.getBoundingClientRect() ?? null;
   };
 
@@ -40,12 +56,10 @@ export function TiltSurface({ children }: TiltSurfaceProps) {
       resetTilt();
       return;
     }
-
     const bounds = boundsRef.current;
     if (!bounds || bounds.width === 0 || bounds.height === 0) {
       return;
     }
-
     const normalizedX = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
     const normalizedY = ((event.clientY - bounds.top) / bounds.height) * 2 - 1;
     pointerX.set(Math.max(-1, Math.min(1, normalizedX)));
@@ -71,12 +85,13 @@ export function TiltSurface({ children }: TiltSurfaceProps) {
     <div
       ref={surfaceRef}
       className="tilt-surface"
-      onPointerEnter={handlePointerEnter}
-      onPointerMove={handlePointerMove}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerLeave}
-      onPointerLeave={handlePointerLeave}
+      data-tilt-enabled={enabled ? 'true' : 'false'}
+      onPointerEnter={enabled ? handlePointerEnter : undefined}
+      onPointerMove={enabled ? handlePointerMove : undefined}
+      onPointerDown={enabled ? handlePointerDown : undefined}
+      onPointerUp={enabled ? handlePointerUp : undefined}
+      onPointerCancel={enabled ? handlePointerLeave : undefined}
+      onPointerLeave={enabled ? handlePointerLeave : undefined}
     >
       <m.div
         className="tilt-surface__content"

@@ -3,14 +3,15 @@ import { m, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
 
 interface HeroSpotlightProps {
   containerRef: React.RefObject<HTMLElement | null>;
+  enabled?: boolean;
 }
 
 /**
  * Interactive spotlight following the user's cursor.
- * Uses useMotionValue + useSpring to update the CSS gradient directly in the DOM.
- * Zero React state or re-renders during mousemove.
+ * Always mounted to keep the DOM tree stable; the `enabled` prop turns the
+ * pointer listeners on or off (lite tier / reduced motion).
  */
-export function HeroSpotlight({ containerRef }: HeroSpotlightProps) {
+export function HeroSpotlight({ containerRef, enabled = true }: HeroSpotlightProps) {
   const mouseX = useMotionValue(-1000);
   const mouseY = useMotionValue(-1000);
 
@@ -21,6 +22,12 @@ export function HeroSpotlight({ containerRef }: HeroSpotlightProps) {
   const background = useMotionTemplate`radial-gradient(600px circle at ${smoothX}px ${smoothY}px, rgba(0, 229, 255, 0.12), transparent 75%)`;
 
   useEffect(() => {
+    if (!enabled) {
+      mouseX.set(-1000);
+      mouseY.set(-1000);
+      return;
+    }
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -42,7 +49,7 @@ export function HeroSpotlight({ containerRef }: HeroSpotlightProps) {
       container.removeEventListener('pointermove', handlePointerMove);
       container.removeEventListener('pointerleave', handlePointerLeave);
     };
-  }, [containerRef, mouseX, mouseY]);
+  }, [containerRef, enabled, mouseX, mouseY]);
 
   return (
     <m.div
@@ -50,6 +57,7 @@ export function HeroSpotlight({ containerRef }: HeroSpotlightProps) {
       style={{ background }}
       aria-hidden="true"
       data-testid="hero-spotlight"
+      data-spotlight-enabled={enabled ? 'true' : 'false'}
     />
   );
 }

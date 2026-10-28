@@ -46,3 +46,7 @@ CONTEXT_PACK.md
 backend/make-context-pack.ps1
 body.json
 context_for_chalan.md
+CREAR_CONTEXT_PACK.ps1
+
+frontend/IA_CONTEXT_PACK.md
+frontend/measure-initial.mjs

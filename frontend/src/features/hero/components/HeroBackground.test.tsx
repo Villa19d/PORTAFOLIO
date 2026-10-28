@@ -27,18 +27,35 @@ describe('HeroBackground performance tiers', () => {
     vi.unstubAllGlobals();
   });
 
-  it('mounts the spotlight in full tier on a capable desktop', () => {
+  it('renders the spotlight enabled in full tier on a capable desktop', () => {
     render(<HeroBackground containerRef={createRef<HTMLElement>()} />);
 
-    expect(screen.getByTestId('hero-spotlight')).toBeInTheDocument();
+    const spotlight = screen.getByTestId('hero-spotlight');
+    expect(spotlight).toBeInTheDocument();
+    expect(spotlight).toHaveAttribute('data-spotlight-enabled', 'true');
   });
 
-  it('does not mount the spotlight in lite tier but keeps the background', () => {
+  it('keeps the spotlight mounted but disabled in lite tier', () => {
     perf.tier = 'lite';
 
     render(<HeroBackground containerRef={createRef<HTMLElement>()} />);
 
-    expect(screen.queryByTestId('hero-spotlight')).not.toBeInTheDocument();
+    const spotlight = screen.getByTestId('hero-spotlight');
+    expect(spotlight).toBeInTheDocument();
+    expect(spotlight).toHaveAttribute('data-spotlight-enabled', 'false');
     expect(screen.getByTestId('hero-background')).toHaveClass('hero-background');
+  });
+
+  it('does not unmount the spotlight node when tier changes from full to lite', () => {
+    const { rerender } = render(<HeroBackground containerRef={createRef<HTMLElement>()} />);
+    const first = screen.getByTestId('hero-spotlight');
+    expect(first).toHaveAttribute('data-spotlight-enabled', 'true');
+
+    perf.tier = 'lite';
+    rerender(<HeroBackground containerRef={createRef<HTMLElement>()} />);
+
+    const second = screen.getByTestId('hero-spotlight');
+    expect(second).toBe(first);
+    expect(second).toHaveAttribute('data-spotlight-enabled', 'false');
   });
 });

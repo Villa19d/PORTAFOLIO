@@ -832,3 +832,18 @@
 [data-perf="lite"] .bento-glow {
   display: none;
 }
+
+
+[data-perf="lite"] .bento-glow {
+  display: none;
+}
+
+/* Skeletons: fixed opacity, no pulse, no shimmer. */
+[data-perf="lite"] .animate-pulse {
+  animation: none;
+}
+
+[data-perf="lite"] .project-skeleton__block::after {
+  animation: none;
+  opacity: 0;
+}
