@@ -4,12 +4,14 @@ import Lenis from 'lenis';
 import { SmoothScrollProvider } from './SmoothScrollProvider';
 
 vi.mock('lenis', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    destroy: vi.fn(),
-    scrollTo: vi.fn(),
-    stop: vi.fn(),
-    start: vi.fn(),
-  })),
+  default: vi.fn(function () {
+    return {
+      destroy: vi.fn(),
+      scrollTo: vi.fn(),
+      stop: vi.fn(),
+      start: vi.fn(),
+    };
+  }),
 }));
 
 const capabilities = vi.hoisted(() => ({
