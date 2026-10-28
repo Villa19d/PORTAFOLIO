@@ -33,14 +33,21 @@ export function BentoTile({
   const { hasFinePointer, prefersReducedMotion } = useCapabilities();
   const { skipEntrance } = useEntranceMotion();
 
-  // When entrance motion is skipped, drop variants entirely so the tile can
-  // never be stuck in a `hidden` state even if an ancestor stops propagating
-  // the `visible` variant.
+  // See BentoGrid: when entrance motion is skipped we must force the final
+  // state (opacity 1, y 0) to overwrite any inline style left by a previous
+  // entrance animation. Without this, a full -> lite transition leaves the
+  // tile stuck at opacity: 0.
+  const hoverProps =
+    !skipEntrance && hasFinePointer && !prefersReducedMotion
+      ? { y: -3, transition: { duration: 0.18 } }
+      : undefined;
+
   return (
     <m.div
       role={label ? 'region' : undefined}
       aria-label={label}
       initial={skipEntrance ? false : undefined}
+      animate={skipEntrance ? { opacity: 1, y: 0 } : undefined}
       variants={
         skipEntrance
           ? undefined
@@ -53,11 +60,7 @@ export function BentoTile({
               },
             }
       }
-      whileHover={
-        hasFinePointer && !prefersReducedMotion
-          ? { y: -3, transition: { duration: 0.18 } }
-          : undefined
-      }
+      whileHover={hoverProps}
       className={[
         'relative overflow-hidden rounded-[--radius-lg]',
         'border border-border bg-surface',

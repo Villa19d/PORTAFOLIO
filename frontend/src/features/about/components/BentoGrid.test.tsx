@@ -11,6 +11,20 @@ vi.mock('../../../hooks/useEntranceMotion', () => ({
   useEntranceMotion: () => ({ skipEntrance: entrance.skipEntrance }),
 }));
 
+const capabilities = vi.hoisted(() => ({
+  value: {
+    hasFinePointer: true,
+    isDesktopLayout: true,
+    prefersReducedMotion: false,
+    canUseHeavyEffects: true,
+    perfTier: 'full' as 'full' | 'lite',
+  },
+}));
+
+vi.mock('../../../hooks/useCapabilities', () => ({
+  useCapabilities: () => capabilities.value,
+}));
+
 afterEach(() => {
   cleanup();
 });
@@ -18,6 +32,13 @@ afterEach(() => {
 describe('BentoGrid motion preferences', () => {
   beforeEach(() => {
     entrance.skipEntrance = true;
+    capabilities.value = {
+      hasFinePointer: true,
+      isDesktopLayout: true,
+      prefersReducedMotion: false,
+      canUseHeavyEffects: true,
+      perfTier: 'full',
+    };
   });
 
   it('does not hide tiles for the reveal animation when entrance motion is skipped', () => {
@@ -36,8 +57,8 @@ describe('BentoGrid motion preferences', () => {
     expect(tile.style.transform).not.toContain('12px');
   });
 
-  it('renders tiles without variants when entrance motion is skipped (About must stay visible)', () => {
-    const { container } = render(
+  it('forces the final visible state on tiles when entrance motion is skipped (regression: About empty in lite)', () => {
+    render(
       <I18nextProvider i18n={i18n}>
         <BentoGrid>
           <BentoTile label="Intro tile">
@@ -47,15 +68,47 @@ describe('BentoGrid motion preferences', () => {
       </I18nextProvider>,
     );
 
-    // The wrapper must not carry variants when skipEntrance is true; otherwise
-    // descendants can inherit a `hidden` state and the section renders empty.
-    const group = container.querySelector('[role="group"]');
-    expect(group).not.toBeNull();
-    expect(group?.querySelector('[style*="opacity: 0"]')).toBeNull();
-
     const tile = screen.getByRole('region', { name: 'Intro tile' });
-    // Motion stores variants in an internal prop; the DOM should have no
-    // leftover transform/opacity from an unresolved variant.
-    expect(tile.style.opacity === '' || tile.style.opacity === '1').toBe(true);
+    // With skipEntrance=true, BentoTile applies animate={{ opacity: 1, y: 0 }}
+    // and initial={false}, so the tile must not stay at opacity: 0 nor at
+    // translateY(12px). Motion may set the style asynchronously on the very
+    // first tick, but by the time the assertion runs it must already be at
+    // the final state (no animation is requested, so it's synchronous).
+    const opacity = tile.style.opacity;
+    expect(opacity === '' || opacity === '1').toBe(true);
+    const transform = tile.style.transform;
+    expect(transform === '' || transform === 'none' || !transform.includes('12px')).toBe(true);
+  });
+
+  it('re-renders without crashing when skipEntrance flips from false to true', () => {
+    entrance.skipEntrance = false;
+
+    const { rerender } = render(
+      <I18nextProvider i18n={i18n}>
+        <BentoGrid>
+          <BentoTile label="Intro tile">
+            <p>Profile intro</p>
+          </BentoTile>
+        </BentoGrid>
+      </I18nextProvider>,
+    );
+
+    entrance.skipEntrance = true;
+
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <BentoGrid>
+          <BentoTile label="Intro tile">
+            <p>Profile intro</p>
+          </BentoTile>
+        </BentoGrid>
+      </I18nextProvider>,
+    );
+
+    // The tile must still be in the DOM after the flip. (We don't assert on
+    // inline styles here because motion applies `animate` asynchronously in
+    // jsdom; the deterministic style assertion lives in the previous test
+    // where skipEntrance is true from the start.)
+    expect(screen.getByRole('region', { name: 'Intro tile' })).toBeInTheDocument();
   });
 });

@@ -12,16 +12,18 @@ export function BentoGrid({ children, containerRef }: BentoGridProps) {
   const { t } = useTranslation('common');
   const { skipEntrance } = useEntranceMotion();
 
-  // When entrance motion is skipped we render the grid with NO variants and
-  // NO whileInView, so no descendant can inherit a `hidden` state. This keeps
-  // the section content visible in lite tier / reduced motion regardless of
-  // when the tier is resolved.
+  // When entrance motion is skipped we force the final state and drop all
+  // variants. `animate` is explicit so motion overwrites any inline style
+  // left by a previous entrance animation that already ran (full -> lite
+  // transition in low-GPU browsers). This is the fix for the About section
+  // staying at opacity: 0 in Brave / lite tier.
   return (
     <m.div
       ref={containerRef}
       role="group"
       aria-label={t('about.sectionLabel')}
       initial={skipEntrance ? false : 'hidden'}
+      animate={skipEntrance ? { opacity: 1 } : undefined}
       whileInView={skipEntrance ? undefined : 'visible'}
       viewport={skipEntrance ? undefined : { once: true, amount: 0.12 }}
       variants={
