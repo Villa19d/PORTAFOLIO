@@ -7,6 +7,10 @@
   },
   "dependencies": {
     "@neon/config": "^1.8.6",
-    "@neon/env": "^1.5.3"
+    "@neon/env": "^1.5.3",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "0.186.0"
   }
 }

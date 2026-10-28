@@ -26,6 +26,8 @@ export interface PerformanceTierStore {
   getTier: () => PerfTier;
   subscribe: (listener: () => void) => () => void;
   start: () => () => void;
+  /** Forces the lite tier (e.g. a feature measured poor performance). Persists for the session. */
+  requestLite: () => void;
 }
 
 function isPerfTier(value: unknown): value is PerfTier {
@@ -270,7 +272,16 @@ export function createPerformanceTierStore(
     };
   };
 
-  return { getTier, subscribe, start };
+  const requestLite = () => {
+    getTier();
+    needsMeasurement = false;
+    stopMonitor?.();
+    stopMonitor = null;
+    persistTier('lite');
+    commit('lite');
+  };
+
+  return { getTier, subscribe, start, requestLite };
 }
 
 let defaultStore: PerformanceTierStore | null = null;
@@ -290,4 +301,9 @@ export function usePerformanceTier(): PerfTier {
   const store = getDefaultStore();
   useEffect(() => store.start(), [store]);
   return useSyncExternalStore(store.subscribe, store.getTier, getServerTier);
+}
+
+/** Forces the lite tier for the rest of the session (used when a heavy effect degrades). */
+export function requestLiteTier(): void {
+  getDefaultStore().requestLite();
 }
