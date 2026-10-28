@@ -834,10 +834,6 @@
 }
 
 
-[data-perf="lite"] .bento-glow {
-  display: none;
-}
-
 /* Skeletons: fixed opacity, no pulse, no shimmer. */
 [data-perf="lite"] .animate-pulse {
   animation: none;
