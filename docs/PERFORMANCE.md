@@ -131,6 +131,89 @@ and static modulepreloads total 131,174 gzip bytes (React 3,203; React DOM
 66,372; Motion 23,111; entry 38,488). Before optimization those same initial
 chunks totaled 156,487 gzip bytes (React 4,370; Motion 23,111; entry 129,006).
 
+### Ticket S11.2: 3D Hero chunk (three)
+
+The 3D scene lives in a lazy chunk (`three-*.js`, plus the small `HeroScene-*.js`)
+that must only be requested through a dynamic import. Budget: the three chunk
+must not exceed **180 KB gzip**; if it does, stop and consult before continuing.
+The entry chunk must not grow compared with the previous ticket.
+
+From `frontend/`, build and run these checks (with `--emptyOutDir false` only if
+Vite reports `EBUSY`, and then ignore stale files in `dist/assets`):
+
+```sh
+npm run build
+```
+
+1. Three must be absent from the initial HTML (no output expected). In PowerShell:
+
+```powershell
+Select-String -Path dist/index.html -Pattern 'three'
+```
+
+2. Gzip size of every JavaScript chunk, including `three-*.js` and `HeroScene-*.js`:
+
+```sh
+node --input-type=module -e 'import { readdirSync, readFileSync } from "node:fs"; import { gzipSync } from "node:zlib"; for (const name of readdirSync("dist/assets").filter((file) => file.endsWith(".js"))) { const bytes = readFileSync(`dist/assets/${name}`); console.log(`${name}: ${bytes.length} bytes; ${gzipSync(bytes).length} bytes gzip`); }'
+```
+
+3. Entry chunk gzip: reuse the S7.3b command above and compare with the previous ticket.
+
+#### Network checks (no 3D download)
+
+In Chrome DevTools, Network tab, Disable cache, filter by `three`:
+
+| Case | Expected requests for `three-*.js` |
+| --- | --- |
+| Desktop, full tier, WebGL available | 1, after the `load` event |
+| Mobile emulation (touch, narrow viewport) | 0 |
+| Desktop with `?perf=lite` | 0 |
+| Desktop with `prefers-reduced-motion: reduce` emulated | 0 |
+
+Clear `sessionStorage` between runs (`sessionStorage.clear()`), because a stored
+tier decision takes precedence over measurement.
+
+#### Lighthouse with and without 3D
+
+Run Lighthouse desktop and mobile, three runs each, report the median of
+Performance, CLS and TBT (see the Lighthouse section). The "without 3D" case is
+the build from the previous ticket (S11.1); `?perf=lite` is not an equivalent
+baseline because lite also turns off other effects. Mobile must show no
+difference caused by this ticket.
+
+#### Frame rate with the pointer moving
+
+With the 3D active on desktop, record a 10 s DevTools Performance trace while
+moving the pointer across the Hero continuously, and report the average fps
+shown by the trace. As a cross-check, run the `requestAnimationFrame` sampling
+snippet from the frame-rate section over the same 10 s.
+
+#### Degradation with 6x CPU
+
+1. Enable CPU 6x slowdown, clear `sessionStorage` and open the page with `?perf=full`. This disables the base tier measurement, so only the scene's own monitor is tested.
+2. As soon as the page has loaded, paste in the Console:
+
+```js
+const start = performance.now();
+const observer = new MutationObserver(() => {
+  if (document.documentElement.dataset.perf === 'lite') {
+    console.log('lite after ms:', Math.round(performance.now() - start));
+    console.log('canvas mounted:', Boolean(document.querySelector('[data-testid="hero-scene"] canvas')));
+    observer.disconnect();
+  }
+});
+observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-perf'] });
+```
+
+3. Expected: `data-perf="lite"` and no canvas in about 4 s after the scene starts (0.5 s warm-up plus three 1 s windows). The snippet starts counting when pasted, so the figure can differ by about a second; report it as measured. Repeat three times and report all values.
+4. Context loss check: in the Console run `document.querySelector('[data-testid="hero-scene"] canvas').getContext('webgl2').getExtension('WEBGL_lose_context').loseContext()`. Expected: the canvas disappears and the CSS background remains, with no errors in the Console.
+
+#### Layout shift
+
+Record CLS with the 3D enabled (Slow 4G, cache disabled, three reloads). The
+canvas is absolutely positioned inside the Hero background and fades in over the
+CSS background, so the expected CLS contribution is 0.
+
 ## Visual comparison
 
 Capture the Hero and Projects at the same viewport, theme, language, browser

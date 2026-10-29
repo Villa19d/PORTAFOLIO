@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCapabilities } from '../../../hooks/useCapabilities';
+import { HeroSceneLayer } from '../three/HeroSceneLayer';
 import { HeroSpotlight } from './HeroSpotlight';
 
 interface HeroBackgroundProps {
@@ -9,6 +10,7 @@ interface HeroBackgroundProps {
 /**
  * Layered Hero background.
  * - Base Layer: Pure CSS animated mesh gradients & subtle radial masked tech grid (zero JS).
+ * - 3D Layer: deferred particle field (desktop, full tier only). The CSS layer stays underneath as poster.
  * - Interactive Layer: Spotlight rendered always, enabled only when canUseHeavyEffects.
  * - Automatically pauses CSS animations when Hero is outside the viewport.
  * - In lite tier the blobs are hidden and replaced by a static gradient (see index.css).
@@ -73,6 +75,9 @@ export function HeroBackground({ containerRef }: HeroBackgroundProps) {
             'radial-gradient(ellipse 70% 60% at 50% 50%, #000 35%, transparent 85%)',
         }}
       />
+
+      {/* Deferred 3D particles; renders nothing until every gate condition passes. */}
+      <HeroSceneLayer containerRef={containerRef} />
 
       {/* Always mounted; internal listeners react to `enabled` toggles. */}
       <HeroSpotlight containerRef={containerRef} enabled={canUseHeavyEffects} />

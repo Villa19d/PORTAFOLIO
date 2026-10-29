@@ -1,5 +1,4 @@
-/// <reference types="vitest" />
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -39,12 +38,16 @@ export default defineConfig({
     }
   },
   build: {
+    // The lazy three chunk is ~500+ kB minified (gzip is what counts, see docs/PERFORMANCE.md)
+    // and is only requested through a dynamic import.
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
         manualChunks: {
           react: ['react'],
           'react-dom': ['react-dom/client'],
           motion: ['motion'],
+          three: ['three'],
         },
       },
     },
