@@ -537,13 +537,6 @@ async function runFullSmoke() {
         }
         if (res && res.status === 429) {
           got429 = true; blockedIndex = i;
-          const retryHeader = res.headers.get('retry-after');
-          if (retryHeader) {
-            const parsed = parseInt(retryHeader, 10);
-            if (!isNaN(parsed) && parsed > 0) {
-              retryAfterSeconds = parsed;
-            }
-          }
           break;
         }
         await sleep(50);
