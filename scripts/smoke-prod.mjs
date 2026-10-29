@@ -486,8 +486,8 @@ async function runFullSmoke() {
     ];
 
     for (const testCase of SPOOF_HEADERS) {
-      const waitSeconds = Math.max(retryAfterSeconds, 1) + 2;
-      console.log(`\n${SYMBOL_INFO} [Ronda ${testCase.header}] Esperando ${waitSeconds}s a que expire la ventana (Retry-After: ${retryAfterSeconds}s + 2s)...`);
+      const waitSeconds = Math.max(retryAfterSeconds, 1) + 3;
+      console.log(`\n${SYMBOL_INFO} [Ronda ${testCase.header}] Esperando ${waitSeconds}s a que expire la ventana (Retry-After: ${retryAfterSeconds}s + 3s)...`);
 
       // Cuenta regresiva visual
       for (let remaining = waitSeconds; remaining > 0; remaining -= 5) {
@@ -537,6 +537,13 @@ async function runFullSmoke() {
         }
         if (res && res.status === 429) {
           got429 = true; blockedIndex = i;
+          const retryHeader = res.headers.get('retry-after');
+          if (retryHeader) {
+            const parsed = parseInt(retryHeader, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              retryAfterSeconds = parsed;
+            }
+          }
           break;
         }
         await sleep(50);
