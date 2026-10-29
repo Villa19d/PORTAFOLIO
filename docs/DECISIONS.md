@@ -88,6 +88,7 @@
   | `X-Forwarded-For` | Cliente / Cloudflare / Render | **Concatena (Append), NO sobrescribe.** Render añade la IP real al final de la lista. | [Render Proxy Documentation](https://render.com/docs/web-services) | **SÓLO el rightmost si proviene de proxy interno confiable (Fallback)** |
 
 - **Decisión:**
+  La IP del cliente es la 3.ª desde la derecha del X-Forwarded-For; la cabecera CF-Connecting-IP enviada por el cliente la rechaza el edge (error 1000) y la app nunca la lee.
   1. Se eliminan `CF-Connecting-IP`, `True-Client-IP`, `X-Real-IP` y `Forwarded` del resolver: la aplicación no confía en ninguna de esas cabeceras porque una petición directa al origen de Render puede incluirlas arbitrariamente.
   2. Render es la infraestructura de borde confiable y añade la IP real del cliente al final de `X-Forwarded-For`. El resolver usa únicamente el valor válido situado más a la derecha.
   3. Si no existe un `X-Forwarded-For` utilizable, se usa `request.getRemoteAddr()` como fallback de la conexión TCP.

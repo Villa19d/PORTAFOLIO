@@ -55,7 +55,7 @@ class ClientIpResolverTest {
 
     @Test
     @DisplayName("X-Forwarded-For con exactamente 3 entradas: extrae posición 0 (length - 3)")
-    void resolveIp_whenXForwardedForHasExactlyThreeHops_extractsClientIp() {
+    void usesValidIpFromTrustedHops() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("10.0.0.1");
         request.addHeader("X-Forwarded-For", "203.0.113.50, 172.71.147.4, 10.27.84.220");
@@ -124,43 +124,49 @@ class ClientIpResolverTest {
         assertThat(ip).isEqualTo("198.51.100.1");
     }
 
-    @Test
-    @DisplayName("X-Forwarded-For devuelve el valor del offset aunque sea basura")
-    void resolveIp_whenXForwardedForContainsGarbage_skipsInvalidValues() {
+    @ParameterizedTest
+    @ValueSource(strings = {"<script>alert(1)</script>", "999.1.1.1", "malformed"})
+    @DisplayName("X-Forwarded-For con IP inválida: fallback a remoteAddr")
+    void usesRemoteAddrWhenTrustedHopIsInvalid(String invalidIp) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
-        request.addHeader("X-Forwarded-For", "<script>alert(1)</script>, invalid ip with spaces, 10.0.0.2");
+        request.addHeader("X-Forwarded-For", invalidIp + ", 172.16.0.2, 10.0.0.2");
 
         String ip = resolver.resolve(request);
 
-        assertThat(ip).isEqualTo("<script>alert(1)</script>");
+        assertThat(ip).isEqualTo("203.0.113.10");
     }
 
     @Test
-    @DisplayName("X-Forwarded-For con último valor malformado mantiene el offset")
-    void resolveIp_whenRightmostXForwardedForIsMalformed_skipsInvalidValue() {
+    @DisplayName("X-Forwarded-For IPv6 normaliza al prefijo /64")
+    void normalizesIpv6ToIts64BitSubnet() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.10");
-        request.addHeader("X-Forwarded-For", "203.0.113.5, malformed, 10.0.0.2");
-
-        assertThat(resolver.resolve(request)).isEqualTo("203.0.113.5");
-    }
-
-    @Test
-    @DisplayName("X-Forwarded-For con IPv6 válida: resuelve el valor del offset")
-    void resolveIp_whenXForwardedForContainsValidIpv6_extractsIpv6() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("203.0.113.10");
-        request.addHeader("X-Forwarded-For", "198.51.100.1, 2001:db8:85a3::8a2e:370:7334, 172.16.0.2, 10.0.0.2");
+        request.addHeader("X-Forwarded-For", "198.51.100.1, 2001:0db8:85a3:0000:0000:8a2e:0370:7334, 172.16.0.2, 10.0.0.2");
 
         String ip = resolver.resolve(request);
 
-        assertThat(ip).isEqualTo("2001:db8:85a3::8a2e:370:7334");
+        assertThat(ip).isEqualTo("2001:0db8:85a3:0000::/64");
+    }
+
+    @Test
+    @DisplayName("Direcciones IPv6 del mismo bloque producen la misma clave /64")
+    void normalizesIpv6AddressesInSameSubnetToSameRateLimitKey() {
+        MockHttpServletRequest first = new MockHttpServletRequest();
+        first.setRemoteAddr("203.0.113.10");
+        first.addHeader("X-Forwarded-For", "198.51.100.1, 2001:0db8:85a3:0000:0000:8a2e:0370:7334, 172.16.0.2, 10.0.0.2");
+
+        MockHttpServletRequest second = new MockHttpServletRequest();
+        second.setRemoteAddr("203.0.113.11");
+        second.addHeader("X-Forwarded-For", "198.51.100.1, 2001:0db8:85a3:0000:ffff:ffff:ffff:ffff, 172.16.0.2, 10.0.0.2");
+
+        assertThat(resolver.resolve(first)).isEqualTo("2001:0db8:85a3:0000::/64");
+        assertThat(resolver.resolve(second)).isEqualTo("2001:0db8:85a3:0000::/64");
     }
 
     @Test
     @DisplayName("X-Forwarded-For con los dos hops de Render devuelve el cliente público")
-    void resolveIp_whenXForwardedForHasMultiplePrivateHops_usesFirstPublicFromRight() {
+    void usesValidIpFromTrustedHopsWithRenderChain() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.88");
         request.addHeader("X-Forwarded-For", "79.127.147.89, 172.71.147.4, 10.27.84.220");

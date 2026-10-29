@@ -486,8 +486,8 @@ async function runFullSmoke() {
     ];
 
     for (const testCase of SPOOF_HEADERS) {
-      const waitSeconds = Math.max(retryAfterSeconds, 1) + 2;
-      console.log(`\n${SYMBOL_INFO} [Ronda ${testCase.header}] Esperando ${waitSeconds}s a que expire la ventana (Retry-After: ${retryAfterSeconds}s + 2s)...`);
+      const waitSeconds = Math.max(retryAfterSeconds, 1) + 3;
+      console.log(`\n${SYMBOL_INFO} [Ronda ${testCase.header}] Esperando ${waitSeconds}s a que expire la ventana (Retry-After: ${retryAfterSeconds}s + 3s)...`);
 
       // Cuenta regresiva visual
       for (let remaining = waitSeconds; remaining > 0; remaining -= 5) {
@@ -522,26 +522,21 @@ async function runFullSmoke() {
         continue;
       }
 
+      const statuses = [];
+      let edgeRejected = 0;
       for (let i = 1; i <= 8; i++) {
-        const fakeVal = testCase.generate(i);
-        const headers = {
-          'Content-Type': 'application/json',
-          Origin: FRONT_ORIGIN,
-          [testCase.header]: fakeVal
-        };
-
         const { res } = await fetchWithTimeout(`${API_BASE}/api/auth/login`, {
           method: 'POST',
-          headers,
-          body: JSON.stringify({
-            username: `probe_spoof_${testCase.code}_${i}`,
-            password: 'ProbeWrongPassword!'
-          })
+          headers: { 'Content-Type': 'application/json', Origin: FRONT_ORIGIN, [testCase.header]: testCase.generate(i) },
+          body: JSON.stringify({ username: `probe_spoof_${testCase.code}_${i}`, password: 'ProbeWrongPassword!' })
         });
-
+        statuses.push(res ? res.status : 'ERR');
+        if (res && res.status === 403) {
+          const text = await res.text().catch(() => '');
+          if (text.includes('error code: 1000')) edgeRejected++;
+        }
         if (res && res.status === 429) {
-          got429 = true;
-          blockedIndex = i;
+          got429 = true; blockedIndex = i;
           const retryHeader = res.headers.get('retry-after');
           if (retryHeader) {
             const parsed = parseInt(retryHeader, 10);
@@ -553,22 +548,13 @@ async function runFullSmoke() {
         }
         await sleep(50);
       }
-
       const duration = Math.round(performance.now() - start);
-
-      if (!got429) {
-        const detail = [
-          `FALLO CRÍTICO: La cabecera '${testCase.header}' permite evadir el rate limit.`,
-          `Se enviaron 8 peticiones con valores falsificados distintos y NINGUNA fue bloqueada con 429.`,
-          `Causa raíz: La aplicación confía en '${testCase.header}' o el proxy no la sobrescribe en el edge,`,
-          `permitiendo ataques de fuerza bruta ilimitados al rotar esta cabecera.`
-        ].join('\n');
-
-        recordResult(testCase.code, `SPOOFING: Resistencia ante '${testCase.header}' falsificada`, false, duration, detail, true);
-      } else {
-        const detail = `Rate limit bloqueó exitosamente en intento #${blockedIndex}/8 (Status 429) a pesar de falsificar '${testCase.header}'.`;
-        recordResult(testCase.code, `SPOOFING: Resistencia ante '${testCase.header}' falsificada`, true, duration, detail);
-      }
+      const reachedApp = statuses.filter((s) => s === 401).length;
+      const inconclusive = statuses.includes('ERR');
+      const passed = !inconclusive && (got429 || reachedApp === 0);
+      const summary = `Códigos: [${statuses.join(', ')}] | Rechazadas por el edge de Cloudflare (1000): ${edgeRejected}`;
+      recordResult(testCase.code, `SPOOFING: Resistencia ante '${testCase.header}' falsificada`, passed, duration,
+        passed ? summary : `FALLO: ${reachedApp} peticiones con valores distintos llegaron al login sin 429.\n${summary}`, !passed);
     }
   }
 

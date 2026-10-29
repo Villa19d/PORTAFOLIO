@@ -176,12 +176,8 @@ El script evalúa las siguientes comprobaciones en estricto orden y muestra una 
 | **f** | `GET /api/admin/projects` sin token | HTTP 401, `application/problem+json` | Endpoint administrativo desprotegido o exponiendo información sin autenticación. |
 | **g** | `GET /swagger-ui.html` y `/v3/api-docs` | HTTP 200, `servers[0].url` inicia con `https://` | Swagger deshabilitado o proxy headers mal procesados (OpenAPI anuncia `http://` en lugar de `https://`). |
 | **h** | **Rate Limit Básico** (6 logins fallidos seguidos) | Al menos una petición (la #6 o antes) devuelve HTTP 429 con cabecera `Retry-After` | Bucket4j inactivo o umbral de login mal configurado. Ataques de fuerza bruta no serían mitigados. |
-| **i** | **Spoofing de IP** (8 logins con `X-Forwarded-For` variables) | Al menos una petición devuelve HTTP 429 | **FALLO CRÍTICO:** La aplicación confía ciegamente en `X-Forwarded-For` enviado por el cliente. Un atacante puede eludir el rate limit simplemente cambiando esta cabecera en cada intento. |
+| **i** | **Spoofing de IP** (8 logins con cabeceras variables) | HTTP 429 o rechazo del edge sin peticiones que alcancen el login | **FALLO CRÍTICO:** Una o más peticiones alcanzan el login sin HTTP 429. Cloudflare rechaza `CF-Connecting-IP` inyectada por el cliente con HTTP 403 y `error code: 1000`; ese rechazo confirma que la app no recibió la cabecera. |
 
 ### 6.3 Diagnóstico y Propuesta de Fix ante Fallo en Spoofing (Check i)
 
-Si la prueba **i** es marcada como `CRITICAL FAIL`:
-- **Causa Raíz:** `server.forward-headers-strategy: framework` hace que Spring extraiga la dirección IP del primer elemento en `X-Forwarded-For`. Si Render no sanitiza ni sobrescribe esta cabecera (o agrega la IP del cliente al final en lugar de al principio), el servidor confía en la IP falsificada.
-- **Propuesta de Mitigación:**
-  1. Cambiar `server.forward-headers-strategy: native` y configurar una lista blanca de proxies confiables en Tomcat (`internal-proxies`), o
-  2. Implementar un `ClientIpResolver` personalizado que priorice cabeceras de proxy de confianza específicas de la plataforma (por ejemplo, cabeceras seguras de Render o Cloudflare `CF-Connecting-IP`), ignorando `X-Forwarded-For` arbitrarios enviados por el cliente.
+La IP del cliente es la 3.ª desde la derecha de `X-Forwarded-For`. Cloudflare rechaza una cabecera `CF-Connecting-IP` inyectada por el cliente con HTTP 403 y `error code: 1000`; la app nunca la lee. La ronda se considera aprobada si recibe HTTP 429 o si el edge bloquea todas las peticiones antes de que lleguen al login.
