@@ -3,9 +3,22 @@ import { useTranslation } from 'react-i18next';
 import { useSmoothScroll } from '../../components/SmoothScrollProvider';
 import { useTheme } from '../../components/ThemeProvider';
 import { useSound } from '../sound/SoundContext';
-import { executeCommand, type TerminalLanguage } from './terminalInterpreter';
+import { executeCommandLines, type TerminalLanguage } from './terminalInterpreter';
 
 type TerminalModalProps = { onClose: () => void };
+
+type TerminalLine = {
+  kind: 'command' | 'output' | 'success' | 'error';
+  text: string;
+};
+
+const SUGGESTIONS = ['help', 'about', 'skills', 'projects', 'experience', 'contact', 'whoami', 'ls', 'cat', 'history', 'clear', 'theme', 'lang', 'sound', 'sudo'];
+
+/** The window never takes more than this share of the viewport. */
+const MAX_HEIGHT_RATIO = 0.7;
+const MIN_HEIGHT_PX = 240;
+/** Shrink of the visual viewport that we read as "the on-screen keyboard is open". */
+const KEYBOARD_THRESHOLD_PX = 120;
 
 export function TerminalModal({ onClose }: TerminalModalProps) {
   const { i18n, t } = useTranslation('common');
@@ -14,14 +27,16 @@ export function TerminalModal({ onClose }: TerminalModalProps) {
   const { enabled, toggle: toggleSound, play } = useSound();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(document.activeElement as HTMLElement);
   const [value, setValue] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [output, setOutput] = useState<string[]>([]);
+  const [output, setOutput] = useState<TerminalLine[]>([]);
 
   const language = (i18n.language.startsWith('en') ? 'en' : 'es') as TerminalLanguage;
-  const prompt = language === 'es' ? 'invitado@portfolio:~$' : 'guest@portfolio:~$';
+  const prompt = t('terminal.prompt');
   const context = useMemo(() => ({
     language,
     history,
@@ -45,11 +60,22 @@ export function TerminalModal({ onClose }: TerminalModalProps) {
     if (!viewport) return;
 
     const adjustForViewport = () => {
+      // The window is centred by CSS. Only when the on-screen keyboard shrinks the
+      // visual viewport do we pin it to the top so the prompt stays reachable.
+      const keyboardOpen = viewport.height < window.innerHeight - KEYBOARD_THRESHOLD_PX;
+
+      if (!keyboardOpen) {
+        dialog.style.removeProperty('top');
+        dialog.style.removeProperty('bottom');
+        dialog.style.removeProperty('max-height');
+        return;
+      }
+
       const top = Math.max(viewport.offsetTop + 16, 16);
-      const height = Math.max(viewport.height - 32, 240);
+      const available = Math.min(viewport.height - 32, window.innerHeight * MAX_HEIGHT_RATIO);
       dialog.style.top = `${top}px`;
       dialog.style.bottom = 'auto';
-      dialog.style.maxHeight = `${height}px`;
+      dialog.style.maxHeight = `${Math.max(available, MIN_HEIGHT_PX)}px`;
       inputRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     };
 
@@ -63,6 +89,25 @@ export function TerminalModal({ onClose }: TerminalModalProps) {
     };
   }, []);
 
+  // Clicking the body focuses the input; links, buttons and the input keep their behaviour.
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+    const focusInput = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('a, button, input, textarea')) return;
+      inputRef.current?.focus();
+    };
+    body.addEventListener('click', focusInput);
+    return () => body.removeEventListener('click', focusInput);
+  }, []);
+
+  // Keep the newest line in view.
+  useEffect(() => {
+    const log = logRef.current;
+    if (log) log.scrollTop = log.scrollHeight;
+  }, [output]);
+
   const close = () => {
     onClose();
     requestAnimationFrame(() => previousFocusRef.current?.focus());
@@ -72,7 +117,7 @@ export function TerminalModal({ onClose }: TerminalModalProps) {
     const command = value.trim();
     if (!command) return;
     play('key');
-    const lines = executeCommand(command, context);
+    const lines = executeCommandLines(command, context);
     setHistory((items) => [...items, command]);
     setHistoryIndex(-1);
     setValue('');
@@ -80,7 +125,7 @@ export function TerminalModal({ onClose }: TerminalModalProps) {
       setOutput([]);
       return;
     }
-    setOutput((items) => [...items, `${prompt} ${command}`, ...lines]);
+    setOutput((items) => [...items, { kind: 'command', text: `${prompt} ${command}` }, ...lines]);
     play(lines.length ? (command.toLocaleLowerCase() === 'sudo' ? 'success' : 'click') : 'error');
   };
 
@@ -108,8 +153,7 @@ export function TerminalModal({ onClose }: TerminalModalProps) {
       setHistoryIndex(next);
       setValue(next === -1 ? '' : history[history.length - 1 - next] ?? '');
     } else if (event.key === 'Tab') {
-      const suggestions = ['help', 'about', 'skills', 'projects', 'experience', 'contact', 'whoami', 'ls', 'cat', 'history', 'clear', 'theme', 'lang', 'sound', 'sudo'];
-      const match = suggestions.find((item) => item.startsWith(value.toLocaleLowerCase()));
+      const match = SUGGESTIONS.find((item) => item.startsWith(value.toLocaleLowerCase()));
       if (match) {
         event.preventDefault();
         setValue(match);
@@ -124,18 +168,33 @@ export function TerminalModal({ onClose }: TerminalModalProps) {
       ref={dialogRef}
       aria-labelledby="terminal-title"
       onCancel={(event) => { event.preventDefault(); close(); }}
-      className="fixed inset-0 z-[110] m-auto w-[min(94vw,52rem)] rounded-[var(--radius-lg)] border border-border bg-surface p-0 text-text shadow-soft backdrop:bg-black/70"
+      className="terminal-window"
     >
-      <div className="p-4 font-mono text-sm">
-        <div className="mb-3 flex items-center justify-between border-b border-border pb-3">
-          <h2 id="terminal-title">{t('terminal.title')}</h2>
-          <button type="button" aria-label={t('terminal.close')} onClick={close} className="min-h-11 min-w-11 rounded border border-border-control">×</button>
+      {/* The accessible name stays "Terminal"; the bar shows the shell prompt instead. */}
+      <h2 id="terminal-title" className="sr-only">{t('terminal.title')}</h2>
+
+      <div className="terminal-window__bar">
+        <span className="terminal-window__status" aria-hidden="true" />
+        <span className="terminal-window__window-title">{t('terminal.windowTitle')}</span>
+        <button type="button" onClick={close} aria-label={t('terminal.close')} className="terminal-window__close">
+          <span aria-hidden="true">×</span>
+          <span className="terminal-window__close-key" aria-hidden="true">{t('terminal.closeKey')}</span>
+        </button>
+      </div>
+
+      <div className="terminal-window__body" ref={bodyRef}>
+        <div ref={logRef} role="log" aria-live="polite" className="terminal-window__log" data-lenis-prevent="true">
+          <p className="terminal-window__line terminal-window__line--output terminal-window__welcome">{t('terminal.welcome')}</p>
+          {output.map((line, index) => (
+            <div key={`${index}-${line.text}`} className={`terminal-window__line terminal-window__line--${line.kind}`}>
+              {line.text}
+            </div>
+          ))}
         </div>
-        <div role="log" aria-live="polite" className="max-h-[55vh] overflow-y-auto whitespace-pre-wrap" data-lenis-prevent="true">
-          {output.map((line, index) => <div key={`${index}-${line}`}>{line}</div>)}
-        </div>
-        <div className="mt-3 flex items-center gap-2">
-          <span aria-hidden="true">{prompt}</span>
+
+        <div className="terminal-window__prompt-row">
+          <span className="terminal-window__prompt" aria-hidden="true">{prompt}</span>
+          {value === '' && <span className="terminal-window__caret" aria-hidden="true" />}
           <input
             ref={inputRef}
             value={value}
@@ -144,10 +203,12 @@ export function TerminalModal({ onClose }: TerminalModalProps) {
             aria-label={t('terminal.input')}
             autoComplete="off"
             spellCheck={false}
-            className="min-h-11 min-w-0 flex-1 bg-transparent outline-none"
+            className="terminal-window__input"
           />
         </div>
       </div>
+
+      <div className="terminal-window__footer">{t('terminal.footer')}</div>
     </dialog>
   );
 }

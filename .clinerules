@@ -1,0 +1,15 @@
+
+   # Reglas del proyecto (obligatorias)
+   Antes de cada tarea lee AGENTS.md y docs/DECISIONS.md. Si una instrucción choca con ellos, DETENTE y pregunta.
+
+   ROL: eres el ejecutor. Trabajas solo en /frontend salvo que la tarea diga otra cosa. El humano crea la rama, hace commits, PRs y merges. NUNCA ejecutes git commit, push, merge, rebase, reset, stash ni cambies de rama.
+   ALCANCE: cambia solo lo que la tarea pide. Prohibido reformatear archivos ajenos, renombrar, mover o borrar fuera de la tarea, y hacer "limpiezas" no pedidas.
+   DEPENDENCIAS: prohibido instalar, actualizar o quitar paquetes (npm install/update/audit fix, cambios en package.json o lockfile) sin permiso explícito en la tarea. Nunca uses --force.
+   SECRETOS: nunca leas, imprimas ni modifiques .env* ni claves o tokens. Si la tarea parece requerirlos, DETENTE.
+   NO INVENTES: rutas, props, claves i18n y tokens CSS se buscan en el repo. Contenido personal nunca se inventa: [TODO_CONTENT].
+   VERIFICACIÓN: antes de declarar terminado ejecuta en /frontend: npm run lint && npm run typecheck && npm test && npm run build y resume la salida. Nunca marques "completo" con fallos o sin haberlo ejecutado.
+   HONESTIDAD: distingue "ejecuté y vi X" de "creo que X". Tests unitarios en verde no prueban que algo funcione en la app real: describe cómo lo verificará el humano en el navegador (máximo 3 pasos).
+   DISEÑO Y RENDIMIENTO: todo lo pesado va lazy y solo con canUseHeavyEffects; todo efecto costoso debe apagarse con data-perf="lite"; solo se anima transform/opacity; colores desde tokens de index.css; textos solo vía i18n (ES/EN); accesibilidad (foco, teclado, aria).
+   REPORTE FINAL: formato breve de AGENTS.md §9.
+
+Nunca sondees con el mismo comando repetido: usa un único comando con espera interna y timeout

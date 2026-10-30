@@ -68,7 +68,26 @@ const text = {
   },
 } as const;
 
-export function executeCommand(cmd: string, context: TerminalContext): string[] {
+/**
+ * Presentation tag for a result line. The window colours each line from it, so the
+ * classification lives here, where the outcome is actually known.
+ */
+export type TerminalResultKind = 'output' | 'success' | 'error';
+
+export type TerminalResultLine = {
+  kind: TerminalResultKind;
+  text: string;
+};
+
+const output = (text: string): TerminalResultLine => ({ kind: 'output', text });
+const success = (text: string): TerminalResultLine => ({ kind: 'success', text });
+const failure = (text: string): TerminalResultLine => ({ kind: 'error', text });
+
+/**
+ * Same commands, same order, same side effects and the same strings as before;
+ * each line just carries its kind. `executeCommand` below keeps the plain API.
+ */
+export function executeCommandLines(cmd: string, context: TerminalContext): TerminalResultLine[] {
   const input = cmd.trim();
   if (!input) return [];
   const [command, ...args] = input.toLocaleLowerCase().split(/\s+/);
@@ -76,53 +95,58 @@ export function executeCommand(cmd: string, context: TerminalContext): string[] 
 
   switch (command) {
     case 'help':
-      return [copy.help];
+      return [output(copy.help)];
     case 'about':
-      return [PROFILE_DATA.bio[context.language]];
+      return [output(PROFILE_DATA.bio[context.language])];
     case 'skills':
-      return [copy.skills()];
+      return [output(copy.skills())];
     case 'projects':
-      return [copy.projects(projects.length)];
+      return [output(copy.projects(projects.length))];
     case 'experience':
-      return [copy.experience(PROFILE_DATA.timeline.length)];
+      return [output(copy.experience(PROFILE_DATA.timeline.length))];
     case 'contact':
       context.onContact();
-      return [copy.contact];
+      return [output(copy.contact)];
     case 'whoami':
-      return [copy.whoami(context.username ?? (context.language === 'es' ? 'invitado' : 'guest'))];
+      return [output(copy.whoami(context.username ?? (context.language === 'es' ? 'invitado' : 'guest')))];
     case 'ls':
-      return [copy.files];
+      return [output(copy.files)];
     case 'cat': {
       const filename = args[0] as keyof typeof virtualFiles | undefined;
       return filename && filename in virtualFiles
-        ? [virtualFiles[filename](context.language)]
-        : [`${copy.missingFile}: ${args[0] ?? ''}`];
+        ? [output(virtualFiles[filename](context.language))]
+        : [failure(`${copy.missingFile}: ${args[0] ?? ''}`)];
     }
     case 'history':
-      return [copy.history, ...context.history];
+      return [output(copy.history), ...context.history.map(output)];
     case 'clear':
       return [];
     case 'theme':
       if (args[0] === 'dark' || args[0] === 'light') {
         context.onTheme(args[0]);
-        return [copy.theme(args[0])];
+        return [success(copy.theme(args[0]))];
       }
-      return [`${copy.usage}theme dark|light`];
+      return [failure(`${copy.usage}theme dark|light`)];
     case 'lang':
       if (args[0] === 'es' || args[0] === 'en') {
         context.onLanguage(args[0]);
-        return [copy.lang(args[0])];
+        return [success(copy.lang(args[0]))];
       }
-      return [`${copy.usage}lang es|en`];
+      return [failure(`${copy.usage}lang es|en`)];
     case 'sound':
       if (args[0] === 'on' || args[0] === 'off') {
         context.onSound(args[0] === 'on');
-        return [copy.sound(args[0])];
+        return [success(copy.sound(args[0]))];
       }
-      return [`${copy.usage}sound on|off`];
+      return [failure(`${copy.usage}sound on|off`)];
     case 'sudo':
-      return args.join(' ') === 'hire rodrigo' ? [copy.hire] : [copy.unknown(input)];
+      return args.join(' ') === 'hire rodrigo' ? [success(copy.hire)] : [failure(copy.unknown(input))];
     default:
-      return [copy.unknown(input)];
+      return [failure(copy.unknown(input))];
   }
+}
+
+/** Plain text result, kept for callers that do not need the presentation tag. */
+export function executeCommand(cmd: string, context: TerminalContext): string[] {
+  return executeCommandLines(cmd, context).map((line) => line.text);
 }

@@ -52,6 +52,12 @@
     --text-muted: #8b98a9;
     --accent-primary: #00e5ff;  /* Cian */
     --accent-secondary: #39ff88; /* Verde */
+    --error: #ff7b72;            /* Danger fg (dark) — ≈8.0:1 sobre la superficie de la terminal ✔ AA */
+
+    /* Terminal window: a surface darker than the page background, its title bar and
+       its error line. The light block below overrides what differs. */
+    --terminal-surface: #04060a;
+    --terminal-titlebar: var(--surface-elevated);
   }
 
   [data-theme="light"] {
@@ -64,6 +70,13 @@
     --text-muted: #57606a;
     --accent-primary: #00798c;   /* Teal oscuro (#00798c) — contraste 5.10:1 sobre blanco, 4.80:1 sobre fondo ✔ AA */
     --accent-secondary: #1a7f37; /* Verde oscuro — contraste 4.77:1 ✔ AA */
+    --error: #cf222e;            /* Danger fg (light) — ≈4.9:1 sobre la superficie de la terminal ✔ AA */
+
+    /* Light keeps the terminal surface close to white so every text token stays AA
+       (contrast vs #f2f4f7, computed by hand): primary ≈4.6:1, secondary ≈4.6:1,
+       muted ≈5.8:1, error ≈4.9:1. */
+    --terminal-surface: #f2f4f7;
+    --terminal-titlebar: var(--surface-elevated);
   }
 
   [data-theme="dark"] {
@@ -730,6 +743,50 @@
   background-color: color-mix(in srgb, var(--accent-primary) 12%, transparent);
 }
 
+/* --------------------------------------------------------------------------
+   Modal dialogs and the custom cursor
+   A <dialog> opened with showModal() lives in the top layer, which paints above
+   any z-index. The decorative cursor is fixed with z-index 9999, so it would
+   stay behind the dialog while `cursor: none` hides the native one. While a
+   modal dialog is open the pointer goes back to the browser and the decorative
+   cursor is hidden; both revert as soon as the dialog closes.
+   -------------------------------------------------------------------------- */
+html.custom-cursor-active:has(dialog:modal),
+html.custom-cursor-active:has(dialog:modal) *,
+html.custom-cursor-active:has(dialog:modal) dialog::backdrop {
+  cursor: auto !important;
+}
+
+html.custom-cursor-active:has(dialog:modal)
+  :is(
+    input:not([type]),
+    input[type='text'],
+    input[type='email'],
+    input[type='search'],
+    input[type='url'],
+    input[type='tel'],
+    input[type='password'],
+    input[type='number'],
+    input[type='date'],
+    input[type='datetime-local'],
+    input[type='month'],
+    input[type='week'],
+    input[type='time'],
+    textarea,
+    [contenteditable]:not([contenteditable='false'])
+  ) {
+  cursor: text !important;
+}
+
+html.custom-cursor-active:has(dialog:modal)
+  :is(a[href], button, [role='button'], summary, select) {
+  cursor: pointer !important;
+}
+
+html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
+  visibility: hidden;
+}
+
 @keyframes blob-drift-1 {
   0%, 100% {
     transform: translate(0, 0) scale(1);
@@ -842,4 +899,268 @@
 [data-perf="lite"] .project-skeleton__block::after {
   animation: none;
   opacity: 0;
+}
+
+/* ==========================================================================
+   Terminal window (S10-UX) — presentation only
+   Centred window with a static accent halo. Colours come from the theme tokens;
+   only opacity and transform are animated, and nothing uses filter/backdrop-filter.
+   ========================================================================== */
+.terminal-window {
+  /* Explicitly centred on both axes. The UA already does this for :modal, but being
+     explicit keeps it deterministic; the mobile keyboard overrides it with inline
+     styles (top/bottom) only while it is open. */
+  position: fixed;
+  inset: 0;
+  height: fit-content;
+  margin: auto;
+  width: min(94vw, 760px);
+  max-height: 70vh;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--terminal-surface);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent-primary) 16%, transparent),
+    0 18px 60px -24px color-mix(in srgb, var(--accent-primary) 28%, transparent),
+    var(--shadow-soft);
+  animation: terminal-window-in 180ms var(--ease-snappy);
+}
+
+.terminal-window::backdrop {
+  background-color: rgb(0 0 0 / 0.7);
+}
+
+/* Flex layout only while open, so a closed dialog keeps the UA `display: none`. */
+.terminal-window[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-window__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--terminal-titlebar);
+}
+
+.terminal-window__status {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+}
+
+.terminal-window__window-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.terminal-window__close {
+  display: inline-flex;
+  flex: none;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.terminal-window__close:hover {
+  background-color: var(--surface-elevated);
+  color: var(--text-main);
+}
+
+.terminal-window__close-key {
+  font-size: 0.65rem;
+}
+
+.terminal-window__body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.75rem 1rem 0.5rem;
+}
+
+/* Static scanlines: 3% opacity, no animation, off in light theme and lite tier. */
+.terminal-window__body::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.03) 0 1px,
+    transparent 1px 4px
+  );
+}
+
+.terminal-window__log {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 40%, transparent) transparent;
+}
+
+.terminal-window__log::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal-window__log::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-window__log::-webkit-scrollbar-thumb {
+  border-radius: var(--radius);
+  background-color: color-mix(in srgb, var(--text-muted) 35%, transparent);
+}
+
+.terminal-window__line--command {
+  color: var(--accent-primary);
+}
+
+.terminal-window__line--output {
+  color: var(--text-main);
+}
+
+.terminal-window__line--success {
+  color: var(--accent-secondary);
+}
+
+.terminal-window__line--error {
+  color: var(--error);
+}
+
+.terminal-window__welcome {
+  color: var(--text-muted);
+}
+
+.terminal-window a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.terminal-window a:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.terminal-window__prompt-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-bottom: 1px solid transparent;
+}
+
+.terminal-window__prompt-row:focus-within {
+  border-bottom-color: var(--accent-primary);
+}
+
+.terminal-window__prompt {
+  flex: none;
+  color: var(--accent-secondary);
+}
+
+.terminal-window__caret {
+  flex: none;
+  width: 0.55em;
+  height: 1.05em;
+  background-color: var(--accent-secondary);
+  animation: terminal-caret-blink 1.1s steps(1, end) infinite;
+}
+
+.terminal-window__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  outline: none;
+  background-color: transparent;
+  color: var(--text-main);
+  font: inherit;
+}
+
+.terminal-window__footer {
+  flex: none;
+  padding: 0.4rem 1rem 0.6rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+@keyframes terminal-window-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes terminal-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+[data-theme="light"] .terminal-window__body::before {
+  background-image: none;
+}
+
+[data-perf="lite"] .terminal-window__body::before {
+  background-image: none;
+}
+
+[data-perf="lite"] .terminal-window {
+  animation: none;
+}
+
+[data-perf="lite"] .terminal-window__caret {
+  animation: none;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal-window {
+    animation: none;
+  }
+
+  .terminal-window__caret {
+    animation: none;
+    opacity: 1;
+  }
 }

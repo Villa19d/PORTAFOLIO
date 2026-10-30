@@ -6,17 +6,20 @@ function isTextField(target: EventTarget | null) {
       target.isContentEditable);
 }
 
-export function useCommandPaletteShortcut(onOpen: () => void) {
+/** `null` disables the shortcut (the mobile trigger registers nothing on touch). */
+export function useCommandPaletteShortcut(onOpen: (() => void) | null) {
   useEffect(() => {
+    if (!onOpen) return;
     if (window.matchMedia('(pointer: coarse)').matches) return;
 
+    const open = onOpen;
     const handleKeyDown = (event: KeyboardEvent) => {
       const commandKey = event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey);
       const slashKey = event.key === '/' && !isTextField(event.target);
       if (!commandKey && !slashKey) return;
 
       event.preventDefault();
-      onOpen();
+      open();
     };
 
     document.addEventListener('keydown', handleKeyDown);

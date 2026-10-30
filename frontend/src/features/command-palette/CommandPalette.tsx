@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SITE_CONFIG } from '../../data/site';
 import { useSmoothScroll } from '../../components/SmoothScrollProvider';
@@ -36,6 +36,11 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
 
   const filteredCommands = commands.filter((command) => fuzzyMatch(query, command));
 
+  const close = useCallback(() => {
+    onClose();
+    requestAnimationFrame(() => previousFocusRef.current?.focus());
+  }, [onClose]);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -48,14 +53,20 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
     };
   }, [pause, resume]);
 
+  // A click on the backdrop has the dialog element itself as its target.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const closeOnBackdropClick = (event: MouseEvent) => {
+      if (event.target === dialog) close();
+    };
+    dialog.addEventListener('click', closeOnBackdropClick);
+    return () => dialog.removeEventListener('click', closeOnBackdropClick);
+  }, [close]);
+
   useEffect(() => {
     setActiveIndex((index) => Math.min(index, Math.max(filteredCommands.length - 1, 0)));
   }, [filteredCommands.length]);
-
-  const close = () => {
-    onClose();
-    requestAnimationFrame(() => previousFocusRef.current?.focus());
-  };
 
   const execute = (id: string) => {
     playSound('click');
@@ -97,21 +108,36 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
   };
 
   return (
-    <dialog ref={dialogRef} onCancel={(event) => { event.preventDefault(); close(); }} onKeyDown={handleKeyDown} className="fixed inset-0 z-[100] m-auto w-[min(92vw,40rem)] rounded-[var(--radius-lg)] border border-border bg-surface p-0 text-text shadow-soft backdrop:bg-black/60">
+    <dialog
+      ref={dialogRef}
+      onCancel={(event) => { event.preventDefault(); close(); }}
+      onKeyDown={handleKeyDown}
+      className="fixed inset-0 z-[100] m-auto w-[min(92vw,40rem)] rounded-[var(--radius-lg)] border border-border bg-surface p-0 text-text shadow-soft backdrop:bg-black/60"
+    >
       <div className="p-4">
-        <label className="sr-only" htmlFor="command-palette-search">{t('command.search')}</label>
-        <input
-          ref={inputRef}
-          id="command-palette-search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t('command.search')}
-          role="combobox"
-          aria-controls="command-palette-list"
-          aria-expanded="true"
-          aria-activedescendant={filteredCommands[activeIndex] ? `command-${filteredCommands[activeIndex].id}` : undefined}
-          className="min-h-11 w-full rounded border border-border-control bg-surface-elevated px-3 text-text"
-        />
+        <div className="flex items-center gap-3">
+          <label className="sr-only" htmlFor="command-palette-search">{t('command.search')}</label>
+          <input
+            ref={inputRef}
+            id="command-palette-search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('command.search')}
+            role="combobox"
+            aria-controls="command-palette-list"
+            aria-expanded="true"
+            aria-activedescendant={filteredCommands[activeIndex] ? `command-${filteredCommands[activeIndex].id}` : undefined}
+            className="min-h-11 min-w-0 flex-1 rounded border border-border-control bg-surface-elevated px-3 text-text"
+          />
+          <button
+            type="button"
+            onClick={close}
+            aria-label={t('command.close')}
+            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-border-control text-text-muted hover:bg-surface-elevated hover:text-text"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
         <ul id="command-palette-list" role="listbox" aria-label={t('command.results')} className="mt-3 max-h-80 overflow-y-auto">
           {filteredCommands.map((command, index) => (
             <li
@@ -121,13 +147,19 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
               aria-selected={index === activeIndex}
               className={index === activeIndex ? 'rounded bg-accent/15 text-accent' : 'rounded'}
             >
-              <button className="min-h-11 w-full px-3 text-left" type="button" onClick={() => execute(command.id)}>
+              <button
+                className="min-h-11 w-full rounded px-3 text-left"
+                type="button"
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => execute(command.id)}
+              >
                 {command.label}
               </button>
             </li>
           ))}
           {!filteredCommands.length && <li className="p-3 text-text-muted">{t('command.noResults')}</li>}
         </ul>
+        <p className="mt-3 border-t border-border pt-3 text-xs text-text-muted">{t('command.hints')}</p>
       </div>
     </dialog>
   );

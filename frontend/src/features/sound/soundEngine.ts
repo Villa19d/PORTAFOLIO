@@ -40,6 +40,16 @@ export function createSoundEngine(): SoundEngine {
   const context = new AudioContextConstructor();
   const voices: Voice[] = [];
 
+  /**
+   * The engine loads through a dynamic import, so the AudioContext is built outside
+   * the user gesture and browsers hand it back `suspended`. Every play() call comes
+   * from a user interaction, which is the right moment to resume it.
+   */
+  const resumeContext = () => {
+    if (context.state !== 'suspended') return;
+    void context.resume().catch(() => undefined);
+  };
+
   const removeVoice = (voice: Voice) => {
     const index = voices.indexOf(voice);
     if (index >= 0) voices.splice(index, 1);
@@ -48,6 +58,7 @@ export function createSoundEngine(): SoundEngine {
   return {
     play(sound) {
       if (context.state === 'closed') return;
+      resumeContext();
 
       while (voices.length >= MAX_VOICES) {
         const oldest = voices.shift();

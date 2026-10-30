@@ -71,7 +71,13 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         // Sound remains usable when storage is unavailable.
       }
       if (next) {
-        void loadEngine().then((engine) => engine?.play('click'));
+        void loadEngine().then((engine) => {
+          if (!engine) return;
+          // The engine is built after a dynamic import, so its AudioContext starts
+          // suspended: resume it while the enabling gesture is still active.
+          engine.resume();
+          engine.play('click');
+        });
       } else {
         engineRef.current?.suspend();
       }

@@ -52,14 +52,22 @@
     "contact": "Ir a Contacto",
     "theme": "Cambiar tema",
     "language": "Cambiar idioma",
-    "sound": "Activar o desactivar sonido"
-    ,"terminal": "Abrir terminal"
+    "sound": "Activar o desactivar sonido",
+    "terminal": "Abrir terminal",
+    "close": "Cerrar paleta de comandos",
+    "hints": "↑↓ navegar · Enter ejecutar · Esc cerrar"
   },
   "terminal": {
     "title": "Terminal",
     "open": "Abrir terminal",
+    "openHint": "Abrir terminal (Ctrl + `)",
     "close": "Cerrar terminal",
-    "input": "Comando de terminal"
+    "input": "Comando de terminal",
+    "windowTitle": "rodrigo@portfolio: ~",
+    "prompt": "rodrigo@portfolio:~$",
+    "welcome": "Escribe help para ver los comandos.",
+    "footer": "Ctrl+` abrir/cerrar · Esc salir",
+    "closeKey": "Esc"
   },
   "contact": {
     "title": "Hablemos",

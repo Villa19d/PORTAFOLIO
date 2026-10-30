@@ -1,7 +1,7 @@
 # HANDOFF: estado del proyecto al 25-oct-2026
 
 ## Equipo
-Claude PM (arquitectura, seguridad, revisión de sprints) > PM diario (Gemini, nuevo chat) > Chalán (Claude web, solo frontend, sin ejecución) > Humano (ramas, commits, PRs, merges, mediciones).
+Claude PM (arquitectura, revisión de sprints) > PM diario (Gemini, chat nuevo) > Chalán ejecutor: DeepSeek V4.1 en Cline (VS Code, vía OpenRouter), con acceso directo al repo y a la terminal > Humano (ramas, commits, PRs, merges y verificación visible).
 
 ## Producción
 - Frontend: Vercel, dominio canónico www.rodrigodvillar.com (el dominio raíz redirige 308 a www).
