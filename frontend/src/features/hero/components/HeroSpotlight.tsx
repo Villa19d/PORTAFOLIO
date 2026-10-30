@@ -19,7 +19,7 @@ export function HeroSpotlight({ containerRef, enabled = true }: HeroSpotlightPro
   const smoothX = useSpring(mouseX, springConfig);
   const smoothY = useSpring(mouseY, springConfig);
 
-  const background = useMotionTemplate`radial-gradient(600px circle at ${smoothX}px ${smoothY}px, rgba(0, 229, 255, 0.12), transparent 75%)`;
+  const background = useMotionTemplate`radial-gradient(600px circle at ${smoothX}px ${smoothY}px, color-mix(in srgb, var(--accent-primary) 12%, transparent), transparent 75%)`;
 
   useEffect(() => {
     if (!enabled) {

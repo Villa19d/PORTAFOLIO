@@ -147,6 +147,29 @@ describe('createPerformanceTierStore', () => {
     expect(window.sessionStorage.getItem(PERF_STORAGE_KEY)).toBeNull();
   });
 
+  it('does not persist a decision taken while a tier is forced by the URL', () => {
+    window.history.replaceState({}, '', '/?perf=full');
+    const clock = createFakeClock();
+    const store = createPerformanceTierStore(clock);
+    store.start();
+
+    store.requestLite();
+
+    expect(store.getTier()).toBe('lite');
+    expect(document.documentElement.dataset.perf).toBe('lite');
+    expect(window.sessionStorage.getItem(PERF_STORAGE_KEY)).toBeNull();
+  });
+
+  it('still persists automatic decisions when no tier is forced', () => {
+    const clock = createFakeClock();
+    const store = createPerformanceTierStore(clock);
+    store.start();
+
+    store.requestLite();
+
+    expect(window.sessionStorage.getItem(PERF_STORAGE_KEY)).toBe('lite');
+  });
+
   it('?perf=full wins over a stored lite decision', () => {
     window.sessionStorage.setItem(PERF_STORAGE_KEY, 'lite');
     window.history.replaceState({}, '', '/?perf=full');

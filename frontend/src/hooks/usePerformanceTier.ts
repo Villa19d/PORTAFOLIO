@@ -79,6 +79,9 @@ function readStoredTier(): PerfTier | null {
 }
 
 function persistTier(tier: PerfTier) {
+  // A tier forced through the URL is a diagnostic override for this page view only:
+  // it must never leak into the session, so only automatic decisions are stored.
+  if (readForcedTier()) return;
   try {
     window.sessionStorage.setItem(PERF_STORAGE_KEY, tier);
   } catch {

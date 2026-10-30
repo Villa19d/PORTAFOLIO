@@ -66,14 +66,18 @@ export function AboutSection() {
     <BentoGrid containerRef={bentoRef}>
       <BentoTile label={t('about.introLabel')} className="col-span-1 sm:col-span-2 lg:row-span-2">
         <div className="flex h-full flex-col justify-end gap-3">
-          <img
-            src="/assets/rodrigo/rodrigo-480.webp"
-            alt={t('hero.photoAlt')}
-            width={160}
-            height={200}
-            loading="lazy"
-            className="h-32 w-28 rounded-[--radius-md] object-cover"
-          />
+          {/* Same portrait as the Hero: the avif is already cached by its preload. */}
+          <picture>
+            <source type="image/avif" srcSet="/assets/rodrigo/rodrigo-480.avif" />
+            <img
+              src="/assets/rodrigo/rodrigo-480.webp"
+              alt={t('hero.photoAlt')}
+              width={160}
+              height={200}
+              loading="lazy"
+              className="h-32 w-28 rounded-[--radius-md] object-cover"
+            />
+          </picture>
           <p className="font-mono text-sm uppercase tracking-widest text-accent">
             {t('about.introLabel')}
           </p>

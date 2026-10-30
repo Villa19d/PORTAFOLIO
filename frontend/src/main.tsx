@@ -1,8 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import { isOptionalChunkFailure } from './lib/chunkReload'
 
 window.addEventListener('vite:preloadError', (event) => {
+  // three/HeroScene may fail on their own: the error is left to propagate so the Hero
+  // error boundary keeps the CSS poster, instead of reloading the page for them.
+  if (isOptionalChunkFailure((event as Event & { payload?: unknown }).payload)) return;
+
   event.preventDefault();
   if (sessionStorage.getItem('chunk-reload') !== '1') {
     sessionStorage.setItem('chunk-reload', '1');
