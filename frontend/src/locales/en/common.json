@@ -58,6 +58,7 @@
   "terminal": {
     "title": "Terminal",
     "open": "Open terminal",
+    "openHint": "Open terminal (Ctrl + `)",
     "close": "Close terminal",
     "input": "Terminal command"
   },

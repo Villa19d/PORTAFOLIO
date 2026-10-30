@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundProvider } from '../SoundContext';
 import { SoundToggle } from '../SoundToggle';
 import { useSound } from '../SoundContext';
+import { createSoundEngine } from '../soundEngine';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../../lib/i18n';
 
@@ -12,8 +13,13 @@ const closeMock = vi.fn();
 const oscillatorMock = vi.fn();
 const audioContextCreatedMock = vi.fn();
 
+type MockContextState = 'running' | 'suspended' | 'closed';
+
+/** Browsers hand back a suspended context when it is built outside a user gesture. */
+let initialContextState: MockContextState = 'running';
+
 class MockAudioContext {
-  state = 'running';
+  state: MockContextState = initialContextState;
   currentTime = 0;
   destination = {};
   constructor() {
@@ -38,9 +44,21 @@ class MockAudioContext {
       disconnect: vi.fn(),
     };
   }
-  suspend = suspendMock;
-  resume = resumeMock;
-  close = closeMock;
+  suspend = () => {
+    suspendMock();
+    this.state = 'suspended';
+    return Promise.resolve();
+  };
+  resume = () => {
+    resumeMock();
+    this.state = 'running';
+    return Promise.resolve();
+  };
+  close = () => {
+    closeMock();
+    this.state = 'closed';
+    return Promise.resolve();
+  };
 }
 
 function SoundProbe() {
@@ -57,6 +75,7 @@ describe('sound controls', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    initialContextState = 'running';
     vi.stubGlobal('AudioContext', MockAudioContext);
     document.documentElement.dataset.perf = '';
   });
@@ -121,5 +140,24 @@ describe('sound controls', () => {
     await vi.dynamicImportSettled();
 
     expect(audioContextCreatedMock).not.toHaveBeenCalled();
+  });
+
+  it('resumes a suspended AudioContext when a sound is played', () => {
+    initialContextState = 'suspended';
+    const engine = createSoundEngine();
+
+    engine.play('click');
+
+    expect(resumeMock).toHaveBeenCalledTimes(1);
+    expect(oscillatorMock).toHaveBeenCalled();
+  });
+
+  it('does not resume the AudioContext when it is already running', () => {
+    const engine = createSoundEngine();
+
+    engine.play('click');
+
+    expect(resumeMock).not.toHaveBeenCalled();
+    expect(oscillatorMock).toHaveBeenCalled();
   });
 });

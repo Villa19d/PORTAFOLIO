@@ -6,6 +6,7 @@ import { useSmoothScroll } from '../SmoothScrollProvider';
 import { SoundToggle } from '../../features/sound/SoundToggle';
 import { useSound } from '../../features/sound/SoundContext';
 import { CommandPaletteTrigger } from '../../features/command-palette/CommandPaletteTrigger';
+import { openTerminal } from '../../features/terminal/TerminalLauncher';
 
 const NAV_LINKS = [
   { key: 'home' as const, href: '#home' },
@@ -198,6 +199,16 @@ export function Navbar() {
             <LanguageToggle />
             <ThemeToggle />
             <SoundToggle />
+            <button
+              type="button"
+              onClick={openTerminal}
+              aria-label={t('terminal.openHint')}
+              aria-keyshortcuts="Control+`"
+              title={t('terminal.openHint')}
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[var(--radius-md)] border border-border-control font-mono text-xs text-text-muted transition-colors hover:bg-surface-elevated hover:text-text"
+            >
+              <span aria-hidden="true">{'>_'}</span>
+            </button>
             <CommandPaletteTrigger />
           </div>
 
@@ -278,6 +289,7 @@ export function Navbar() {
               <LanguageToggle />
               <ThemeToggle />
               <SoundToggle />
+              <CommandPaletteTrigger variant="mobile" onOpen={closeMenu} />
             </div>
           </div>
         )}
