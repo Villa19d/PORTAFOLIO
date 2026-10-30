@@ -151,4 +151,36 @@ describe('CommandPalette', () => {
     fireEvent.change(search, { target: { value: 'admin' } });
     expect(screen.queryAllByRole('option')).toHaveLength(0);
   });
+
+  it('closes with the visible close button', async () => {
+    const onClose = vi.fn();
+    renderWithI18n(<CommandPalette onClose={onClose} />);
+    await screen.findByRole('dialog');
+
+    fireEvent.click(screen.getByRole('button', { name: /cerrar paleta/i }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes when the backdrop is clicked', async () => {
+    const onClose = vi.fn();
+    renderWithI18n(<CommandPalette onClose={onClose} />);
+    const dialog = await screen.findByRole('dialog');
+
+    fireEvent.click(dialog);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('selects an option with the mouse', async () => {
+    renderWithI18n(<CommandPalette onClose={vi.fn()} />);
+    await screen.findByRole('dialog');
+    const options = screen.getAllByRole('option');
+    const hovered = options[2];
+
+    expect(hovered).toBeDefined();
+    fireEvent.mouseOver(hovered!.querySelector('button')!);
+
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-activedescendant', hovered!.id);
+  });
 });

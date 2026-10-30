@@ -52,8 +52,10 @@
     "contact": "Ir a Contacto",
     "theme": "Cambiar tema",
     "language": "Cambiar idioma",
-    "sound": "Activar o desactivar sonido"
-    ,"terminal": "Abrir terminal"
+    "sound": "Activar o desactivar sonido",
+    "terminal": "Abrir terminal",
+    "close": "Cerrar paleta de comandos",
+    "hints": "↑↓ navegar · Enter ejecutar · Esc cerrar"
   },
   "terminal": {
     "title": "Terminal",

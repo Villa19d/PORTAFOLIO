@@ -730,6 +730,50 @@
   background-color: color-mix(in srgb, var(--accent-primary) 12%, transparent);
 }
 
+/* --------------------------------------------------------------------------
+   Modal dialogs and the custom cursor
+   A <dialog> opened with showModal() lives in the top layer, which paints above
+   any z-index. The decorative cursor is fixed with z-index 9999, so it would
+   stay behind the dialog while `cursor: none` hides the native one. While a
+   modal dialog is open the pointer goes back to the browser and the decorative
+   cursor is hidden; both revert as soon as the dialog closes.
+   -------------------------------------------------------------------------- */
+html.custom-cursor-active:has(dialog:modal),
+html.custom-cursor-active:has(dialog:modal) *,
+html.custom-cursor-active:has(dialog:modal) dialog::backdrop {
+  cursor: auto !important;
+}
+
+html.custom-cursor-active:has(dialog:modal)
+  :is(
+    input:not([type]),
+    input[type='text'],
+    input[type='email'],
+    input[type='search'],
+    input[type='url'],
+    input[type='tel'],
+    input[type='password'],
+    input[type='number'],
+    input[type='date'],
+    input[type='datetime-local'],
+    input[type='month'],
+    input[type='week'],
+    input[type='time'],
+    textarea,
+    [contenteditable]:not([contenteditable='false'])
+  ) {
+  cursor: text !important;
+}
+
+html.custom-cursor-active:has(dialog:modal)
+  :is(a[href], button, [role='button'], summary, select) {
+  cursor: pointer !important;
+}
+
+html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
+  visibility: hidden;
+}
+
 @keyframes blob-drift-1 {
   0%, 100% {
     transform: translate(0, 0) scale(1);
