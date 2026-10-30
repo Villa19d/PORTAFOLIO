@@ -62,7 +62,12 @@
     "open": "Abrir terminal",
     "openHint": "Abrir terminal (Ctrl + `)",
     "close": "Cerrar terminal",
-    "input": "Comando de terminal"
+    "input": "Comando de terminal",
+    "windowTitle": "rodrigo@portfolio: ~",
+    "prompt": "rodrigo@portfolio:~$",
+    "welcome": "Escribe help para ver los comandos.",
+    "footer": "Ctrl+` abrir/cerrar · Esc salir",
+    "closeKey": "Esc"
   },
   "contact": {
     "title": "Hablemos",

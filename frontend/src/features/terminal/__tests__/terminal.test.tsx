@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../../lib/i18n';
 import { useSound } from '../../sound/SoundContext';
 import { TerminalModal } from '../TerminalModal';
-import { executeCommand, type TerminalContext } from '../terminalInterpreter';
+import { executeCommand, executeCommandLines, type TerminalContext } from '../terminalInterpreter';
 
 vi.mock('../../../components/SmoothScrollProvider', () => ({
   useSmoothScroll: () => ({ scrollTo: vi.fn() }),
@@ -92,6 +92,17 @@ describe('terminal interpreter', () => {
     expect(executeCommand('sudo hire rodrigo', context).join('\n')).toMatch(/decisión|decision/i);
     expect(executeCommand('unknown-command', context).join('\n')).toMatch(/command not found/i);
   });
+
+  it('tags each result line without changing the plain text API', () => {
+    const context = createContext();
+    expect(executeCommandLines('help', context).map((line) => line.kind)).toEqual(['output']);
+    expect(executeCommandLines('theme light', context).map((line) => line.kind)).toEqual(['success']);
+    expect(executeCommandLines('theme nope', context).map((line) => line.kind)).toEqual(['error']);
+    expect(executeCommandLines('cat missing.txt', context).map((line) => line.kind)).toEqual(['error']);
+    expect(executeCommandLines('sudo hire rodrigo', context).map((line) => line.kind)).toEqual(['success']);
+    expect(executeCommandLines('clear', context)).toEqual([]);
+    expect(executeCommandLines('help', context)[0]?.text).toBe(executeCommand('help', context)[0]);
+  });
 });
 
 describe('TerminalModal', () => {
@@ -134,5 +145,44 @@ describe('TerminalModal', () => {
     expect(screen.getByRole('log').textContent).not.toMatch(
       /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/,
     );
+  });
+
+  it('renders the window chrome and the welcome hint from i18n', () => {
+    renderTerminal();
+
+    expect(screen.getByText('rodrigo@portfolio: ~')).toBeInTheDocument();
+    expect(screen.getByRole('log')).toHaveTextContent(/escribe help|type help/i);
+    expect(screen.getByText(/esc salir|esc exit/i)).toBeInTheDocument();
+  });
+
+  it('colours the command echo, the output, the success and the error lines', () => {
+    const { container } = renderTerminal();
+    const input = screen.getByRole('textbox', { name: /comando de terminal/i });
+
+    fireEvent.change(input, { target: { value: 'help' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.change(input, { target: { value: 'theme light' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.change(input, { target: { value: 'nope' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    // welcome + help output
+    expect(container.querySelectorAll('.terminal-window__line--output')).toHaveLength(2);
+    expect(container.querySelectorAll('.terminal-window__line--command')).toHaveLength(3);
+    expect(container.querySelectorAll('.terminal-window__line--success')).toHaveLength(1);
+    expect(container.querySelectorAll('.terminal-window__line--error')).toHaveLength(1);
+  });
+
+  it('closes with the close button', () => {
+    const onClose = vi.fn();
+    render(
+      <I18nextProvider i18n={i18n}>
+        <TerminalModal onClose={onClose} />
+      </I18nextProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /cerrar terminal|close terminal/i }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
