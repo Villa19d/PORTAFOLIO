@@ -1164,3 +1164,69 @@ html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
     opacity: 1;
   }
 }
+
+/* ==========================================================================
+   Bento mini world (S12.1)
+   Static card first; the 3D canvas lives in a lazy chunk and only appears after
+   pressing "Play". Both surfaces are painted with theme tokens, nothing hardcoded.
+   ========================================================================== */
+.bento-world-card {
+  background:
+    radial-gradient(
+      circle at 78% 15%,
+      color-mix(in srgb, var(--accent-primary) 10%, transparent),
+      transparent 62%
+    ),
+    var(--surface);
+}
+
+.bento-world {
+  background:
+    radial-gradient(
+      circle at 50% 120%,
+      color-mix(in srgb, var(--accent-primary) 12%, transparent),
+      transparent 70%
+    ),
+    var(--bg);
+}
+
+/* Discreet loading indicator while the world chunk is on its way. */
+.bento-world-loading {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.bento-world-loading__dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+  animation: bento-world-loading 1.2s ease-in-out infinite;
+}
+
+@keyframes bento-world-loading {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+[data-perf="lite"] .bento-world-loading__dot {
+  animation: none;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bento-world-loading__dot {
+    animation: none;
+    opacity: 0.7;
+  }
+}

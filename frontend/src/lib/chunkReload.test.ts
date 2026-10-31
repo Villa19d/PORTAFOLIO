@@ -12,6 +12,7 @@ describe('isOptionalChunkFailure', () => {
       ),
     ).toBe(true);
     expect(isOptionalChunkFailure(preloadFailure('/assets/HeroScene-4at_U5Dm.js'))).toBe(true);
+    expect(isOptionalChunkFailure(preloadFailure('/assets/BentoWorldCanvas-C9x1b2Kd.js'))).toBe(true);
     expect(isOptionalChunkFailure('assets/HeroScene-4at_U5Dm.js')).toBe(true);
   });
 

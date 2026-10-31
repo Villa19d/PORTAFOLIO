@@ -127,7 +127,14 @@
     "cvLabel": "Currículum",
     "cvDownloadEs": "Descargar CV (ES)",
     "cvDownloadEn": "Descargar CV (EN)",
-    "cvUnavailable": "CV próximamente"
+    "cvUnavailable": "CV próximamente",
+    "worldLabel": "Mini mundo",
+    "worldHint": "Mi escritorio, en 3D",
+    "worldPlay": "Jugar",
+    "worldExit": "Salir",
+    "worldLoading": "Cargando la escena",
+    "worldUnavailable": "Solo en escritorio con WebGL",
+    "worldLookHint": "Mueve el ratón para mirar"
   },
   "experience": {
     "title": "Experiencia",
