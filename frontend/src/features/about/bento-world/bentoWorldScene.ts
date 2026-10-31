@@ -1,6 +1,5 @@
 import {
   ACESFilmicToneMapping,
-  AmbientLight,
   BackSide,
   BoxGeometry,
   CanvasTexture,
@@ -81,6 +80,16 @@ const SCREEN_LINES: { indent: number; width: number; tone: 'accent' | 'accentAlt
 ];
 const LINE_TOP = 34;
 const LINE_STEP = 12;
+const CODE_LINES = [
+  'const room = await loadWorld();',
+  'if (interactive) physics.step(1 / 60);',
+  'const neon = palette.accent;',
+  'camera.lookAt(room.center);',
+  'SELECT status FROM bento_world;',
+  'return { ready: true };',
+  '# keep the night calm',
+  'function resetScene() { return home; }',
+];
 
 type Palette = {
   bg: string;
@@ -155,6 +164,25 @@ function drawScreen(canvas: HTMLCanvasElement, palette: Palette): void {
     context.fillRect(line.indent, LINE_TOP + index * LINE_STEP, line.width, 4);
   });
   context.globalAlpha = 1;
+}
+
+function drawCodeScreen(
+  canvas: HTMLCanvasElement,
+  palette: Palette,
+  visibleLines: number,
+  characters: number,
+): void {
+  drawScreen(canvas, palette);
+  const context = canvas.getContext('2d');
+  if (!context) return;
+  context.font = '7px monospace';
+  context.textBaseline = 'top';
+  const lines = CODE_LINES.slice(0, Math.min(visibleLines, CODE_LINES.length));
+  lines.forEach((line, index) => {
+    const text = index === lines.length - 1 ? line.slice(0, characters) : line;
+    context.fillStyle = line.startsWith('#') ? palette.muted : line.includes('const') ? palette.accent : palette.accentAlt;
+    context.fillText(text, 12, 31 + index * 14);
+  });
 }
 
 /** Very faint grid so the floor reads as a surface instead of a void. */
@@ -372,7 +400,15 @@ type PartOptions = {
   side?: Side;
 };
 
-type InteractiveKind = 'mug' | 'book' | 'dumbbell' | 'lamp' | 'keyboard' | 'mouse';
+type InteractiveKind =
+  | 'mug'
+  | 'book'
+  | 'dumbbell'
+  | 'lamp'
+  | 'keyboard'
+  | 'mouse'
+  | 'monitor'
+  | 'neonSwitch';
 
 type InteractivePart = {
   object: Mesh | Group;
@@ -418,7 +454,7 @@ function buildDesk(
   palette: Palette,
   registry: Registry,
   screen: CanvasTarget,
-): { group: Group; cursor: Mesh; keyboard: Mesh; mouse: Mesh; mug: Group } {
+): { group: Group; cursor: Mesh; keyboard: Mesh; mouse: Mesh; mug: Group; screenMesh: Mesh } {
   const part = createPartFactory(palette, registry);
   const group = new Group();
 
@@ -504,7 +540,7 @@ function buildDesk(
   mugGroup.add(handle);
   group.add(mugGroup);
 
-  return { group, cursor, keyboard, mouse, mug: mugGroup };
+  return { group, cursor, keyboard, mouse, mug: mugGroup, screenMesh };
 }
 
 /** Lamp, plant, two books and a mousepad: five meshes at most per prop. */
@@ -564,7 +600,7 @@ function buildProps(palette: Palette, registry: Registry): { group: Group; bulb:
     weight.position.x = x;
     dumbbell.add(weight);
   }
-  dumbbell.position.set(0.8, ROOM_FLOOR_Y + 0.16, 0.7);
+  dumbbell.position.set(2.15, ROOM_FLOOR_Y + 0.16, 1.35);
   group.add(dumbbell);
 
   // Two stacked books.
@@ -619,6 +655,8 @@ type RoomParts = {
   rainTexture: CanvasTexture;
   neonMaterial: MeshStandardMaterial;
   upperBooks: Group[];
+  wallSwitch: Mesh;
+  neon: Mesh;
 };
 
 /** Room shell, window with rain, neon strip, shelves with books and three posters. */
@@ -770,19 +808,25 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
 
   // Two shelves with coloured book spines, right of the monitor.
   const bookTones: (keyof Palette)[] = ['accent', 'accentAlt', 'border', 'muted', 'elevated', 'accent'];
+  const bookPositions = [1.4, 1.57, 1.78, 1.95, 2.12, 2.29];
   const upperBooks: Group[] = [];
   [0.72, 1.22].forEach((shelfY, shelfIndex) => {
-    const shelf = part(new BoxGeometry(1.7, 0.05, 0.24), 'border', { cast: false });
-    shelf.position.set(2.35, shelfY, WALL_BACK_Z + 0.14);
+    const shelf = part(new BoxGeometry(2.1, 0.05, 0.24), 'border', { cast: false });
+    shelf.position.set(2.15, shelfY, WALL_BACK_Z + 0.14);
     group.add(shelf);
 
-    for (let book = 0; book < 3; book += 1) {
-      const tone = bookTones[(shelfIndex * 3 + book) % bookTones.length] ?? 'accent';
+    for (let book = 0; book < bookPositions.length; book += 1) {
+      const tone = bookTones[(shelfIndex * bookPositions.length + book) % bookTones.length] ?? 'accent';
       const bookTexture = createCanvasTexture(
         48,
         128,
         (canvas, next) =>
-          drawBookSpine(canvas, next, ['Ethical Hacking', 'Python', 'Cloud'][book] ?? 'Book', tone),
+          drawBookSpine(
+            canvas,
+            next,
+            ['Ethical Hacking', 'Python', 'Cloud'][book % 3] ?? 'Book',
+            tone,
+          ),
         palette,
       );
       registry.canvases.push(bookTexture);
@@ -799,7 +843,7 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
       registry.geometries.push(spineGeometry);
       registry.materials.push(spineMaterial);
       const bookGroup = new Group();
-      bookGroup.position.set(1.78 + book * 0.17, shelfY + 0.155, WALL_BACK_Z + 0.14);
+      bookGroup.position.set(bookPositions[book] ?? 1.78, shelfY + 0.155, WALL_BACK_Z + 0.14);
       bookGroup.add(spine);
       group.add(bookGroup);
       if (shelfIndex === 1) upperBooks.push(bookGroup);
@@ -854,7 +898,7 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
   registry.tinted.push({ material: neonMaterial, token: NEON_TOKEN, emissive: 1.5 });
   group.add(neon);
 
-  return { group, rainTexture: rain.texture, neonMaterial, upperBooks };
+  return { group, rainTexture: rain.texture, neonMaterial, upperBooks, wallSwitch, neon };
 }
 
 type SteamPuff = { sprite: Sprite; phase: number; speed: number; drift: number };
@@ -979,8 +1023,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   const puffs = buildSteam(palette, registry);
   for (const puff of puffs) scene.add(puff.sprite);
 
-  // Three lights at most: low ambient, the key light with shadows and the neon point.
-  const ambient = new AmbientLight(0xffffff, 0.42);
+  // Three lights at most: the key, neon and a soft desk-lamp light.
   const key = new DirectionalLight(0xffffff, 1.6);
   key.position.set(3.4, 5.6, 3.8);
   key.castShadow = true;
@@ -995,7 +1038,9 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   // The screen keeps its own emissive map, so no extra light is needed for the glow.
   const neonLight = new PointLight(new Color(palette[NEON_TOKEN]), 2.2, 7, 2);
   neonLight.position.set(0, 1.6, WALL_BACK_Z + 0.6);
-  scene.add(ambient, key, neonLight);
+  const lampLight = new PointLight(new Color(palette.accent), 0.65, 3.2, 2);
+  lampLight.position.set(-1.55, 1.08, -0.44);
+  scene.add(key, neonLight, lampLight);
 
   const physics: PhysicsState = {
     world: new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) }),
@@ -1046,12 +1091,12 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   addStaticBox(new CANNON.Vec3(ROOM_HALF_WIDTH, wallCenterY, 0), new CANNON.Vec3(0.04, ROOM_HEIGHT / 2, ROOM_DEPTH / 2));
   addStaticBox(new CANNON.Vec3(0, wallCenterY, ROOM_DEPTH / 2), new CANNON.Vec3(ROOM_HALF_WIDTH, ROOM_HEIGHT / 2, 0.04));
   addStaticBox(new CANNON.Vec3(0, 0, 0), new CANNON.Vec3(2.3, 0.09, 1.05));
-  addStaticBox(new CANNON.Vec3(2.35, 0.72, WALL_BACK_Z + 0.14), new CANNON.Vec3(0.85, 0.025, 0.12));
-  addStaticBox(new CANNON.Vec3(2.35, 1.22, WALL_BACK_Z + 0.14), new CANNON.Vec3(0.85, 0.025, 0.12));
+  addStaticBox(new CANNON.Vec3(2.15, 0.72, WALL_BACK_Z + 0.14), new CANNON.Vec3(1.05, 0.025, 0.12));
+  addStaticBox(new CANNON.Vec3(2.15, 1.22, WALL_BACK_Z + 0.14), new CANNON.Vec3(1.05, 0.025, 0.12));
   addStaticBox(new CANNON.Vec3(0, 1.24, -0.5), new CANNON.Vec3(1.05, 0.63, 0.06));
   addStaticBox(new CANNON.Vec3(-0.35, 0.11, 0.45), new CANNON.Vec3(0.75, 0.03, 0.26));
 
-  const { group: desk, cursor, keyboard, mouse, mug } = buildDesk(palette, registry, screen);
+  const { group: desk, cursor, keyboard, mouse, mug, screenMesh } = buildDesk(palette, registry, screen);
   scene.add(desk);
   const props = buildProps(palette, registry);
   scene.add(props.group);
@@ -1060,6 +1105,8 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   const room = buildRoom(palette, registry);
   scene.add(room.group);
   scene.add(buildCeilingFixtures(palette, registry, ROOM_FLOOR_Y + ROOM_HEIGHT));
+  room.wallSwitch.userData.interactiveKind = 'neonSwitch';
+  room.neon.userData.interactiveKind = 'neonSwitch';
   const interactiveParts: Array<[Group, InteractiveKind, CANNON.Vec3, number]> = [
     [mug, 'mug', new CANNON.Vec3(0.18, 0.18, 0.18), 0.35],
     [props.dumbbell, 'dumbbell', new CANNON.Vec3(0.36, 0.16, 0.16), 5],
@@ -1081,6 +1128,8 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     [props.bulb, 'lamp'],
     [keyboard, 'keyboard'],
     [mouse, 'mouse'],
+    [screenMesh, 'monitor'],
+    [room.wallSwitch, 'neonSwitch'],
   ];
   for (const [object, kind] of interactiveObjects) object.userData.interactiveKind = kind;
   const collisionSoundTimes: number[] = [];
@@ -1099,8 +1148,19 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   }
   const raycaster = new Raycaster();
   const pointer = new Vector2();
-  const highlighted = new Map<Mesh, number>();
+  const highlighted = new Map<Mesh, { color: Color; emissive: Color; intensity: number }>();
   const lampMaterial = props.bulb.material as MeshStandardMaterial;
+  const screenState = { line: 1, characters: CODE_LINES[0]?.length ?? 0, running: false };
+  const screenCanvas = screen.texture.image as HTMLCanvasElement;
+  const redrawCode = (): void => {
+    drawCodeScreen(screenCanvas, palette, screenState.line, screenState.characters);
+    screen.texture.needsUpdate = true;
+  };
+  let neonTarget = new Color(palette.accent);
+  const neonCurrent = neonTarget.clone();
+  let neonIsPurple = false;
+  let neonTransition = 1;
+  const neonMaterial = room.neon.material as MeshStandardMaterial;
   let lampOn = true;
 
   /** Applies the constant night palette. There is no theme observer any more. */
@@ -1176,13 +1236,27 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   };
 
   const setHighlight = (kind: InteractiveKind | undefined): void => {
-    for (const [mesh, intensity] of highlighted) {
+    for (const [mesh, state] of highlighted) {
       const material = mesh.material as MeshStandardMaterial;
-      material.emissiveIntensity = intensity;
+      material.color.copy(state.color);
+      material.emissive.copy(state.emissive);
+      material.emissiveIntensity = state.intensity;
     }
     highlighted.clear();
     if (!kind) {
       host.style.cursor = 'default';
+      return;
+    }
+    if (result.kind === 'monitor') {
+      screenState.running = !screenState.running;
+      if (!screenState.running) redrawCode();
+      return;
+    }
+    if (result.kind === 'neonSwitch') {
+      neonIsPurple = !neonIsPurple;
+      neonTarget = new Color(neonIsPurple ? palette.accentAlt : palette.accent);
+      neonTransition = 0;
+      playSound('click');
       return;
     }
     host.style.cursor = 'pointer';
@@ -1191,7 +1265,12 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       object.traverse((child) => {
         if (!(child instanceof Mesh) || !(child.material instanceof MeshStandardMaterial)) return;
         const material = child.material;
-        highlighted.set(child, material.emissiveIntensity);
+        highlighted.set(child, {
+          color: material.color.clone(),
+          emissive: material.emissive.clone(),
+          intensity: material.emissiveIntensity,
+        });
+        material.color.lerp(new Color(palette.accent), 0.28);
         material.emissive.set(palette.accent);
         material.emissiveIntensity = Math.max(material.emissiveIntensity, 0.35);
       });
@@ -1223,15 +1302,18 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     if (!result) return;
     if (result.kind === 'keyboard') {
       playSound('key');
+      flashInteractive(result.object);
       return;
     }
     if (result.kind === 'mouse') {
       playSound('click');
+      flashInteractive(result.object);
       return;
     }
     if (result.kind === 'lamp') {
       lampOn = !lampOn;
       lampMaterial.emissiveIntensity = lampOn ? 1.1 : 0.08;
+      lampLight.visible = lampOn;
       return;
     }
     const part = interactives.find((candidate) => candidate.object === result.object);
@@ -1256,6 +1338,16 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       part.body.velocity.z = clamp(part.body.velocity.z, -1.2, 1.2);
     }
     part.body.wakeUp();
+  };
+
+  const flashInteractive = (object: Mesh | Group): void => {
+    object.traverse((child) => {
+      if (!(child instanceof Mesh) || !(child.material instanceof MeshStandardMaterial)) return;
+      const material = child.material;
+      const base = material.color.clone();
+      material.color.lerp(new Color(palette.accent), 0.55);
+      window.setTimeout(() => material.color.copy(base), 110);
+    });
   };
 
   const shouldRun = (): boolean => !disposed && !lost && inView && tabVisible;
@@ -1336,6 +1428,21 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       target.y = 0;
       resetPhysics();
       setHighlight(undefined);
+      screenState.running = false;
+      screenState.line = 1;
+      screenState.characters = CODE_LINES[0]?.length ?? 0;
+      drawScreen(screenCanvas, palette);
+      screen.texture.needsUpdate = true;
+      neonIsPurple = false;
+      neonTarget = new Color(palette.accent);
+      neonCurrent.copy(neonTarget);
+      neonTransition = 1;
+      neonMaterial.color.copy(neonCurrent);
+      neonMaterial.emissive.copy(neonCurrent);
+      neonLight.color.copy(neonCurrent);
+      lampOn = true;
+      lampMaterial.emissiveIntensity = 1.1;
+      lampLight.visible = true;
     }
     lastTime = 0;
     applyFov();
@@ -1407,6 +1514,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     lastTime = now;
     monitorFrameTime(now, deltaMs);
     stepPhysics(dt);
+    updateScreenAndNeon(dt);
 
     if (mode === 'interactive') {
       const lookBlend = 1 - Math.exp(-dt * LOOK_RESPONSE);
