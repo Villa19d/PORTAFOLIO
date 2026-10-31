@@ -1,4 +1,13 @@
-export type SoundName = 'tick' | 'click' | 'whoosh' | 'key' | 'success' | 'error';
+export type SoundName =
+  | 'tick'
+  | 'click'
+  | 'whoosh'
+  | 'key'
+  | 'success'
+  | 'error'
+  | 'ceramic'
+  | 'metal'
+  | 'paper';
 
 type Voice = {
   gain: GainNode;
@@ -18,6 +27,9 @@ const SOUND_CONFIG: Record<
   key: { frequency: 720, duration: 0.045, type: 'square' },
   success: { frequency: 660, duration: 0.16, type: 'sine', endFrequency: 990 },
   error: { frequency: 220, duration: 0.18, type: 'sawtooth', endFrequency: 140 },
+  ceramic: { frequency: 260, duration: 0.16, type: 'sine', endFrequency: 180 },
+  metal: { frequency: 105, duration: 0.34, type: 'triangle', endFrequency: 70 },
+  paper: { frequency: 190, duration: 0.12, type: 'triangle', endFrequency: 130 },
 };
 
 export type SoundEngine = {

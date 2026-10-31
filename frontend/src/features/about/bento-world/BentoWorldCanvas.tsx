@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSound } from '../../sound/SoundContext';
 import { createBentoWorldScene, type BentoWorldMode, type BentoWorldScene } from './bentoWorldScene';
 
 interface BentoWorldCanvasProps {
@@ -13,6 +14,7 @@ interface BentoWorldCanvasProps {
  * as the tile approaches the viewport, never again afterwards.
  */
 export default function BentoWorldCanvas({ mode, onFailure }: BentoWorldCanvasProps) {
+  const { play } = useSound();
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<BentoWorldScene | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -25,6 +27,7 @@ export default function BentoWorldCanvas({ mode, onFailure }: BentoWorldCanvasPr
     try {
       scene = createBentoWorldScene({
         host,
+        playSound: play,
         onFirstFrame: () => setIsReady(true),
         onFailure,
       });
@@ -41,7 +44,7 @@ export default function BentoWorldCanvas({ mode, onFailure }: BentoWorldCanvasPr
     };
     // `mode` is applied by the effect below: adding it here would recreate the scene.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onFailure]);
+  }, [onFailure, play]);
 
   useEffect(() => {
     sceneRef.current?.setMode(mode);

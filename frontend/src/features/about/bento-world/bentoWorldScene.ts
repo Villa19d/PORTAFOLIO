@@ -9,6 +9,7 @@ import {
   CylinderGeometry,
   DirectionalLight,
   Fog,
+  FrontSide,
   Group,
   IcosahedronGeometry,
   Mesh,
@@ -17,6 +18,7 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   PointLight,
+  Raycaster,
   RepeatWrapping,
   SRGBColorSpace,
   Scene,
@@ -24,16 +26,21 @@ import {
   SpriteMaterial,
   TorusGeometry,
   Vector3,
+  Vector2,
   WebGLRenderer,
   type BufferGeometry,
   type Material,
   type Texture,
+  type Side,
 } from 'three';
+import * as CANNON from 'cannon-es';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import type { SoundName } from '../../sound/soundEngine';
 
 export interface BentoWorldSceneOptions {
   host: HTMLElement;
   onFirstFrame: () => void;
+  playSound: (sound: SoundName) => void;
   /** Called when the scene must stop for good (WebGL context lost). */
   onFailure: () => void;
 }
@@ -84,6 +91,29 @@ type Palette = {
   accentAlt: string;
   muted: string;
 };
+
+function buildCeilingFixtures(palette: Palette, registry: Registry, ceilingY: number): Group {
+  const part = createPartFactory(palette, registry);
+  const group = new Group();
+  for (const x of [-2.1, 0, 2.1]) {
+    const housing = part(new CylinderGeometry(0.24, 0.2, 0.08, 16), 'border', {
+      cast: false,
+      receive: false,
+    });
+    housing.position.set(x, ceilingY - 0.05, 0.35);
+    group.add(housing);
+
+    const diffuser = part(new CylinderGeometry(0.14, 0.14, 0.018, 16), 'accent', {
+      cast: false,
+      receive: false,
+      emissive: 1.8,
+      roughness: 0.35,
+    });
+    diffuser.position.set(x, ceilingY - 0.1, 0.35);
+    group.add(diffuser);
+  }
+  return group;
+}
 
 /**
  * The room is always night time (ticket 12.2b): this palette is deliberately a fixed set
@@ -249,6 +279,7 @@ function drawPoster(canvas: HTMLCanvasElement, palette: Palette, variant: number
       context.arc(width / 2, height * 0.42, (width / 2) * (ring / 3.4), 0, Math.PI * 2);
       context.fill();
     }
+
   } else if (variant === 1) {
     context.globalAlpha = 0.85;
     for (let bar = 0; bar < 4; bar += 1) {
@@ -267,6 +298,22 @@ function drawPoster(canvas: HTMLCanvasElement, palette: Palette, variant: number
     context.fill();
   }
   context.globalAlpha = 1;
+}
+
+function drawBookSpine(canvas: HTMLCanvasElement, palette: Palette, label: string, token: keyof Palette): void {
+  const context = canvas.getContext('2d');
+  if (!context) return;
+  context.fillStyle = palette[token];
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = palette.bg;
+  context.font = 'bold 12px sans-serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.save();
+  context.translate(canvas.width / 2, canvas.height / 2);
+  context.rotate(-Math.PI / 2);
+  context.fillText(label, 0, 0);
+  context.restore();
 }
 
 type CanvasTarget = { texture: CanvasTexture; redraw: (palette: Palette) => void };
@@ -322,6 +369,24 @@ type PartOptions = {
   metalness?: number;
   /** Emissive intensity; 0 keeps the material non-emissive. */
   emissive?: number;
+  side?: Side;
+};
+
+type InteractiveKind = 'mug' | 'book' | 'dumbbell' | 'lamp' | 'keyboard' | 'mouse';
+
+type InteractivePart = {
+  object: Mesh | Group;
+  kind: InteractiveKind;
+  body?: CANNON.Body;
+  initialPosition: Vector3;
+  initialQuaternion: { x: number; y: number; z: number; w: number };
+};
+
+type PhysicsState = {
+  world: CANNON.World;
+  parts: InteractivePart[];
+  enabled: boolean;
+  accumulator: number;
 };
 
 /** Builds meshes that are tracked for disposal and re-tinted on a theme change. */
@@ -332,6 +397,7 @@ function createPartFactory(palette: Palette, registry: Registry) {
       color: new Color(palette[token]),
       roughness: options.roughness ?? 0.85,
       metalness: options.metalness ?? 0.05,
+      side: options.side ?? FrontSide,
     });
     if (emissive > 0) {
       material.emissive.set(palette[token]);
@@ -352,7 +418,7 @@ function buildDesk(
   palette: Palette,
   registry: Registry,
   screen: CanvasTarget,
-): { group: Group; cursor: Mesh } {
+): { group: Group; cursor: Mesh; keyboard: Mesh; mouse: Mesh; mug: Group } {
   const part = createPartFactory(palette, registry);
   const group = new Group();
 
@@ -422,21 +488,27 @@ function buildDesk(
   keyboard.position.set(-0.35, 0.11, 0.45);
   group.add(keyboard);
 
+  const mouse = part(new RoundedBoxGeometry(0.24, 0.08, 0.36, 2, 0.05), 'border');
+  mouse.position.set(0.78, 0.12, 0.45);
+  group.add(mouse);
+
   // Mug with a torus handle
+  const mugGroup = new Group();
   const mug = part(new CylinderGeometry(0.17, 0.15, 0.36, 12), 'accentAlt');
-  mug.position.set(1.55, 0.26, 0.35);
-  group.add(mug);
+  mugGroup.position.set(1.55, 0.26, 0.35);
+  mugGroup.add(mug);
 
   const handle = part(new TorusGeometry(0.1, 0.028, 8, 12), 'accentAlt');
-  handle.position.set(1.74, 0.3, 0.35);
+  handle.position.set(0.19, 0.04, 0);
   handle.rotation.y = Math.PI / 2;
-  group.add(handle);
+  mugGroup.add(handle);
+  group.add(mugGroup);
 
-  return { group, cursor };
+  return { group, cursor, keyboard, mouse, mug: mugGroup };
 }
 
 /** Lamp, plant, two books and a mousepad: five meshes at most per prop. */
-function buildProps(palette: Palette, registry: Registry): Group {
+function buildProps(palette: Palette, registry: Registry): { group: Group; bulb: Mesh; dumbbell: Group } {
   const part = createPartFactory(palette, registry);
   const group = new Group();
 
@@ -479,6 +551,22 @@ function buildProps(palette: Palette, registry: Registry): Group {
     group.add(leaf);
   }
 
+  const dumbbell = new Group();
+  const weightMaterial = 'border' as keyof Palette;
+  const bar = part(new CylinderGeometry(0.035, 0.035, 0.58, 8), weightMaterial, { metalness: 0.8 });
+  bar.rotation.z = Math.PI / 2;
+  dumbbell.add(bar);
+  for (const x of [-0.27, 0.27]) {
+    const weight = part(new CylinderGeometry(0.13, 0.13, 0.12, 10), weightMaterial, {
+      metalness: 0.8,
+    });
+    weight.rotation.z = Math.PI / 2;
+    weight.position.x = x;
+    dumbbell.add(weight);
+  }
+  dumbbell.position.set(0.8, ROOM_FLOOR_Y + 0.16, 0.7);
+  group.add(dumbbell);
+
   // Two stacked books.
   const firstBook = part(new RoundedBoxGeometry(0.52, 0.07, 0.36, 2, 0.015), 'accent');
   firstBook.position.set(-1.32, 0.125, 0.72);
@@ -506,7 +594,7 @@ function buildProps(palette: Palette, registry: Registry): Group {
   registry.tinted.push({ material: mousepadMaterial, token: 'surface', emissive: 0 });
   group.add(mousepad);
 
-  return group;
+  return { group, bulb, dumbbell };
 }
 
 /** Floor with a very faint grid; the fog fades it into the background. */
@@ -526,7 +614,12 @@ function buildFloor(registry: Registry, grid: CanvasTarget): Mesh {
   return floor;
 }
 
-type RoomParts = { group: Group; rainTexture: CanvasTexture; neonMaterial: MeshStandardMaterial };
+type RoomParts = {
+  group: Group;
+  rainTexture: CanvasTexture;
+  neonMaterial: MeshStandardMaterial;
+  upperBooks: Group[];
+};
 
 /** Room shell, window with rain, neon strip, shelves with books and three posters. */
 function buildRoom(palette: Palette, registry: Registry): RoomParts {
@@ -537,7 +630,7 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
 
   // Shell (the floor is the grid plane built by buildFloor). The ceiling sits far above
   // the eye and is only visible from inside (BackSide), so it never crops the view.
-  const ceilingGeometry = new PlaneGeometry(ROOM_HALF_WIDTH * 2, ROOM_DEPTH);
+  const ceilingGeometry = new PlaneGeometry(ROOM_HALF_WIDTH * 2 + 0.16, ROOM_DEPTH + 0.16);
   const ceilingMaterial = new MeshStandardMaterial({
     color: new Color(palette.bg),
     roughness: 0.95,
@@ -551,20 +644,48 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
   registry.materials.push(ceilingMaterial);
   group.add(ceiling);
 
-  const backWall = part(new PlaneGeometry(ROOM_HALF_WIDTH * 2, ROOM_HEIGHT), 'surface', {
+  const backWall = part(new PlaneGeometry(ROOM_HALF_WIDTH * 2 + 0.16, ROOM_HEIGHT + 0.16), 'surface', {
     receive: true,
     cast: false,
+    side: BackSide,
   });
+  backWall.rotation.y = Math.PI;
   backWall.position.set(0, wallCenterY, WALL_BACK_Z);
   group.add(backWall);
 
-  const leftWall = part(new PlaneGeometry(ROOM_DEPTH, ROOM_HEIGHT), 'surface', {
+  const leftWall = part(new PlaneGeometry(ROOM_DEPTH + 0.16, ROOM_HEIGHT + 0.16), 'surface', {
     receive: true,
     cast: false,
+    side: BackSide,
   });
-  leftWall.rotation.y = Math.PI / 2;
+  leftWall.rotation.y = -Math.PI / 2;
   leftWall.position.set(WALL_LEFT_X, wallCenterY, 0);
   group.add(leftWall);
+
+  const rightWall = part(new PlaneGeometry(ROOM_DEPTH + 0.16, ROOM_HEIGHT + 0.16), 'surface', {
+    receive: true,
+    cast: false,
+    side: BackSide,
+  });
+  rightWall.rotation.y = Math.PI / 2;
+  rightWall.position.set(ROOM_HALF_WIDTH, wallCenterY, 0);
+  group.add(rightWall);
+
+  const frontWall = part(new PlaneGeometry(ROOM_HALF_WIDTH * 2 + 0.16, ROOM_HEIGHT + 0.16), 'surface', {
+    receive: true,
+    cast: false,
+    side: BackSide,
+  });
+  frontWall.position.set(0, wallCenterY, ROOM_DEPTH / 2);
+  group.add(frontWall);
+
+  // A small wall control keeps the new side wall useful without adding another light.
+  const wallSwitch = part(new RoundedBoxGeometry(0.18, 0.3, 0.06, 2, 0.02), 'border', {
+    cast: false,
+  });
+  wallSwitch.position.set(ROOM_HALF_WIDTH - 0.04, 1.05, 0.95);
+  wallSwitch.rotation.y = Math.PI / 2;
+  group.add(wallSwitch);
 
   // Window on the left wall: night view, rain behind the glass, glass and frame.
   const windowWidth = 1.9;
@@ -649,6 +770,7 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
 
   // Two shelves with coloured book spines, right of the monitor.
   const bookTones: (keyof Palette)[] = ['accent', 'accentAlt', 'border', 'muted', 'elevated', 'accent'];
+  const upperBooks: Group[] = [];
   [0.72, 1.22].forEach((shelfY, shelfIndex) => {
     const shelf = part(new BoxGeometry(1.7, 0.05, 0.24), 'border', { cast: false });
     shelf.position.set(2.35, shelfY, WALL_BACK_Z + 0.14);
@@ -656,12 +778,46 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
 
     for (let book = 0; book < 3; book += 1) {
       const tone = bookTones[(shelfIndex * 3 + book) % bookTones.length] ?? 'accent';
-      const spine = part(new BoxGeometry(0.055, 0.26, 0.19), tone);
-      spine.position.set(1.78 + book * 0.17, shelfY + 0.155, WALL_BACK_Z + 0.14);
+      const bookTexture = createCanvasTexture(
+        48,
+        128,
+        (canvas, next) =>
+          drawBookSpine(canvas, next, ['Ethical Hacking', 'Python', 'Cloud'][book] ?? 'Book', tone),
+        palette,
+      );
+      registry.canvases.push(bookTexture);
+      registry.textures.push(bookTexture.texture);
+      const spineGeometry = new BoxGeometry(0.055, 0.26, 0.19);
+      const spineMaterial = new MeshStandardMaterial({
+        map: bookTexture.texture,
+        roughness: 0.85,
+        metalness: 0.05,
+      });
+      const spine = new Mesh(spineGeometry, spineMaterial);
+      spine.position.set(0, 0, 0);
       spine.rotation.z = book % 2 === 0 ? 0.02 : -0.035;
-      group.add(spine);
+      registry.geometries.push(spineGeometry);
+      registry.materials.push(spineMaterial);
+      const bookGroup = new Group();
+      bookGroup.position.set(1.78 + book * 0.17, shelfY + 0.155, WALL_BACK_Z + 0.14);
+      bookGroup.add(spine);
+      group.add(bookGroup);
+      if (shelfIndex === 1) upperBooks.push(bookGroup);
     }
   });
+
+  // A second poster gives the right-hand wall visual weight from the first-person view.
+  const sidePoster = createCanvasTexture(140, 180, (canvas, next) => drawPoster(canvas, next, 1), palette);
+  registry.canvases.push(sidePoster);
+  registry.textures.push(sidePoster.texture);
+  const sidePosterGeometry = new PlaneGeometry(0.56, 0.72);
+  const sidePosterMaterial = new MeshStandardMaterial({ map: sidePoster.texture, roughness: 0.9 });
+  const sidePosterMesh = new Mesh(sidePosterGeometry, sidePosterMaterial);
+  sidePosterMesh.rotation.y = -Math.PI / 2;
+  sidePosterMesh.position.set(ROOM_HALF_WIDTH - 0.03, 1.45, -0.35);
+  registry.geometries.push(sidePosterGeometry);
+  registry.materials.push(sidePosterMaterial);
+  group.add(sidePosterMesh);
 
   // Three posters, each with its own texture drawn in code.
   [0, 1, 2].forEach((variant) => {
@@ -698,7 +854,7 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
   registry.tinted.push({ material: neonMaterial, token: NEON_TOKEN, emissive: 1.5 });
   group.add(neon);
 
-  return { group, rainTexture: rain.texture, neonMaterial };
+  return { group, rainTexture: rain.texture, neonMaterial, upperBooks };
 }
 
 type SteamPuff = { sprite: Sprite; phase: number; speed: number; drift: number };
@@ -741,7 +897,9 @@ const WIDE_TILE_ASPECT = 2.2;
 
 /** Room box: half width, ceiling height and the back/left wall positions. */
 const ROOM_HALF_WIDTH = 3.4;
-const ROOM_DEPTH = 3.2;
+// The camera is inside the room. Keep the front wall behind it even at the
+// maximum yaw so the viewport never opens onto the page background.
+const ROOM_DEPTH = 8;
 /** Tall enough to keep the ceiling well above the eye and the monitor. */
 const ROOM_HEIGHT = 3.9;
 /** The desk legs already end here, so the room floor shares the level. */
@@ -778,7 +936,7 @@ function clamp(value: number, min: number, max: number): number {
  * visible, and stop when the tile leaves the screen or the tab is hidden.
  */
 export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWorldScene {
-  const { host } = options;
+  const { host, playSound } = options;
   const registry: Registry = { geometries: [], materials: [], textures: [], canvases: [], tinted: [] };
 
   const canvas = document.createElement('canvas');
@@ -786,7 +944,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   canvas.style.display = 'block';
   canvas.style.width = '100%';
   canvas.style.height = '100%';
-  canvas.style.pointerEvents = 'none';
+  canvas.style.pointerEvents = 'auto';
 
   const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: true, stencil: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO));
@@ -818,14 +976,6 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   registry.textures.push(screen.texture, floorGrid.texture);
   registry.canvases.push(screen, floorGrid);
 
-  const { group: desk, cursor } = buildDesk(palette, registry, screen);
-  scene.add(desk);
-  scene.add(buildProps(palette, registry));
-  scene.add(buildFloor(registry, floorGrid));
-
-  const room = buildRoom(palette, registry);
-  scene.add(room.group);
-
   const puffs = buildSteam(palette, registry);
   for (const puff of puffs) scene.add(puff.sprite);
 
@@ -846,6 +996,112 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   const neonLight = new PointLight(new Color(palette[NEON_TOKEN]), 2.2, 7, 2);
   neonLight.position.set(0, 1.6, WALL_BACK_Z + 0.6);
   scene.add(ambient, key, neonLight);
+
+  const physics: PhysicsState = {
+    world: new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) }),
+    parts: [],
+    enabled: false,
+    accumulator: 0,
+  };
+  physics.world.allowSleep = true;
+  const wallCenterY = ROOM_FLOOR_Y + ROOM_HEIGHT / 2;
+
+  const addStaticBox = (position: CANNON.Vec3, halfExtents: CANNON.Vec3): void => {
+    const body = new CANNON.Body({ mass: 0, type: CANNON.Body.STATIC });
+    body.addShape(new CANNON.Box(halfExtents));
+    body.position.copy(position);
+    physics.world.addBody(body);
+  };
+  const addDynamicPart = (
+    object: Group,
+    kind: InteractiveKind,
+    halfExtents: CANNON.Vec3,
+    mass: number,
+  ): void => {
+    const worldPosition = object.getWorldPosition(new Vector3());
+    const body = new CANNON.Body({
+      mass,
+      shape: new CANNON.Box(halfExtents),
+      position: new CANNON.Vec3(worldPosition.x, worldPosition.y, worldPosition.z),
+      linearDamping: kind === 'dumbbell' ? 0.62 : 0.3,
+      angularDamping: kind === 'dumbbell' ? 0.7 : 0.35,
+    });
+    body.allowSleep = true;
+    body.sleepSpeedLimit = 0.12;
+    body.sleepTimeLimit = 0.5;
+    physics.world.addBody(body);
+    physics.parts.push({
+      object,
+      kind,
+      body,
+      initialPosition: worldPosition.clone(),
+      initialQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+    });
+  };
+
+  // Static collision boxes cover the room shell and the surfaces the player can touch.
+  addStaticBox(new CANNON.Vec3(0, ROOM_FLOOR_Y - 0.08, 0), new CANNON.Vec3(ROOM_HALF_WIDTH, 0.08, ROOM_DEPTH / 2));
+  addStaticBox(new CANNON.Vec3(0, wallCenterY, WALL_BACK_Z), new CANNON.Vec3(ROOM_HALF_WIDTH, ROOM_HEIGHT / 2, 0.04));
+  addStaticBox(new CANNON.Vec3(WALL_LEFT_X, wallCenterY, 0), new CANNON.Vec3(0.04, ROOM_HEIGHT / 2, ROOM_DEPTH / 2));
+  addStaticBox(new CANNON.Vec3(ROOM_HALF_WIDTH, wallCenterY, 0), new CANNON.Vec3(0.04, ROOM_HEIGHT / 2, ROOM_DEPTH / 2));
+  addStaticBox(new CANNON.Vec3(0, wallCenterY, ROOM_DEPTH / 2), new CANNON.Vec3(ROOM_HALF_WIDTH, ROOM_HEIGHT / 2, 0.04));
+  addStaticBox(new CANNON.Vec3(0, 0, 0), new CANNON.Vec3(2.3, 0.09, 1.05));
+  addStaticBox(new CANNON.Vec3(2.35, 0.72, WALL_BACK_Z + 0.14), new CANNON.Vec3(0.85, 0.025, 0.12));
+  addStaticBox(new CANNON.Vec3(2.35, 1.22, WALL_BACK_Z + 0.14), new CANNON.Vec3(0.85, 0.025, 0.12));
+  addStaticBox(new CANNON.Vec3(0, 1.24, -0.5), new CANNON.Vec3(1.05, 0.63, 0.06));
+  addStaticBox(new CANNON.Vec3(-0.35, 0.11, 0.45), new CANNON.Vec3(0.75, 0.03, 0.26));
+
+  const { group: desk, cursor, keyboard, mouse, mug } = buildDesk(palette, registry, screen);
+  scene.add(desk);
+  const props = buildProps(palette, registry);
+  scene.add(props.group);
+  scene.add(buildFloor(registry, floorGrid));
+
+  const room = buildRoom(palette, registry);
+  scene.add(room.group);
+  scene.add(buildCeilingFixtures(palette, registry, ROOM_FLOOR_Y + ROOM_HEIGHT));
+  const interactiveParts: Array<[Group, InteractiveKind, CANNON.Vec3, number]> = [
+    [mug, 'mug', new CANNON.Vec3(0.18, 0.18, 0.18), 0.35],
+    [props.dumbbell, 'dumbbell', new CANNON.Vec3(0.36, 0.16, 0.16), 5],
+    ...room.upperBooks.map(
+      (book): [Group, InteractiveKind, CANNON.Vec3, number] => [
+        book,
+        'book',
+        new CANNON.Vec3(0.08, 0.14, 0.1),
+        0.7,
+      ],
+    ),
+  ];
+  for (const [object, kind, halfExtents, mass] of interactiveParts) addDynamicPart(object, kind, halfExtents, mass);
+  const interactives: InteractivePart[] = physics.parts;
+  const interactiveObjects: Array<[Mesh | Group, InteractiveKind]> = [
+    [mug, 'mug'],
+    [props.dumbbell, 'dumbbell'],
+    ...room.upperBooks.map((book) => [book, 'book'] as [Group, InteractiveKind]),
+    [props.bulb, 'lamp'],
+    [keyboard, 'keyboard'],
+    [mouse, 'mouse'],
+  ];
+  for (const [object, kind] of interactiveObjects) object.userData.interactiveKind = kind;
+  const collisionSoundTimes: number[] = [];
+  for (const part of interactives) {
+    part.body?.addEventListener('collide', (event: { contact?: CANNON.ContactEquation }) => {
+      const speed = Math.abs(event.contact?.getImpactVelocityAlongNormal() ?? 0);
+      if (speed < 0.35 || collisionSoundTimes.length >= 3) return;
+      const now = performance.now();
+      while (collisionSoundTimes[0] !== undefined && now - collisionSoundTimes[0] > 600) {
+        collisionSoundTimes.shift();
+      }
+      if (collisionSoundTimes.length >= 3) return;
+      collisionSoundTimes.push(now);
+      playSound(part.kind === 'mug' ? 'ceramic' : part.kind === 'dumbbell' ? 'metal' : 'paper');
+    });
+  }
+  const raycaster = new Raycaster();
+  const pointer = new Vector2();
+  const highlighted = new Map<Mesh, number>();
+  const lampMaterial = props.bulb.material as MeshStandardMaterial;
+  let lampOn = true;
 
   /** Applies the constant night palette. There is no theme observer any more. */
   const applyNightPalette = (): void => {
@@ -881,6 +1137,126 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   let frameSum = 0;
   let frameCount = 0;
   let windowStart = 0;
+
+  const resetPart = (part: InteractivePart): void => {
+    if (!part.body) return;
+    part.body.position.set(part.initialPosition.x, part.initialPosition.y, part.initialPosition.z);
+    part.body.quaternion.set(
+      part.initialQuaternion.x,
+      part.initialQuaternion.y,
+      part.initialQuaternion.z,
+      part.initialQuaternion.w,
+    );
+    part.body.velocity.setZero();
+    part.body.angularVelocity.setZero();
+    part.body.wakeUp();
+    part.object.position.copy(part.initialPosition);
+    part.object.quaternion.set(
+      part.initialQuaternion.x,
+      part.initialQuaternion.y,
+      part.initialQuaternion.z,
+      part.initialQuaternion.w,
+    );
+  };
+
+  const resetPhysics = (): void => {
+    for (const part of interactives) resetPart(part);
+    physics.accumulator = 0;
+  };
+
+  const findInteractive = (object: object | null): InteractiveKind | undefined => {
+    let currentObject: { parent?: { userData?: Record<string, unknown> } | null; userData?: Record<string, unknown> } | null =
+      object as { parent?: { userData?: Record<string, unknown> } | null; userData?: Record<string, unknown> } | null;
+    while (currentObject) {
+      const kind = currentObject.userData?.interactiveKind;
+      if (typeof kind === 'string') return kind as InteractiveKind;
+      currentObject = currentObject.parent ?? null;
+    }
+    return undefined;
+  };
+
+  const setHighlight = (kind: InteractiveKind | undefined): void => {
+    for (const [mesh, intensity] of highlighted) {
+      const material = mesh.material as MeshStandardMaterial;
+      material.emissiveIntensity = intensity;
+    }
+    highlighted.clear();
+    if (!kind) {
+      host.style.cursor = 'default';
+      return;
+    }
+    host.style.cursor = 'pointer';
+    for (const [object, objectKind] of interactiveObjects) {
+      if (objectKind !== kind) continue;
+      object.traverse((child) => {
+        if (!(child instanceof Mesh) || !(child.material instanceof MeshStandardMaterial)) return;
+        const material = child.material;
+        highlighted.set(child, material.emissiveIntensity);
+        material.emissive.set(palette.accent);
+        material.emissiveIntensity = Math.max(material.emissiveIntensity, 0.35);
+      });
+    }
+  };
+
+  const raycastInteractive = (
+    event: PointerEvent,
+  ): { kind: InteractiveKind; object: Mesh | Group; hit: Vector3 } | null => {
+    if (mode !== 'interactive') return null;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(interactiveObjects.map(([object]) => object), true);
+    const hit = hits[0];
+    if (!hit) return null;
+    const kind = findInteractive(hit.object);
+    const target = interactiveObjects.find(([object]) => object === hit.object || object.getObjectById(hit.object.id));
+    return kind && target ? { kind, object: target[0], hit: hit.point } : null;
+  };
+
+  const handleInteractiveMove = (event: PointerEvent): void => {
+    setHighlight(raycastInteractive(event)?.kind);
+  };
+
+  const handleInteractiveClick = (event: PointerEvent): void => {
+    const result = raycastInteractive(event);
+    if (!result) return;
+    if (result.kind === 'keyboard') {
+      playSound('key');
+      return;
+    }
+    if (result.kind === 'mouse') {
+      playSound('click');
+      return;
+    }
+    if (result.kind === 'lamp') {
+      lampOn = !lampOn;
+      lampMaterial.emissiveIntensity = lampOn ? 1.1 : 0.08;
+      return;
+    }
+    const part = interactives.find((candidate) => candidate.object === result.object);
+    if (!part?.body) return;
+    const direction = camera.getWorldDirection(new Vector3()).normalize();
+    const strength = result.kind === 'dumbbell' ? 0.8 : result.kind === 'mug' ? 0.35 : 1.5;
+    part.body.applyImpulse(
+      new CANNON.Vec3(
+        direction.x * strength,
+        Math.min(Math.max(direction.y * strength, -0.08), 0.08),
+        direction.z * strength,
+      ),
+      new CANNON.Vec3(
+        result.hit.x - part.body.position.x,
+        result.hit.y - part.body.position.y,
+        result.hit.z - part.body.position.z,
+      ),
+    );
+    if (result.kind === 'mug') {
+      part.body.velocity.x = clamp(part.body.velocity.x, -1.2, 1.2);
+      part.body.velocity.y = clamp(part.body.velocity.y, -0.6, 0.6);
+      part.body.velocity.z = clamp(part.body.velocity.z, -1.2, 1.2);
+    }
+    part.body.wakeUp();
+  };
 
   const shouldRun = (): boolean => !disposed && !lost && inView && tabVisible;
 
@@ -950,6 +1326,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   const setMode = (next: BentoWorldMode): void => {
     if (mode === next) return;
     mode = next;
+    physics.enabled = next === 'interactive';
     if (next === 'showcase') {
       lookTarget.yaw = 0;
       lookTarget.pitch = BASE_PITCH;
@@ -957,6 +1334,8 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       lookCurrent.pitch = BASE_PITCH;
       target.x = 0;
       target.y = 0;
+      resetPhysics();
+      setHighlight(undefined);
     }
     lastTime = 0;
     applyFov();
@@ -996,6 +1375,29 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     frameId = window.requestAnimationFrame(tick);
   }
 
+  const stepPhysics = (dt: number): void => {
+    if (!physics.enabled) return;
+    physics.accumulator += dt;
+    const interval = degraded ? 1 / 30 : 1 / 60;
+    if (physics.accumulator < interval) return;
+    physics.world.step(1 / 60, physics.accumulator, degraded ? 1 : 3);
+    physics.accumulator = 0;
+    for (const part of interactives) {
+      if (!part.body) continue;
+      if (part.body.position.y < -5) {
+        resetPart(part);
+        continue;
+      }
+      part.object.position.set(part.body.position.x, part.body.position.y, part.body.position.z);
+      part.object.quaternion.set(
+        part.body.quaternion.x,
+        part.body.quaternion.y,
+        part.body.quaternion.z,
+        part.body.quaternion.w,
+      );
+    }
+  };
+
   function tick(now: number): void {
     frameId = null;
     if (!shouldRun()) return;
@@ -1004,6 +1406,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     const dt = Math.min(deltaMs / 1000, 0.1);
     lastTime = now;
     monitorFrameTime(now, deltaMs);
+    stepPhysics(dt);
 
     if (mode === 'interactive') {
       const lookBlend = 1 - Math.exp(-dt * LOOK_RESPONSE);
@@ -1105,6 +1508,9 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   intersectionObserver?.observe(host);
   host.addEventListener('pointermove', handlePointerMove, { passive: true });
   host.addEventListener('pointerleave', handlePointerLeave, { passive: true });
+  canvas.addEventListener('pointermove', handleInteractiveMove, { passive: true });
+  canvas.addEventListener('pointerleave', () => setHighlight(undefined), { passive: true });
+  canvas.addEventListener('click', handleInteractiveClick);
   canvas.addEventListener('webglcontextlost', handleContextLost);
   document.addEventListener('visibilitychange', handleVisibility);
   document.addEventListener('keydown', handleLookKey);
@@ -1127,6 +1533,10 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     document.removeEventListener('keydown', handleLookKey);
     host.removeEventListener('pointermove', handlePointerMove);
     host.removeEventListener('pointerleave', handlePointerLeave);
+    canvas.removeEventListener('pointermove', handleInteractiveMove);
+    canvas.removeEventListener('click', handleInteractiveClick);
+    setHighlight(undefined);
+    physics.world.bodies.length = 0;
     canvas.removeEventListener('webglcontextlost', handleContextLost);
     resizeObserver?.disconnect();
     intersectionObserver?.disconnect();
