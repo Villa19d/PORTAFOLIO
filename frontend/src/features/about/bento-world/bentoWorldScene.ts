@@ -91,6 +91,11 @@ const CODE_LINES = [
   'function resetScene() { return home; }',
 ];
 
+/** Lines that fit on the monitor before it starts scrolling up. */
+const CODE_WINDOW = 8;
+/** One new line every ~120 ms. */
+const LINE_INTERVAL = 0.12;
+
 type Palette = {
   bg: string;
   surface: string;
@@ -140,7 +145,7 @@ const NIGHT_PALETTE: Palette = {
 };
 
 /** Fake code editor: title bar with window dots and coloured code lines. */
-function drawScreen(canvas: HTMLCanvasElement, palette: Palette): void {
+function drawScreen(canvas: HTMLCanvasElement, palette: Palette, withCodeBars = true): void {
   const context = canvas.getContext('2d');
   if (!context) return;
 
@@ -158,6 +163,9 @@ function drawScreen(canvas: HTMLCanvasElement, palette: Palette): void {
     context.fill();
   });
 
+  // Decorative bars: only for the idle screen. The generated code clears them.
+  if (!withCodeBars) return;
+
   context.globalAlpha = 0.8;
   SCREEN_LINES.forEach((line, index) => {
     context.fillStyle = palette[line.tone];
@@ -169,20 +177,25 @@ function drawScreen(canvas: HTMLCanvasElement, palette: Palette): void {
 function drawCodeScreen(
   canvas: HTMLCanvasElement,
   palette: Palette,
-  visibleLines: number,
+  written: number,
   characters: number,
 ): void {
-  drawScreen(canvas, palette);
+  drawScreen(canvas, palette, false);
   const context = canvas.getContext('2d');
   if (!context) return;
   context.font = '7px monospace';
   context.textBaseline = 'top';
-  const lines = CODE_LINES.slice(0, Math.min(visibleLines, CODE_LINES.length));
-  lines.forEach((line, index) => {
-    const text = index === lines.length - 1 ? line.slice(0, characters) : line;
+  // `written` is the number of lines emitted so far: the screen keeps the newest
+  // CODE_WINDOW of them, so the list scrolls up once it fills the canvas.
+  const first = Math.max(written - CODE_WINDOW, 0);
+  const count = written - first;
+  for (let index = 0; index < count; index += 1) {
+    const line = CODE_LINES[(first + index) % CODE_LINES.length] ?? '';
+    const isNewest = index === count - 1;
+    const text = isNewest ? line.slice(0, characters) : line;
     context.fillStyle = line.startsWith('#') ? palette.muted : line.includes('const') ? palette.accent : palette.accentAlt;
     context.fillText(text, 12, 31 + index * 14);
-  });
+  }
 }
 
 /** Very faint grid so the floor reads as a surface instead of a void. */
@@ -1150,10 +1163,10 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   const pointer = new Vector2();
   const highlighted = new Map<Mesh, { color: Color; emissive: Color; intensity: number }>();
   const lampMaterial = props.bulb.material as MeshStandardMaterial;
-  const screenState = { line: 1, characters: CODE_LINES[0]?.length ?? 0, running: false };
+  const screenState = { written: 1, characters: CODE_LINES[0]?.length ?? 0, running: false };
   const screenCanvas = screen.texture.image as HTMLCanvasElement;
   const redrawCode = (): void => {
-    drawCodeScreen(screenCanvas, palette, screenState.line, screenState.characters);
+    drawCodeScreen(screenCanvas, palette, screenState.written, screenState.characters);
     screen.texture.needsUpdate = true;
   };
   let neonTarget = new Color(palette.accent);
@@ -1247,18 +1260,6 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       host.style.cursor = 'default';
       return;
     }
-    if (result.kind === 'monitor') {
-      screenState.running = !screenState.running;
-      if (!screenState.running) redrawCode();
-      return;
-    }
-    if (result.kind === 'neonSwitch') {
-      neonIsPurple = !neonIsPurple;
-      neonTarget = new Color(neonIsPurple ? palette.accentAlt : palette.accent);
-      neonTransition = 0;
-      playSound('click');
-      return;
-    }
     host.style.cursor = 'pointer';
     for (const [object, objectKind] of interactiveObjects) {
       if (objectKind !== kind) continue;
@@ -1274,6 +1275,41 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
         material.emissive.set(palette.accent);
         material.emissiveIntensity = Math.max(material.emissiveIntensity, 0.35);
       });
+    }
+  };
+
+  // Timer for the monitor typewriter animation
+  let typingTimer = 0;
+
+  /** Updates the monitor typing animation and the neon color transition each frame. */
+  const updateScreenAndNeon = (dt: number): void => {
+    // --- Monitor typing animation: one new line every ~120 ms ---
+    if (screenState.running) {
+      if (animated) {
+        typingTimer += dt;
+        while (typingTimer >= LINE_INTERVAL) {
+          typingTimer -= LINE_INTERVAL;
+          screenState.written += 1;
+          screenState.characters =
+            CODE_LINES[(screenState.written - 1) % CODE_LINES.length]?.length ?? 0;
+          redrawCode();
+        }
+      } else {
+        // Reduced motion: the whole fragment list at once, static.
+        screenState.written = CODE_WINDOW;
+        screenState.characters = CODE_LINES[(CODE_WINDOW - 1) % CODE_LINES.length]?.length ?? 0;
+        screenState.running = false;
+        redrawCode();
+      }
+    }
+
+    // --- Neon color transition (400 ms lerp) ---
+    if (neonTransition < 1) {
+      neonTransition = Math.min(neonTransition + dt / 0.4, 1);
+      neonCurrent.lerp(neonTarget, neonTransition);
+      neonMaterial.color.copy(neonCurrent);
+      neonMaterial.emissive.copy(neonCurrent);
+      neonLight.color.copy(neonCurrent);
     }
   };
 
@@ -1314,6 +1350,21 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       lampOn = !lampOn;
       lampMaterial.emissiveIntensity = lampOn ? 1.1 : 0.08;
       lampLight.visible = lampOn;
+      return;
+    }
+    if (result.kind === 'monitor') {
+      screenState.running = !screenState.running;
+      typingTimer = 0;
+      // Redraw now: showing the generated code also clears the decorative bars.
+      redrawCode();
+      playSound('key');
+      return;
+    }
+    if (result.kind === 'neonSwitch') {
+      neonIsPurple = !neonIsPurple;
+      neonTarget = new Color(neonIsPurple ? palette.accentAlt : palette.accent);
+      neonTransition = 0;
+      playSound('click');
       return;
     }
     const part = interactives.find((candidate) => candidate.object === result.object);
@@ -1429,7 +1480,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       resetPhysics();
       setHighlight(undefined);
       screenState.running = false;
-      screenState.line = 1;
+      screenState.written = 1;
       screenState.characters = CODE_LINES[0]?.length ?? 0;
       drawScreen(screenCanvas, palette);
       screen.texture.needsUpdate = true;
