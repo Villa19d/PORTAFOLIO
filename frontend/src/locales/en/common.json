@@ -167,6 +167,7 @@
     "slideLabel": "Project {{index}} of {{slidesLength}}",
     "slidePosition": "Project {{current}} of {{total}}",
     "pagination": "Project pagination",
-    "goToSlide": "Go to project {{current}} of {{total}}"
+    "goToSlide": "Go to project {{current}} of {{total}}",
+    "showcase": "Featured projects"
   }
 }

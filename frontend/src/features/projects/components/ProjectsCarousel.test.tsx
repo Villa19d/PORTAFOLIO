@@ -45,10 +45,13 @@ describe('ProjectsCarousel', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders one or two projects in a static centered layout', () => {
+  it('renders one to three projects in the showcase layout', () => {
     const { container, rerender } = renderCarousel([project], false);
 
-    expect(container.querySelector('.projects-static')).toBeInTheDocument();
+    const showcase = container.querySelector('.projects-showcase');
+    expect(showcase).toBeInTheDocument();
+    expect(showcase).toHaveAttribute('data-layout', 'showcase');
+    expect(showcase).toHaveAttribute('data-count', '1');
     expect(screen.queryByTestId('projects-scroll-snap-track')).not.toBeInTheDocument();
 
     rerender(
@@ -60,20 +63,39 @@ describe('ProjectsCarousel', () => {
       </I18nextProvider>,
     );
 
-    expect(container.querySelector('.projects-static')).toBeInTheDocument();
+    expect(container.querySelector('.projects-showcase')).toHaveAttribute('data-count', '2');
     expect(screen.getAllByRole('article')).toHaveLength(2);
+
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <ProjectsCarousel
+          projects={[
+            project,
+            { ...project, id: 'project-2', slug: 'project-2' },
+            { ...project, id: 'project-3', slug: 'project-3' },
+          ]}
+          isLoading={false}
+        />
+      </I18nextProvider>,
+    );
+
+    expect(container.querySelector('.projects-showcase')).toHaveAttribute('data-count', '3');
+    expect(screen.getAllByRole('article')).toHaveLength(3);
   });
 
-  it('uses the scroll-snap track when there are more than two projects', () => {
-    const projects = [project, { ...project, id: 'project-2', slug: 'project-2' }, {
-      ...project,
-      id: 'project-3',
-      slug: 'project-3',
-    }];
+  it('switches to the carousel layout from four projects up', () => {
+    const projects = [
+      project,
+      { ...project, id: 'project-2', slug: 'project-2' },
+      { ...project, id: 'project-3', slug: 'project-3' },
+      { ...project, id: 'project-4', slug: 'project-4' },
+    ];
 
-    renderCarousel(projects, false);
+    const { container } = renderCarousel(projects, false);
 
+    expect(container.querySelector('.projects-carousel')).toHaveAttribute('data-layout', 'carousel');
+    expect(container.querySelector('.projects-showcase')).not.toBeInTheDocument();
     expect(screen.getByTestId('projects-scroll-snap-track')).toBeInTheDocument();
-    expect(screen.getAllByRole('article')).toHaveLength(3);
+    expect(screen.getAllByRole('article')).toHaveLength(4);
   });
 });

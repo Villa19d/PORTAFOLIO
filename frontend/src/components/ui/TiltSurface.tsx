@@ -14,6 +14,22 @@ interface TiltSurfaceProps {
 
 const MAX_ROTATION = 8;
 
+/**
+ * Spotlight position as CSS variables written straight onto the node, so the
+ * follow-the-cursor effect never goes through React's render cycle. `null` removes
+ * them, which sends the highlight back to the CSS default (centred, static).
+ */
+function applySpotlight(surface: HTMLElement | null, x: number | null, y: number | null): void {
+  if (!surface) return;
+  if (x === null || y === null) {
+    surface.style.removeProperty('--spot-x');
+    surface.style.removeProperty('--spot-y');
+    return;
+  }
+  surface.style.setProperty('--spot-x', `${((x + 1) / 2) * 100}%`);
+  surface.style.setProperty('--spot-y', `${((y + 1) / 2) * 100}%`);
+}
+
 export function TiltSurface({ children, enabled = true }: TiltSurfaceProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const boundsRef = useRef<DOMRect | null>(null);
@@ -36,11 +52,13 @@ export function TiltSurface({ children, enabled = true }: TiltSurfaceProps) {
     pointerY.set(0);
     boundsRef.current = null;
     isPointerDownRef.current = false;
+    applySpotlight(surfaceRef.current, null, null);
   }, [enabled, pointerX, pointerY]);
 
   const resetTilt = () => {
     pointerX.set(0);
     pointerY.set(0);
+    applySpotlight(surfaceRef.current, null, null);
   };
 
   const handlePointerEnter = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -62,8 +80,11 @@ export function TiltSurface({ children, enabled = true }: TiltSurfaceProps) {
     }
     const normalizedX = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
     const normalizedY = ((event.clientY - bounds.top) / bounds.height) * 2 - 1;
-    pointerX.set(Math.max(-1, Math.min(1, normalizedX)));
-    pointerY.set(Math.max(-1, Math.min(1, normalizedY)));
+    const clampedX = Math.max(-1, Math.min(1, normalizedX));
+    const clampedY = Math.max(-1, Math.min(1, normalizedY));
+    pointerX.set(clampedX);
+    pointerY.set(clampedY);
+    applySpotlight(surfaceRef.current, clampedX, clampedY);
   };
 
   const handlePointerDown = () => {
