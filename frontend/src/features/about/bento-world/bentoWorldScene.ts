@@ -1,5 +1,7 @@
 import {
   ACESFilmicToneMapping,
+  AdditiveBlending,
+  AmbientLight,
   BackSide,
   BoxGeometry,
   CanvasTexture,
@@ -12,6 +14,7 @@ import {
   Group,
   IcosahedronGeometry,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
@@ -35,11 +38,14 @@ import {
 import * as CANNON from 'cannon-es';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import type { SoundName } from '../../sound/soundEngine';
+import { AMBIENT_TRANSITION_SECONDS, resolveAmbientMode, type AmbientMode } from './bentoWorldAmbient';
 
 export interface BentoWorldSceneOptions {
   host: HTMLElement;
   onFirstFrame: () => void;
   playSound: (sound: SoundName) => void;
+  /** Starts or stops the generated lofi track; returns whether it is really playing. */
+  onLofi?: (on: boolean) => boolean;
   /** Called when the scene must stop for good (WebGL context lost). */
   onFailure: () => void;
 }
@@ -270,6 +276,55 @@ function drawNightView(canvas: HTMLCanvasElement, palette: Palette): void {
   context.globalAlpha = 1;
 }
 
+/** Clear daytime sky: gradient, faint skyline and a few simple clouds. */
+function drawDayView(canvas: HTMLCanvasElement, palette: Palette): void {
+  const context = canvas.getContext('2d');
+  if (!context) return;
+  const { width, height } = canvas;
+
+  const sky = context.createLinearGradient(0, 0, 0, height);
+  sky.addColorStop(0, '#6fb0e6');
+  sky.addColorStop(0.55, '#a8d2f0');
+  sky.addColorStop(1, '#dceef9');
+  context.fillStyle = sky;
+  context.fillRect(0, 0, width, height);
+
+  // Faint skyline so the room keeps a horizon in daylight.
+  context.fillStyle = palette.border;
+  context.globalAlpha = 0.3;
+  [0.06, 0.2, 0.35, 0.52, 0.66, 0.8].forEach((position, index) => {
+    const buildingWidth = width * 0.11;
+    const buildingHeight = height * (0.13 + (index % 3) * 0.08);
+    context.fillRect(position * width, height - buildingHeight, buildingWidth, buildingHeight);
+  });
+  context.globalAlpha = 1;
+
+  // Clouds: clusters of soft ellipses.
+  const clouds: [number, number, number][] = [
+    [0.2, 0.2, 0.26],
+    [0.62, 0.15, 0.22],
+    [0.86, 0.3, 0.16],
+  ];
+  context.fillStyle = '#ffffff';
+  context.globalAlpha = 0.85;
+  for (const [x, y, size] of clouds) {
+    for (let puff = 0; puff < 4; puff += 1) {
+      context.beginPath();
+      context.ellipse(
+        (x + puff * size * 0.18) * width,
+        (y + (puff % 2) * 0.035) * height,
+        size * width * 0.17,
+        size * height * 0.11,
+        0,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+    }
+  }
+  context.globalAlpha = 1;
+}
+
 /** Rain streaks; the plane scrolls this texture so it reads as falling rain. */
 function drawRain(canvas: HTMLCanvasElement, palette: Palette): void {
   const context = canvas.getContext('2d');
@@ -393,6 +448,58 @@ function createSteamTexture(): CanvasTexture {
   return texture;
 }
 
+/** Wide soft blob used by the additive halo of the neon strip. */
+function createGlowTexture(): CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 64;
+  const context = canvas.getContext('2d');
+  if (context) {
+    const gradient = context.createRadialGradient(64, 32, 0, 64, 32, 64);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+    gradient.addColorStop(0.45, 'rgba(255, 255, 255, 0.32)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 128, 64);
+  }
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  return texture;
+}
+
+type SkyTarget = { texture: CanvasTexture; render: (progress: number) => void };
+
+/**
+ * Window canvas that crossfades the night skyline into the day sky. Both skies are painted
+ * once into offscreen canvases, so a transition frame costs a single `drawImage`.
+ */
+function createSkyTarget(palette: Palette): SkyTarget {
+  const night = document.createElement('canvas');
+  const day = document.createElement('canvas');
+  const canvas = document.createElement('canvas');
+  for (const target of [night, day, canvas]) {
+    target.width = 320;
+    target.height = 220;
+  }
+  drawNightView(night, palette);
+  drawDayView(day, palette);
+  const context = canvas.getContext('2d');
+  const render = (progress: number): void => {
+    if (!context) return;
+    context.globalAlpha = 1;
+    context.drawImage(night, 0, 0);
+    if (progress > 0) {
+      context.globalAlpha = Math.min(progress, 1);
+      context.drawImage(day, 0, 0);
+      context.globalAlpha = 1;
+    }
+  };
+  render(0);
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  return { texture, render };
+}
+
 type TintedMaterial = { color: Color; emissive?: Color; emissiveIntensity?: number };
 
 type Registry = {
@@ -421,6 +528,7 @@ type InteractiveKind =
   | 'keyboard'
   | 'mouse'
   | 'monitor'
+  | 'ambient'
   | 'neonSwitch';
 
 type InteractivePart = {
@@ -613,7 +721,9 @@ function buildProps(palette: Palette, registry: Registry): { group: Group; bulb:
     weight.position.x = x;
     dumbbell.add(weight);
   }
-  dumbbell.position.set(2.15, ROOM_FLOOR_Y + 0.16, 1.35);
+  // Under the desk, resting on the floor: it stays visible from the first-person
+  // camera when looking down (pitch -25°), clear of the desk top and the side panels.
+  dumbbell.position.set(-0.6, ROOM_FLOOR_Y + 0.16, 0.1);
   group.add(dumbbell);
 
   // Two stacked books.
@@ -646,6 +756,45 @@ function buildProps(palette: Palette, registry: Registry): { group: Group; bulb:
   return { group, bulb, dumbbell };
 }
 
+type AmbientDevice = { group: Group; ledMaterial: MeshStandardMaterial };
+
+/** Small radio on the desk: body, speaker grille, knob and a status LED. */
+function buildAmbientDevice(palette: Palette, registry: Registry): AmbientDevice {
+  const part = createPartFactory(palette, registry);
+  const group = new Group();
+  const { x, y, z } = AMBIENT_DEVICE;
+
+  const body = part(new RoundedBoxGeometry(0.42, 0.16, 0.26, 2, 0.03), 'elevated');
+  body.position.set(x, y, z);
+  group.add(body);
+
+  const grille = part(new RoundedBoxGeometry(0.24, 0.1, 0.02, 2, 0.01), 'border', { cast: false });
+  grille.position.set(x - 0.06, y, z + 0.13);
+  group.add(grille);
+
+  const knob = part(new CylinderGeometry(0.05, 0.05, 0.04, 12), 'accent', { metalness: 0.4 });
+  knob.position.set(x + 0.13, y + 0.09, z);
+  group.add(knob);
+
+  // The LED stays out of the hover highlight: its own emissive is the lofi state.
+  const ledMaterial = new MeshStandardMaterial({
+    color: new Color(palette.border),
+    emissive: new Color(palette.accent),
+    emissiveIntensity: 0.05,
+    roughness: 0.4,
+    metalness: 0,
+  });
+  const ledGeometry = new IcosahedronGeometry(0.024, 0);
+  const led = new Mesh(ledGeometry, ledMaterial);
+  led.position.set(x + 0.06, y + 0.02, z + 0.135);
+  led.userData.noHighlight = true;
+  registry.geometries.push(ledGeometry);
+  registry.materials.push(ledMaterial);
+  group.add(led);
+
+  return { group, ledMaterial };
+}
+
 /** Floor with a very faint grid; the fog fades it into the background. */
 function buildFloor(registry: Registry, grid: CanvasTarget): Mesh {
   const geometry = new PlaneGeometry(26, 26);
@@ -666,7 +815,11 @@ function buildFloor(registry: Registry, grid: CanvasTarget): Mesh {
 type RoomParts = {
   group: Group;
   rainTexture: CanvasTexture;
+  sky: SkyTarget;
+  windowMesh: Mesh;
+  rainMesh: Mesh;
   neonMaterial: MeshStandardMaterial;
+  neonHalo: Mesh;
   upperBooks: Group[];
   wallSwitch: Mesh;
   neon: Mesh;
@@ -742,34 +895,35 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
   const windowWidth = 1.9;
   const windowHeight = 1.3;
   const windowY = WINDOW_Y;
-  const night = createCanvasTexture(320, 220, drawNightView, palette);
+  const sky = createSkyTarget(palette);
   const rain = createCanvasTexture(160, 220, drawRain, palette);
   rain.texture.wrapS = RepeatWrapping;
   rain.texture.wrapT = RepeatWrapping;
-  registry.canvases.push(night, rain);
-  registry.textures.push(night.texture, rain.texture);
+  registry.canvases.push(rain);
+  registry.textures.push(sky.texture, rain.texture);
 
   const nightGeometry = new PlaneGeometry(windowWidth, windowHeight);
-  const nightMaterial = new MeshStandardMaterial({
-    map: night.texture,
+  const windowMaterial = new MeshStandardMaterial({
+    map: sky.texture,
     emissive: new Color(0xffffff),
-    emissiveMap: night.texture,
+    emissiveMap: sky.texture,
     emissiveIntensity: 0.55,
     roughness: 0.9,
     metalness: 0,
   });
-  const nightMesh = new Mesh(nightGeometry, nightMaterial);
-  nightMesh.rotation.y = Math.PI / 2;
-  nightMesh.position.set(WALL_LEFT_X + 0.02, windowY, 0);
+  const windowMesh = new Mesh(nightGeometry, windowMaterial);
+  windowMesh.rotation.y = Math.PI / 2;
+  windowMesh.position.set(WALL_LEFT_X + 0.02, windowY, 0);
   registry.geometries.push(nightGeometry);
-  registry.materials.push(nightMaterial);
-  group.add(nightMesh);
+  registry.materials.push(windowMaterial);
+  group.add(windowMesh);
 
   const rainGeometry = new PlaneGeometry(windowWidth, windowHeight);
   const rainMaterial = new MeshStandardMaterial({
     map: rain.texture,
     color: new Color(0xffffff),
     transparent: true,
+    opacity: 1,
     roughness: 1,
     metalness: 0,
   });
@@ -819,32 +973,35 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
     group.add(bar);
   }
 
-  // Two shelves with coloured book spines, right of the monitor.
+  // Two shelves with coloured book spines, right of the monitor. The upper shelf
+  // keeps its original six spines and adds six more packed towards the left.
   const bookTones: (keyof Palette)[] = ['accent', 'accentAlt', 'border', 'muted', 'elevated', 'accent'];
-  const bookPositions = [1.4, 1.57, 1.78, 1.95, 2.12, 2.29];
+  const bookLabels = ['Ethical Hacking', 'Python', 'Cloud'];
+  /** Varied spine heights, all close enough to the shared collider. */
+  const bookHeights = [0.26, 0.24, 0.28, 0.25, 0.27, 0.23];
+  const shelfBookPositions: number[][] = [
+    [1.4, 1.57, 1.78, 1.95, 2.12, 2.29],
+    [1.15, 1.265, 1.38, 1.495, 1.61, 1.725, 1.84, 1.955, 2.07, 2.185, 2.3, 2.415],
+  ];
   const upperBooks: Group[] = [];
   [0.72, 1.22].forEach((shelfY, shelfIndex) => {
     const shelf = part(new BoxGeometry(2.1, 0.05, 0.24), 'border', { cast: false });
     shelf.position.set(2.15, shelfY, WALL_BACK_Z + 0.14);
     group.add(shelf);
 
+    const bookPositions = shelfBookPositions[shelfIndex] ?? [];
     for (let book = 0; book < bookPositions.length; book += 1) {
       const tone = bookTones[(shelfIndex * bookPositions.length + book) % bookTones.length] ?? 'accent';
+      const height = bookHeights[book % bookHeights.length] ?? 0.26;
       const bookTexture = createCanvasTexture(
         48,
         128,
-        (canvas, next) =>
-          drawBookSpine(
-            canvas,
-            next,
-            ['Ethical Hacking', 'Python', 'Cloud'][book % 3] ?? 'Book',
-            tone,
-          ),
+        (canvas, next) => drawBookSpine(canvas, next, bookLabels[book % bookLabels.length] ?? 'Book', tone),
         palette,
       );
       registry.canvases.push(bookTexture);
       registry.textures.push(bookTexture.texture);
-      const spineGeometry = new BoxGeometry(0.055, 0.26, 0.19);
+      const spineGeometry = new BoxGeometry(0.055, height, 0.19);
       const spineMaterial = new MeshStandardMaterial({
         map: bookTexture.texture,
         roughness: 0.85,
@@ -856,7 +1013,7 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
       registry.geometries.push(spineGeometry);
       registry.materials.push(spineMaterial);
       const bookGroup = new Group();
-      bookGroup.position.set(bookPositions[book] ?? 1.78, shelfY + 0.155, WALL_BACK_Z + 0.14);
+      bookGroup.position.set(bookPositions[book] ?? 1.78, shelfY + 0.025 + height / 2, WALL_BACK_Z + 0.14);
       bookGroup.add(spine);
       group.add(bookGroup);
       if (shelfIndex === 1) upperBooks.push(bookGroup);
@@ -900,7 +1057,7 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
   const neonMaterial = new MeshStandardMaterial({
     color: new Color(palette[NEON_TOKEN]),
     emissive: new Color(palette[NEON_TOKEN]),
-    emissiveIntensity: 1.5,
+    emissiveIntensity: NEON_EMISSIVE,
     roughness: 0.5,
     metalness: 0,
   });
@@ -908,10 +1065,40 @@ function buildRoom(palette: Palette, registry: Registry): RoomParts {
   neon.position.set(0, 1.72, WALL_BACK_Z + 0.04);
   registry.geometries.push(neonGeometry);
   registry.materials.push(neonMaterial);
-  registry.tinted.push({ material: neonMaterial, token: NEON_TOKEN, emissive: 1.5 });
+  registry.tinted.push({ material: neonMaterial, token: NEON_TOKEN, emissive: NEON_EMISSIVE });
   group.add(neon);
 
-  return { group, rainTexture: rain.texture, neonMaterial, upperBooks, wallSwitch, neon };
+  // Additive halo right behind the strip: it reads as light spilling on the wall and
+  // costs a single unlit quad, so the three-dynamic-light budget is untouched.
+  const haloTexture = createGlowTexture();
+  const haloGeometry = new PlaneGeometry(4.4, 1.5);
+  const haloMaterial = new MeshBasicMaterial({
+    map: haloTexture,
+    color: new Color(palette[NEON_TOKEN]),
+    transparent: true,
+    opacity: NEON_HALO_OPACITY,
+    blending: AdditiveBlending,
+    depthWrite: false,
+  });
+  const neonHalo = new Mesh(haloGeometry, haloMaterial);
+  neonHalo.position.set(0, 1.72, WALL_BACK_Z + 0.015);
+  registry.geometries.push(haloGeometry);
+  registry.materials.push(haloMaterial);
+  registry.textures.push(haloTexture);
+  group.add(neonHalo);
+
+  return {
+    group,
+    rainTexture: rain.texture,
+    sky,
+    windowMesh,
+    rainMesh,
+    neonMaterial,
+    neonHalo,
+    upperBooks,
+    wallSwitch,
+    neon,
+  };
 }
 
 type SteamPuff = { sprite: Sprite; phase: number; speed: number; drift: number };
@@ -965,6 +1152,14 @@ const WALL_BACK_Z = -ROOM_DEPTH / 2;
 const WALL_LEFT_X = -ROOM_HALF_WIDTH;
 /** Neon strip colour. Swap this token for the purple accent when it exists. */
 const NEON_TOKEN: keyof Palette = 'accent';
+/** Neon strip, halo and point light tuning (ticket 12.5 A3). */
+const NEON_EMISSIVE = 2.6;
+const NEON_HALO_OPACITY = 0.7;
+const NEON_LIGHT_INTENSITY = 6.5;
+const NEON_LIGHT_DISTANCE = 11;
+const NEON_LIGHT_DECAY = 1.8;
+/** Small radio on the desk that switches the room between night and day (ticket 12.5 B1). */
+const AMBIENT_DEVICE = { x: -1.3, y: 0.17, z: -0.15 };
 
 /** First-person limits and eye position (sitting in front of the desk). */
 const EYE = { x: 0, y: 1.2, z: 2.7 };
@@ -1049,11 +1244,19 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   key.shadow.camera.bottom = -5;
   key.shadow.bias = -0.0008;
   // The screen keeps its own emissive map, so no extra light is needed for the glow.
-  const neonLight = new PointLight(new Color(palette[NEON_TOKEN]), 2.2, 7, 2);
+  const neonLight = new PointLight(
+    new Color(palette[NEON_TOKEN]),
+    NEON_LIGHT_INTENSITY,
+    NEON_LIGHT_DISTANCE,
+    NEON_LIGHT_DECAY,
+  );
   neonLight.position.set(0, 1.6, WALL_BACK_Z + 0.6);
   const lampLight = new PointLight(new Color(palette.accent), 0.65, 3.2, 2);
   lampLight.position.set(-1.55, 1.08, -0.44);
-  scene.add(key, neonLight, lampLight);
+  // Fourth light, but not a dynamic one: no position, no shadows, and it stays at
+  // intensity 0 during the night, so the night look is unchanged.
+  const ambientLight = new AmbientLight(0xffffff, 0);
+  scene.add(key, neonLight, lampLight, ambientLight);
 
   const physics: PhysicsState = {
     world: new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) }),
@@ -1113,6 +1316,8 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   scene.add(desk);
   const props = buildProps(palette, registry);
   scene.add(props.group);
+  const ambientDevice = buildAmbientDevice(palette, registry);
+  scene.add(ambientDevice.group);
   scene.add(buildFloor(registry, floorGrid));
 
   const room = buildRoom(palette, registry);
@@ -1143,6 +1348,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     [mouse, 'mouse'],
     [screenMesh, 'monitor'],
     [room.wallSwitch, 'neonSwitch'],
+    [ambientDevice.group, 'ambient'],
   ];
   for (const [object, kind] of interactiveObjects) object.userData.interactiveKind = kind;
   const collisionSoundTimes: number[] = [];
@@ -1174,6 +1380,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   let neonIsPurple = false;
   let neonTransition = 1;
   const neonMaterial = room.neon.material as MeshStandardMaterial;
+  const neonHaloMaterial = room.neonHalo.material as MeshBasicMaterial;
   let lampOn = true;
 
   /** Applies the constant night palette. There is no theme observer any more. */
@@ -1265,6 +1472,8 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       if (objectKind !== kind) continue;
       object.traverse((child) => {
         if (!(child instanceof Mesh) || !(child.material instanceof MeshStandardMaterial)) return;
+        // The ambient device LED keeps its own emissive: it reports the lofi state.
+        if (child.userData.noHighlight === true) return;
         const material = child.material;
         highlighted.set(child, {
           color: material.color.clone(),
@@ -1309,6 +1518,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       neonCurrent.lerp(neonTarget, neonTransition);
       neonMaterial.color.copy(neonCurrent);
       neonMaterial.emissive.copy(neonCurrent);
+      neonHaloMaterial.color.copy(neonCurrent);
       neonLight.color.copy(neonCurrent);
     }
   };
@@ -1358,6 +1568,16 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       // Redraw now: showing the generated code also clears the decorative bars.
       redrawCode();
       playSound('key');
+      return;
+    }
+    if (result.kind === 'ambient') {
+      ambientMode = ambientMode === 'night' ? 'day' : 'night';
+      ambientTarget = ambientMode === 'day' ? 1 : 0;
+      if (!animated) ambientCurrent = ambientTarget;
+      applyAmbient();
+      setLofiState(options.onLofi?.(ambientTarget === 1) ?? false);
+      playSound('click');
+      requestFrame();
       return;
     }
     if (result.kind === 'neonSwitch') {
@@ -1430,8 +1650,73 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     renderer.shadowMap.enabled = false;
     key.castShadow = false;
     neonLight.visible = false;
+    room.neonHalo.visible = false;
     // three needs a shader recompile after toggling renderer.shadowMap.enabled.
     for (const material of registry.materials) material.needsUpdate = true;
+  };
+
+  // --- Ambient mode (night / day) and the generated lofi track (ticket 12.5 B) ---
+  let ambientMode: AmbientMode = resolveAmbientMode(new Date());
+  let ambientTarget = ambientMode === 'day' ? 1 : 0;
+  let ambientCurrent = ambientTarget;
+  let lofiOn = false;
+  const NIGHT_KEY_COLOR = new Color(0xffffff);
+  const DAY_KEY_COLOR = new Color(0xffd9a8);
+  const NIGHT_FOG_COLOR = new Color(palette.bg);
+  const DAY_FOG_COLOR = new Color('#1b2f4a');
+  const keyColor = new Color();
+  const fogColor = new Color();
+  const windowMaterial = room.windowMesh.material as MeshStandardMaterial;
+  const rainMaterial = room.rainMesh.material as MeshStandardMaterial;
+
+  /** Blends the lights, the window and the rain between night (0) and day (1). */
+  const applyAmbient = (): void => {
+    const progress = ambientCurrent;
+    keyColor.copy(NIGHT_KEY_COLOR).lerp(DAY_KEY_COLOR, progress);
+    key.color.copy(keyColor);
+    key.intensity = 1.6 + progress * 0.8;
+    ambientLight.intensity = progress * 0.5;
+    fogColor.copy(NIGHT_FOG_COLOR).lerp(DAY_FOG_COLOR, progress);
+    fog.color.copy(fogColor);
+    windowMaterial.emissiveIntensity = 0.55 + progress * 0.35;
+    rainMaterial.opacity = 1 - progress;
+    room.rainMesh.visible = progress < 0.98;
+    neonMaterial.emissiveIntensity = NEON_EMISSIVE * (1 - progress);
+    neonHaloMaterial.opacity = NEON_HALO_OPACITY * (1 - progress);
+    room.neonHalo.visible = !degraded && progress < 0.98;
+    neonLight.intensity = NEON_LIGHT_INTENSITY * (1 - progress);
+    neonLight.visible = !degraded && progress < 0.98;
+    room.sky.render(progress);
+    room.sky.texture.needsUpdate = true;
+  };
+
+  /** Advances the transition; reduced motion applies the change in one step. */
+  const updateAmbient = (dt: number): void => {
+    if (ambientCurrent === ambientTarget) return;
+    if (!animated) {
+      ambientCurrent = ambientTarget;
+    } else {
+      const step = dt / AMBIENT_TRANSITION_SECONDS;
+      ambientCurrent =
+        ambientTarget > ambientCurrent
+          ? Math.min(ambientCurrent + step, ambientTarget)
+          : Math.max(ambientCurrent - step, ambientTarget);
+    }
+    applyAmbient();
+  };
+
+  /** LED and audio always report the same state. */
+  const setLofiState = (on: boolean): void => {
+    lofiOn = on;
+    ambientDevice.ledMaterial.emissiveIntensity = on ? 1.5 : 0.05;
+    ambientDevice.ledMaterial.color.set(on ? palette.accent : palette.border);
+  };
+
+  /** Stops the track when the tile leaves the screen, the tab hides or the user exits. */
+  const stopLofi = (): void => {
+    if (!lofiOn) return;
+    options.onLofi?.(false);
+    setLofiState(false);
   };
 
   const monitorFrameTime = (now: number, deltaMs: number): void => {
@@ -1479,6 +1764,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
       target.y = 0;
       resetPhysics();
       setHighlight(undefined);
+      stopLofi();
       screenState.running = false;
       screenState.written = 1;
       screenState.characters = CODE_LINES[0]?.length ?? 0;
@@ -1566,6 +1852,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     monitorFrameTime(now, deltaMs);
     stepPhysics(dt);
     updateScreenAndNeon(dt);
+    updateAmbient(dt);
 
     if (mode === 'interactive') {
       const lookBlend = 1 - Math.exp(-dt * LOOK_RESPONSE);
@@ -1640,6 +1927,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
 
   const handleVisibility = (): void => {
     tabVisible = document.visibilityState === 'visible';
+    if (!tabVisible) stopLofi();
     if (tabVisible) requestFrame();
   };
 
@@ -1659,6 +1947,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
             const entry = entries[entries.length - 1];
             if (!entry) return;
             inView = entry.isIntersecting;
+            if (!inView) stopLofi();
             if (inView) requestFrame();
           },
           { threshold: 0 },
@@ -1680,6 +1969,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
   }
 
   applyNightPalette();
+  applyAmbient();
   placeCamera();
   sizeRenderer();
 
@@ -1695,6 +1985,7 @@ export function createBentoWorldScene(options: BentoWorldSceneOptions): BentoWor
     canvas.removeEventListener('pointermove', handleInteractiveMove);
     canvas.removeEventListener('click', handleInteractiveClick);
     setHighlight(undefined);
+    stopLofi();
     physics.world.bodies.length = 0;
     canvas.removeEventListener('webglcontextlost', handleContextLost);
     resizeObserver?.disconnect();

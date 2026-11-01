@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSound } from '../../sound/SoundContext';
+import type { SoundName } from '../../sound/soundEngine';
 import { createBentoWorldScene, type BentoWorldMode, type BentoWorldScene } from './bentoWorldScene';
 
 interface BentoWorldCanvasProps {
@@ -14,10 +15,21 @@ interface BentoWorldCanvasProps {
  * as the tile approaches the viewport, never again afterwards.
  */
 export default function BentoWorldCanvas({ mode, onFailure }: BentoWorldCanvasProps) {
-  const { play } = useSound();
+  const { play, setLofi } = useSound();
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<BentoWorldScene | null>(null);
   const [isReady, setIsReady] = useState(false);
+
+  // The scene keeps its own copies of these callbacks: toggling the site sound must not
+  // rebuild the GPU resources (and must not reset the chosen day/night mode).
+  const playRef = useRef(play);
+  const setLofiRef = useRef(setLofi);
+  useEffect(() => {
+    playRef.current = play;
+    setLofiRef.current = setLofi;
+  }, [play, setLofi]);
+  const playSound = useCallback((sound: SoundName) => playRef.current(sound), []);
+  const onLofi = useCallback((on: boolean) => setLofiRef.current(on), []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -27,7 +39,8 @@ export default function BentoWorldCanvas({ mode, onFailure }: BentoWorldCanvasPr
     try {
       scene = createBentoWorldScene({
         host,
-        playSound: play,
+        playSound,
+        onLofi,
         onFirstFrame: () => setIsReady(true),
         onFailure,
       });
@@ -44,7 +57,7 @@ export default function BentoWorldCanvas({ mode, onFailure }: BentoWorldCanvasPr
     };
     // `mode` is applied by the effect below: adding it here would recreate the scene.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onFailure, play]);
+  }, [onFailure, playSound, onLofi]);
 
   useEffect(() => {
     sceneRef.current?.setMode(mode);
