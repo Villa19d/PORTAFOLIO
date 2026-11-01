@@ -63,3 +63,16 @@ export function isPlaceholderImageUrl(url: string): boolean {
     return false;
   }
 }
+
+/** Up to this many projects the section uses the large showcase layout (ticket 12.6). */
+export const SHOWCASE_MAX_PROJECTS = 3;
+
+export type CarouselLayout = 'showcase' | 'carousel';
+
+/**
+ * Layout of the projects section: 1-3 projects get the big showcase (no forced loop and
+ * no duplicated slides), 4 or more keep the carousel track. Pure so it can be unit tested.
+ */
+export function resolveCarouselLayout(count: number): CarouselLayout {
+  return count > 0 && count <= SHOWCASE_MAX_PROJECTS ? 'showcase' : 'carousel';
+}

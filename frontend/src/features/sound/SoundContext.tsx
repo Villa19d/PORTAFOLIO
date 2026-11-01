@@ -14,12 +14,15 @@ type SoundContextValue = {
   enabled: boolean;
   toggle: () => void;
   play: (sound: SoundName) => void;
+  /** Starts or stops the generated lofi track; returns whether it is playing. */
+  setLofi: (on: boolean) => boolean;
 };
 
 const SoundContext = createContext<SoundContextValue>({
   enabled: false,
   toggle: () => undefined,
   play: () => undefined,
+  setLofi: () => false,
 });
 
 const STORAGE_KEY = 'portfolio-sound-enabled';
@@ -79,6 +82,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
           engine.play('click');
         });
       } else {
+        engineRef.current?.setLofi(false);
         engineRef.current?.suspend();
       }
       return next;
@@ -97,6 +101,20 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       void loadEngine().then((engine) => {
         if (engine && document.visibilityState !== 'hidden') engine.play(sound);
       });
+    },
+    [enabled, loadEngine]
+  );
+
+  const setLofi = useCallback(
+    (on: boolean): boolean => {
+      if (!on) {
+        engineRef.current?.setLofi(false);
+        return false;
+      }
+      // Muted: the track never starts, so the device LED stays off.
+      if (!enabled) return false;
+      void loadEngine().then((engine) => engine?.setLofi(true));
+      return true;
     },
     [enabled, loadEngine]
   );
@@ -123,7 +141,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const value = useMemo(() => ({ enabled, toggle, play }), [enabled, play, toggle]);
+  const value = useMemo(() => ({ enabled, toggle, play, setLofi }), [enabled, play, setLofi, toggle]);
   return <SoundContext.Provider value={value}>{children}</SoundContext.Provider>;
 }
 

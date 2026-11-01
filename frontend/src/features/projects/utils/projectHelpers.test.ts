@@ -5,6 +5,7 @@ import {
   getLocalized,
   isCloudinaryImageUrl,
   isPlaceholderImageUrl,
+  resolveCarouselLayout,
 } from './projectHelpers';
 
 describe('getLocalized', () => {
@@ -70,5 +71,16 @@ describe('isPlaceholderImageUrl', () => {
   it('accepts real image URLs', () => {
     expect(isPlaceholderImageUrl('https://res.cloudinary.com/portfolio/image/upload/project.jpg'))
       .toBe(false);
+  });
+});
+
+describe('resolveCarouselLayout', () => {
+  it('uses the showcase for 1-3 projects and the carousel from 4 projects up', () => {
+    expect(resolveCarouselLayout(0)).toBe('carousel');
+    expect(resolveCarouselLayout(1)).toBe('showcase');
+    expect(resolveCarouselLayout(2)).toBe('showcase');
+    expect(resolveCarouselLayout(3)).toBe('showcase');
+    expect(resolveCarouselLayout(4)).toBe('carousel');
+    expect(resolveCarouselLayout(9)).toBe('carousel');
   });
 });

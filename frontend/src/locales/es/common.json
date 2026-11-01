@@ -127,7 +127,14 @@
     "cvLabel": "Currículum",
     "cvDownloadEs": "Descargar CV (ES)",
     "cvDownloadEn": "Descargar CV (EN)",
-    "cvUnavailable": "CV próximamente"
+    "cvUnavailable": "CV próximamente",
+    "worldLabel": "Mini mundo",
+    "worldHint": "Mi escritorio, en 3D",
+    "worldPlay": "Jugar",
+    "worldExit": "Salir",
+    "worldLoading": "Cargando la escena",
+    "worldUnavailable": "Solo en escritorio con WebGL",
+    "worldLookHint": "Mueve el ratón para mirar"
   },
   "experience": {
     "title": "Experiencia",
@@ -160,6 +167,7 @@
     "slideLabel": "Proyecto {{index}} de {{slidesLength}}",
     "slidePosition": "Proyecto {{current}} de {{total}}",
     "pagination": "Paginación de proyectos",
-    "goToSlide": "Ir al proyecto {{current}} de {{total}}"
+    "goToSlide": "Ir al proyecto {{current}} de {{total}}",
+    "showcase": "Proyectos destacados"
   }
 }

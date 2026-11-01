@@ -121,7 +121,10 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
   return (
     <>
       <article className="project-card">
-        <TiltSurface enabled={tiltEnabled}>{cardContent}</TiltSurface>
+        <TiltSurface enabled={tiltEnabled}>
+          <span className="project-card__spotlight" aria-hidden="true" />
+          {cardContent}
+        </TiltSurface>
       </article>
       {isDetailOpen && (
         <ProjectDetailModal

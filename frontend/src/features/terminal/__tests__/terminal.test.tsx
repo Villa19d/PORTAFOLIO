@@ -61,6 +61,7 @@ describe('terminal interpreter', () => {
       enabled: false,
       toggle: vi.fn(),
       play: vi.fn(),
+      setLofi: vi.fn(() => false),
     });
   });
 
@@ -111,6 +112,7 @@ describe('TerminalModal', () => {
       enabled: false,
       toggle: vi.fn(),
       play: vi.fn(),
+      setLofi: vi.fn(() => false),
     });
   });
 

@@ -1,0 +1,172 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "about": "Sobre mí",
+    "experience": "Experiencia",
+    "projects": "Proyectos",
+    "contact": "Contacto",
+    "skipToContent": "Saltar al contenido",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú"
+  },
+  "sections": {
+    "home": "Inicio",
+    "about": "Sobre mí",
+    "experience": "Experiencia",
+    "projects": "Proyectos",
+    "contact": "Contacto",
+    "homePlaceholder": "(placeholder) Bienvenido al portafolio de Rodrigo Del Villar. Aquí encontrarás proyectos, experiencia y más.",
+    "aboutPlaceholder": "(placeholder) Sección Sobre mí. Desarrollador Full-Stack apasionado por el código limpio y el diseño accesible.",
+    "contactPlaceholder": "(placeholder) Formulario de contacto próximamente."
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados."
+  },
+  "hero": {
+    "greeting": "Hola, soy",
+    "name": "Rodrigo Del Villar",
+    "role": "Desarrollador Full-Stack",
+    "subtitle": "Construyo aplicaciones web rápidas y seguras, del backend en Spring Boot a interfaces que se sienten vivas.",
+    "ctaProjects": "Ver proyectos",
+    "ctaContact": "Contáctame",
+    "photoAlt": "Retrato profesional de Rodrigo Del Villar, Desarrollador Full-Stack"
+  },
+  "theme": {
+    "toggle": "Cambiar tema"
+  },
+  "sound": {
+    "enable": "Activar sonidos",
+    "disable": "Desactivar sonidos",
+    "enabled": "Sonidos activados",
+    "disabled": "Sonidos desactivados"
+  },
+  "command": {
+    "open": "Abrir paleta de comandos",
+    "search": "Buscar comandos",
+    "results": "Resultados de comandos",
+    "noResults": "No hay comandos coincidentes.",
+    "home": "Ir a Inicio",
+    "about": "Ir a Sobre mí",
+    "experience": "Ir a Experiencia",
+    "projects": "Ir a Proyectos",
+    "contact": "Ir a Contacto",
+    "theme": "Cambiar tema",
+    "language": "Cambiar idioma",
+    "sound": "Activar o desactivar sonido",
+    "terminal": "Abrir terminal",
+    "close": "Cerrar paleta de comandos",
+    "hints": "↑↓ navegar · Enter ejecutar · Esc cerrar"
+  },
+  "terminal": {
+    "title": "Terminal",
+    "open": "Abrir terminal",
+    "openHint": "Abrir terminal (Ctrl + `)",
+    "close": "Cerrar terminal",
+    "input": "Comando de terminal",
+    "windowTitle": "rodrigo@portfolio: ~",
+    "prompt": "rodrigo@portfolio:~$",
+    "welcome": "Escribe help para ver los comandos.",
+    "footer": "Ctrl+` abrir/cerrar · Esc salir",
+    "closeKey": "Esc"
+  },
+  "contact": {
+    "title": "Hablemos",
+    "subtitle": "¿Tienes una idea, una oportunidad o una pregunta? Escríbeme y te responderé pronto.",
+    "fields": {
+      "name": "Nombre",
+      "nameHint": "Entre 1 y 80 caracteres.",
+      "email": "Correo electrónico",
+      "emailHint": "Usaré este correo solo para responderte.",
+      "message": "Mensaje",
+      "messageHint": "Entre 10 y 2000 caracteres.",
+      "messageCount": "{{count}} / 2000 caracteres"
+    },
+    "validation": {
+      "nameRequired": "Escribe tu nombre.",
+      "nameLength": "El nombre debe tener entre 1 y 80 caracteres.",
+      "emailRequired": "Escribe tu correo electrónico.",
+      "emailInvalid": "Introduce un correo electrónico válido de hasta 254 caracteres.",
+      "messageRequired": "Escribe un mensaje.",
+      "messageLength": "El mensaje debe tener entre 10 y 2000 caracteres."
+    },
+    "privacy": "Tus datos se usarán únicamente para responder a este mensaje y se eliminarán después de 30 días.",
+    "submit": "Enviar mensaje",
+    "turnstile": {
+      "blocked": "El sistema antispam fue bloqueado por tu navegador. Puedes contactarme a través de LinkedIn.",
+      "linkedin": "Abrir mi perfil de LinkedIn"
+    },
+    "status": {
+      "sending": "Enviando…",
+      "waiting": "El servidor se está despertando, puede tardar hasta un minuto.",
+      "waitingButton": "Despertando servidor…",
+      "success": "Mensaje enviado correctamente. Gracias por escribirme."
+    },
+    "errors": {
+      "turnstile": "Falló la verificación, inténtalo de nuevo.",
+      "validation": "Revisa los campos marcados.",
+      "rateLimit": "Has alcanzado el límite de envíos.",
+      "retryAfter": "Vuelve a intentarlo en {{seconds}} segundos.",
+      "unavailable": "Servicio temporalmente no disponible.",
+      "timeout": "El servidor está tardando demasiado. Inténtalo de nuevo.",
+      "generic": "No se pudo enviar el mensaje. Inténtalo de nuevo."
+    }
+  },
+  "language": {
+    "toggle": "Cambiar a Inglés"
+  },
+  "about": {
+    "title": "Sobre mí",
+    "subtitle": "Conoce mi perfil, las herramientas que utilizo y lo que me inspira.",
+    "introLabel": "Perfil",
+    "linksLabel": "Enlaces",
+    "sectionLabel": "Sobre mí",
+    "stackLabel": "Stack técnico",
+    "locationLabel": "Ubicación",
+    "hobbiesLabel": "Pasatiempos",
+    "currentlyLabel": "Actualmente",
+    "cvLabel": "Currículum",
+    "cvDownloadEs": "Descargar CV (ES)",
+    "cvDownloadEn": "Descargar CV (EN)",
+    "cvUnavailable": "CV próximamente",
+    "worldLabel": "Mini mundo",
+    "worldHint": "Mi escritorio, en 3D",
+    "worldPlay": "Jugar",
+    "worldExit": "Salir",
+    "worldLoading": "Cargando la escena",
+    "worldUnavailable": "Solo en escritorio con WebGL",
+    "worldLookHint": "Mueve el ratón para mirar"
+  },
+  "experience": {
+    "title": "Experiencia",
+    "subtitle": "Una trayectoria en constante evolución entre desarrollo, formación y aprendizaje continuo.",
+    "timelineLabel": "Experiencia, estudios y certificaciones en orden cronológico",
+    "tagsLabel": "Temas relacionados",
+    "loading": "Cargando la línea de tiempo de experiencia",
+    "kinds": {
+      "work": "Trabajo",
+      "education": "Educación",
+      "certification": "Certificación"
+    }
+  },
+  "projects": {
+    "loading": "Cargando proyectos",
+    "loadingCard": "Cargando proyecto",
+    "empty": "Aún no hay proyectos publicados.",
+    "imageAlt": "Imagen de {{title}}",
+    "technologies": "Tecnologías utilizadas",
+    "moreTechnologies": "{{count}} tecnologías más",
+    "code": "Código",
+    "demo": "Demo",
+    "viewDetails": "Ver detalle",
+    "closeDetails": "Cerrar detalles del proyecto",
+    "loadingDetails": "Cargando detalles del proyecto…",
+    "previous": "Proyecto anterior",
+    "next": "Proyecto siguiente",
+    "firstSlide": "Primer proyecto",
+    "lastSlide": "Último proyecto",
+    "slideLabel": "Proyecto {{index}} de {{slidesLength}}",
+    "slidePosition": "Proyecto {{current}} de {{total}}",
+    "pagination": "Paginación de proyectos",
+    "goToSlide": "Ir al proyecto {{current}} de {{total}}"
+  }
+}

@@ -21,6 +21,7 @@ import {
 } from '../../components/icons/stack/SimpleIcons';
 import { BentoGrid } from './components/BentoGrid';
 import { BentoTile } from './components/BentoTile';
+import { BentoWorldTile } from './bento-world/BentoWorldTile';
 import { CvTile } from './components/CvTile';
 import { LocationTile } from './components/LocationTile';
 import { useCapabilities } from '../../hooks/useCapabilities';
@@ -160,6 +161,14 @@ export function AboutSection() {
             </a>
           ))}
         </div>
+      </BentoTile>
+
+      {/* Mini world (S12): static card first, three is downloaded only on demand. */}
+      <BentoTile
+        label={t('about.worldLabel')}
+        className="col-span-1 sm:col-span-2 lg:col-span-4 lg:row-span-2 !p-0"
+      >
+        <BentoWorldTile />
       </BentoTile>
     </BentoGrid>
   );
