@@ -103,6 +103,75 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
+  /* Ambient backdrop for the whole page (ticket 12.7).
+     One fixed, fully static layer behind every section, so the glow of the Hero no
+     longer ends in a hard edge and the rest of the page is not flat black. Pure CSS:
+     no canvas, no JS, no animation, nothing repainted while scrolling. The body
+     background propagates to the canvas, so a negative z-index child of the body
+     still paints above the page colour and below all content. */
+  body::before {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    background-image:
+      /* depth: a faint vignette over everything else */
+      radial-gradient(
+        ellipse 120% 85% at 50% 45%,
+        transparent 52%,
+        color-mix(in srgb, var(--bg) 62%, transparent)
+      ),
+      /* accent glow at the top, where the Hero hands over */
+      radial-gradient(
+        ellipse 62% 48% at 50% -6%,
+        color-mix(in srgb, var(--accent-primary) 11%, transparent),
+        transparent 72%
+      ),
+      /* cooler second glow, low and wide on the right */
+      radial-gradient(
+        ellipse 58% 42% at 88% 34%,
+        color-mix(in srgb, var(--accent-secondary) 7%, transparent),
+        transparent 74%
+      ),
+      /* three layers of very fine dots, each on its own tile */
+      radial-gradient(
+        circle at 1px 1px,
+        color-mix(in srgb, var(--text-muted) 30%, transparent) 1px,
+        transparent 1.7px
+      ),
+      radial-gradient(
+        circle at 1px 1px,
+        color-mix(in srgb, var(--accent-primary) 26%, transparent) 1px,
+        transparent 1.5px
+      ),
+      radial-gradient(
+        circle at 1px 1px,
+        color-mix(in srgb, var(--accent-secondary) 20%, transparent) 1px,
+        transparent 1.3px
+      );
+    background-size:
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      34px 34px,
+      71px 71px,
+      113px 113px;
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      17px 23px,
+      41px 7px;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat, repeat;
+  }
+
+  /* Light theme keeps the same tokens but turns the texture down. */
+  [data-theme='light'] body::before {
+    opacity: 0.5;
+  }
+
   /* Scroll margin for sections (accounts for navbar height) */
   section[id] {
     scroll-margin-top: 72px;
@@ -525,6 +594,7 @@
 }
 
 .project-detail-modal__media {
+  position: relative;
   width: 100%;
   aspect-ratio: 16 / 10;
   overflow: hidden;
@@ -536,6 +606,36 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.project-detail-modal__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: cover;
+}
+
+.project-detail-modal__play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  display: grid;
+  width: 4rem;
+  height: 4rem;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--border-control);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--accent-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.project-detail-modal__video-link {
+  display: inline-block;
+  margin: 0.75rem 1.25rem 0;
+  color: var(--accent-primary);
 }
 
 .project-detail-modal__content {
@@ -966,6 +1066,46 @@ html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
   animation-play-state: paused;
 }
 
+/* The Hero background used to stop in a hard line at the end of the section, and the
+   first attempt (a gradient painted on top) only made it worse: it darkened the last
+   strip towards --bg, which is exactly the dark band visible while scrolling.
+   The right tool is a mask: the lower edge of the Hero background dissolves to fully
+   transparent, so the ambient layer behind it (body::before) shows through and there is
+   no band at any scroll position. Static, no JS, nothing repainted while scrolling. */
+.hero-background {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - 18vh),
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 18vh), transparent 100%);
+}
+
+/* Scroll-linked hand-over: the further the Hero leaves the viewport, the more its glow
+   dissolves into the ambient layer, and scrolling back up brings it back. Only opacity,
+   so the compositor can run it off the main thread, and only where scroll timelines
+   exist: without support the static mask above still removes the hard edge. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-background {
+      animation: hero-handover linear both;
+      animation-timeline: view();
+      animation-range: exit 40% exit 100%;
+    }
+  }
+}
+
+@keyframes hero-handover {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
 
 /* ==========================================================================
    Performance tier "lite"
@@ -979,6 +1119,9 @@ html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
 }
 
 [data-perf="lite"] .hero-background {
+  /* Lite keeps the static mask that removes the hard edge, but skips the scroll-linked
+     dissolve: no animations at all in this tier. */
+  animation: none;
   background:
     radial-gradient(
       ellipse 45% 50% at 5% 10%,

@@ -3,6 +3,7 @@ import {
   buildImageSrcSet,
   getSafeExternalUrl,
   getLocalized,
+  getProjectVideoSource,
   isCloudinaryImageUrl,
   isPlaceholderImageUrl,
   resolveCarouselLayout,
@@ -35,6 +36,21 @@ describe('getSafeExternalUrl', () => {
     expect(getSafeExternalUrl('javascript:alert(1)')).toBeUndefined();
     expect(getSafeExternalUrl('/relative/path')).toBeUndefined();
     expect(getSafeExternalUrl(null)).toBeUndefined();
+  });
+
+  describe('getProjectVideoSource', () => {
+    it('accepts only HTTPS YouTube URLs and Cloudinary MP4 files', () => {
+      expect(getProjectVideoSource('https://www.youtube.com/watch?v=abc123_DEF')).toEqual({
+        kind: 'youtube',
+        embedUrl: 'https://www.youtube-nocookie.com/embed/abc123_DEF?rel=0&playsinline=1',
+      });
+      expect(getProjectVideoSource('https://res.cloudinary.com/portfolio/video/upload/demo.mp4')).toEqual({
+        kind: 'cloudinary',
+        url: 'https://res.cloudinary.com/portfolio/video/upload/demo.mp4',
+      });
+      expect(getProjectVideoSource('https://videos.example.com/demo.mp4')).toBeUndefined();
+      expect(getProjectVideoSource('http://www.youtube.com/watch?v=abc123_DEF')).toBeUndefined();
+    });
   });
 });
 
