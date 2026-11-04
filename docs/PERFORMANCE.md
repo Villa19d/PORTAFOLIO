@@ -3,6 +3,32 @@
 Use this procedure for production-performance tickets. Keep the browser, machine,
 build, viewport, and network/CPU throttling consistent between before/after runs.
 
+## Protocolo de medición
+
+La fuente de verdad es una comparación A/B en la misma máquina y en el mismo
+momento, usando un worktree fuera de Dropbox. Cada lado se construye y se sirve
+con `vite preview`; además se ejecuta:
+
+```sh
+node scripts/lh-summary.mjs <url> mobile 3
+node measure-initial.mjs
+```
+
+La medición comparable del JavaScript inicial es:
+
+| Build | JS inicial total gzip |
+|---|---:|
+| S11.0 | 141,512 B |
+| S12 | 143,700 B |
+| Presupuesto | <= 150,000 B |
+
+PageSpeed Insights puede variar mucho sobre el mismo código (se observó un
+rango de 54 a 93); se usa solo como referencia y se reporta la mediana de tres
+ejecuciones. Antes de medir, cerrar Chrome y pausar Dropbox.
+
+`measure-initial.mjs` está versionado en `frontend/scripts/` y se ejecuta con
+`npm run measure:initial`.
+
 ## Production build and preview
 
 From `frontend/`, build and serve the production output:

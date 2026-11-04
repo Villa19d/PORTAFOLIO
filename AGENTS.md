@@ -27,7 +27,8 @@ Objetivo: impresionar a reclutadores y usuarios con un diseño moderno, interact
 - Hook `useCapabilities()` (se crea en S3) expone: `hasFinePointer` (`(hover: hover) and (pointer: fine)`), `isDesktopLayout` (ancho >= 1024px), `prefersReducedMotion`.
 - En móvil/táctil: sin cursor personalizado, sin WebGL/3D, fondo con gradiente CSS animado, carrusel como swipe horizontal.
 - Todo código 3D/WebGL se carga con `import()` dinámico o `React.lazy`, SOLO si las capacidades lo permiten. Un celular nunca debe descargar Three.js.
-- Máximo un `<Canvas>` WebGL activo a la vez.
+- un solo canvas WebGL ANIMANDO a la vez; los demás deben estar pausados (loop detenido) o desmontados. Hoy Hero y Bento cumplen: ambos detienen su loop fuera de pantalla.
+- Mejora opcional de S13: desmontar el Hero al montar el Bento.
 - Respetar `prefers-reduced-motion` en toda animación no esencial.
 - Animar solo `transform` y `opacity` salvo justificación.
 - - Todo efecto costoso debe poder apagarse con `data-perf=lite` (CSS en el bloque `[data-perf="lite"]` de `index.css`, o desmontaje por JS con `useCapabilities().canUseHeavyEffects`).

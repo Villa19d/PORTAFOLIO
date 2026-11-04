@@ -29,8 +29,12 @@ const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototyp
 let originalAlert: typeof window.alert;
 let restoreCapabilities: (() => void) | undefined;
 
-function renderCard(description = project.description.es) {
-  const testProject = { ...project, description: { es: description, en: description } };
+function renderCard(description = project.description.es, videoUrl = project.videoUrl) {
+  const testProject = {
+    ...project,
+    description: { es: description, en: description },
+    videoUrl,
+  };
   return render(
     <I18nextProvider i18n={i18n}>
       <ProjectCard project={testProject} />
@@ -127,6 +131,16 @@ describe('ProjectDetailModal', () => {
     );
     expect(container.querySelector('.project-detail-modal__markdown a[href="/docs"]')).toBeNull();
     expect(container.querySelector('[data-lenis-prevent="true"]')).toBeInTheDocument();
+  });
+
+  it('keeps the YouTube iframe unloaded until the video facade is activated', async () => {
+    renderCard(project.description.es, 'https://www.youtube.com/watch?v=abc123_DEF');
+
+    await openDetails();
+
+    expect(document.querySelector('iframe')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Reproducir video de Proyecto de prueba' }));
+    expect(await screen.findByTitle('Video de Proyecto de prueba')).toBeInTheDocument();
   });
 
   it('closes on cancel and backdrop clicks, returning focus to the trigger', async () => {

@@ -10,7 +10,7 @@
 - **Decisión:** Se utilizará Resend a través de su API HTTP.
 - **Consecuencia:** Aseguramos que el envío de correos funcione en el entorno de producción de Render sin configuraciones especiales ni problemas de bloqueo de puertos.
 
-## 10. Contacto: Persistencia, seguridad y resiliencia
+## 2.1 Contacto: Persistencia, seguridad y resiliencia
 - **Guardar antes de enviar:** El mensaje se persiste como `PENDING` antes de llamar a Resend. Así un fallo del proveedor no pierde el contacto recibido.
 - **Texto plano:** El correo se envía como texto plano, evitando HTML no confiable y reduciendo la superficie de inyección en plantillas.
 - **Turnstile falla cerrado:** Un rechazo devuelve `403`; una caída o timeout del proveedor devuelve `503` y no se persiste el mensaje.
@@ -41,12 +41,12 @@
   - **Línea actual:** Spring Boot 3.5.16. Su soporte OSS comunitario finalizó en junio de 2026.
   - **Líneas OSS vigentes hoy (spring.io):** Spring Boot 4.0.x y superiores cuentan con soporte OSS activo en la actualidad.
   - **Recomendación:** **Aceptar el riesgo en el corto plazo**. La aplicación tiene una superficie de ataque muy reducida (solo dos endpoints públicos y endpoints de admin protegidos), no utiliza dependencias con CVEs críticos activos y opera en un contenedor Alpine Linux con límite de memoria estricto (~512MB RAM en Render Free). Se recomienda programar la migración mayor a Spring Boot 4.x en un sprint técnico futuro cuando se aborde la actualización de dependencias pesadas.
-- **Excepción del audit frontend (revisada el 20 de octubre de 2026):**
-  - **Advisory:** GHSA-hmx5-qpq5-p643, Prototype pollution en `swiper` 6.5.1–12.1.1, severidad crítica; la versión corregida disponible es 14.3.0.
-  - **Motivo:** La corrección requiere saltar al major 14. Se conserva Swiper 11 hasta que un ticket futuro permita migración y validación de compatibilidad.
-  - **Política CI:** El audit bloquea cualquier advisory runtime high/crítico que no esté explícitamente aprobado. GHSA-hmx5-qpq5-p643 es la única excepción y debe retirarse al actualizar Swiper.
+- **Excepción del audit frontend (revisada el 1 de noviembre de 2026):**
+  - **Advisory:** GHSA-hmx5-qpq5-p643, prototype pollution en `swiper` 6.5.1–12.1.1, severidad alta; la versión corregida es 14.3.0.
+  - **Estado:** **CERRADA**. `frontend/package.json` declara `swiper` `^14.3.0`.
 - **Versión de Java:** Se establece Java 21 LTS como estándar. Spring Boot 3.5 (actualmente en versión estable 3.5.16) y la rama 4.x garantizan soporte comercial y OSS continuo, asegurando la viabilidad a largo plazo.
-- **Auditoría de Seguridad (Frontend):** CI configurado para fallar ante vulnerabilidades High/Critical. Se acepta temporalmente la vulnerabilidad de Swiper (Advisory ID: `GHSA-hmx5-qpq5-p643`, Severidad: Alta) ya que exige un cambio Major. Fecha de revisión programada: Sprint 13 (Estabilización final).
+- **Auditoría de Seguridad (Frontend):** CI está configurado para fallar ante vulnerabilidades High/Critical no aprobadas.
+- **Coverflow:** Solo se muestra con 4 o más proyectos. La revisión visual queda pendiente hasta disponer de 4+ proyectos o de un modo de prueba.
 ## 7. Testcontainers: 1.21.4 en lugar de serie 2.x (Ticket 1.3)
 - **Contexto:** El BOM de Spring Boot 3.5.x gestiona una versión anterior de Testcontainers 1.x que no detecta correctamente el socket nombrado de Docker Desktop en Windows con Docker Engine ≥29 (error: `Could not find a valid Docker environment`).
 - **Decisión:** Se forzó **Testcontainers 1.21.4** (última versión de la rama 1.x, que incluye el fix de detección de socket) mediante la propiedad `testcontainers.version` en `<properties>` del `pom.xml`. Spring Boot reconoce esta propiedad en su BOM padre y sobreescribe la versión automáticamente sin necesidad de un `<dependencyManagement>` explícito. Se descartó Testcontainers 2.0.5 (serie 2.x) porque esa versión renombró TODOS los artifactIds del ecosistema (ej. `junit-jupiter` → `testcontainers-junit-jupiter`, `postgresql` → `testcontainers-postgresql`), lo que habría requerido modificar el `pom.xml` Y potencialmente imports en el código de tests — cambio de mayor alcance que no estaba en el scope del ticket.
@@ -88,7 +88,7 @@
   | `X-Forwarded-For` | Cliente / Cloudflare / Render | **Concatena (Append), NO sobrescribe.** Render añade la IP real al final de la lista. | [Render Proxy Documentation](https://render.com/docs/web-services) | **SÓLO el rightmost si proviene de proxy interno confiable (Fallback)** |
 
 - **Decisión:**
-  La IP del cliente es la 3.ª desde la derecha del X-Forwarded-For; la cabecera CF-Connecting-IP enviada por el cliente la rechaza el edge (error 1000) y la app nunca la lee.
+  La IP del cliente es la 3.ª desde la derecha del X-Forwarded-For; la cabecera CF-Connecting-IP enviada por el cliente la rechaza el edge de Cloudflare (error 1000) y la app nunca la lee. Las direcciones IPv6 se agrupan por /64.
   1. Se eliminan `CF-Connecting-IP`, `True-Client-IP`, `X-Real-IP` y `Forwarded` del resolver: la aplicación no confía en ninguna de esas cabeceras porque una petición directa al origen de Render puede incluirlas arbitrariamente.
   2. Render es la infraestructura de borde confiable y añade la IP real del cliente al final de `X-Forwarded-For`. El resolver usa únicamente el valor válido situado más a la derecha.
   3. Si no existe un `X-Forwarded-For` utilizable, se usa `request.getRemoteAddr()` como fallback de la conexión TCP.
@@ -113,13 +113,13 @@
 - **Consecuencia:** Los equipos buenos no ven cambios (en full no se altera ningún valor). Las decisiones sincrónicas (URL, sesión, hardware) aplican `data-perf` en el primer render, antes del primer pintado de React. La medición llega unos 3 s después de la carga, así que en la primera visita las animaciones de entrada ya habrán corrido; el beneficio es sobre todo para el resto de la sesión y las visitas siguientes. Una medición puede dar falsos positivos (picos puntuales de CPU) o falsos negativos; se acepta porque el modo lite solo degrada efectos, nunca contenido. El código de medición añade unos pocos bytes al bundle; su impacto sobre el chunk de entrada de S7.3b se evalúa con `dist/stats.json` al cierre del sprint.
 
 ## 15. Fondo 3D del Hero: three directo, compuertas y presupuesto (Ticket 11.2)
-- **Contexto:** El Hero tiene un fondo CSS (blobs, rejilla, spotlight). Se quiere un campo de partículas 3D que reaccione al puntero, solo en escritorio, sin afectar LCP ni CLS y que se degrade solo. Debe respetar las reglas de AGENTS.md §4: un celular nunca descarga Three.js, un solo `<Canvas>` WebGL, todo efecto costoso apagable con `data-perf="lite"`.
+- **Contexto:** El Hero tiene un fondo CSS (blobs, rejilla, spotlight). Se quiere un campo de partículas 3D que reaccione al puntero, solo en escritorio, sin afectar LCP ni CLS y que se degrade solo. Debe respetar las reglas de AGENTS.md §4: un celular nunca descarga Three.js, un solo canvas WebGL animando a la vez; los demás deben estar pausados (loop detenido) o desmontados. Todo efecto costoso debe poder apagarse con `data-perf="lite"`.
 - **Decisión:**
   1. **three directo, sin React Three Fiber ni drei.** Versiones fijas, sin `^`: `three` 0.186.1 y `@types/three` 0.186.0. Menos capas, menos dependencias y una escena imperativa (`BufferGeometry` + `ShaderMaterial`, onda lenta en el vertex shader, repulsión del puntero con suavizado exponencial). No se usa postprocessing, física ni `filter`/`backdrop-filter` sobre el canvas. React solo posee el elemento contenedor; el canvas se crea y se destruye dentro de la escena.
   2. **Compuertas (`useHeroSceneGate`).** three solo se importa si se cumplen todas: `canUseHeavyEffects`, `perfTier === "full"`, página cargada (`readyState === "complete"`), momento idle (`requestIdleCallback`, con `setTimeout` de respaldo), Hero visible (`IntersectionObserver`) y WebGL2 disponible (comprobado con un canvas temporal ANTES de importar three; three r163+ ya no soporta WebGL1). Si alguna falla, no se pide el chunk. Una vez abierto, si `canUseHeavyEffects` o el tier cambian, la escena se desmonta.
   3. **Carga diferida.** `HeroSceneLayer` usa `React.lazy(() => import('./HeroScene'))` dentro de un error boundary con fallback `null`. `vite.config.ts` agrupa `three` en el chunk `three` mediante `manualChunks`; solo se pide por import dinámico y no debe aparecer en `dist/index.html`.
   4. **Degradación.** La escena mide los intervalos entre frames en ventanas de 1 s (tras 0,5 s de calentamiento por la compilación de shaders). Si la mediana es < 40 fps (`LITE_FPS_THRESHOLD`) en 3 ventanas consecutivas, se detiene, se desmonta el canvas y se pide modo lite con `requestLiteTier()`. Se añadió `requestLite()` al store de `usePerformanceTier` (mínimo: detiene la medición pendiente, persiste `lite` en `sessionStorage` y notifica). `webglcontextlost` desmonta el canvas y deja el fondo CSS, sin forzar lite. Cualquier fallo de carga o de creación deja la capa desmontada durante esa vista de página.
-  5. **Rendimiento.** dpr máximo 1,5, `antialias: false`, sin buffer de profundidad ni stencil, 3000 partículas (`TUNING.particleCount`, rango previsto 2500–3500), sin allocations por frame, render pausado si el Hero no es visible o la pestaña está oculta. El canvas entra con fade de opacidad (~600 ms) tras el primer frame; el fondo CSS queda debajo como póster, así que no hay cambio de layout (CLS 0).
+  5. **Rendimiento.** dpr máximo 1,5, `antialias: false`, sin buffer de profundidad ni stencil, 3000 partículas (`TUNING.particleCount`, rango previsto 2500–3500), sin allocations por frame, render pausado si el Hero no es visible o la pestaña está oculta. El canvas entra con fade de opacidad (~600 ms) tras el primer frame; el fondo CSS queda debajo como póster, así que no hay cambio de layout (CLS 0). Solo un canvas WebGL puede estar animando a la vez; los demás deben estar pausados (loop detenido) o desmontados. Hoy Hero y Bento cumplen: ambos detienen su loop fuera de pantalla.
   6. **Colores.** Se leen de los tokens `--accent-primary` y `--accent-secondary` con `getComputedStyle` al montar y cuando cambia `data-theme` (`MutationObserver`). Sin colores sueltos.
   7. **Presupuesto.** El chunk de three no debe superar **180 KB gzip**. Si lo supera, se detiene el ticket y se consulta antes de seguir. El chunk de entrada no debe crecer. Como el chunk sin comprimir supera los 500 kB de aviso por defecto de Vite, `build.chunkSizeWarningLimit` se sube a 800 para no generar un warning nuevo; el límite real es el de gzip.
 - **Consecuencia:**
@@ -128,3 +128,16 @@
   - `?perf=full` fuerza el tier completo y sirve para probar solo el monitor de la escena.
   - Los fallos son silenciosos y visualmente no destructivos: siempre se vuelve al fondo CSS.
   - Las mediciones reales (tamaño gzip del chunk, Lighthouse, fps, degradación con CPU 6x) quedan registradas en docs/PERFORMANCE.md al cierre del ticket.
+
+## 16. Mundo 3D del Bento: escena imperativa y física (Tickets 12.2–12.3)
+- **Decisión:** El mundo 3D del Bento usa `three` imperativo y `cannon-es`, sin React Three Fiber, drei ni Rapier. La escena se carga dentro de su propio chunk lazy y React solo posee el host.
+- **Consecuencia:** La entrada no descarga la escena del Bento; la física solo corre en modo interactivo, con la visibilidad y las compuertas de capacidad ya existentes.
+- **Mejora opcional de S13:** desmontar el Hero al montar el Bento.
+
+## 17. Habitación nocturna y sonido generativo del Bento (Tickets 12.2–12.4)
+- **Decisión:** La habitación usa una paleta nocturna propia, independiente del tema del sitio. La carga automática del tile se permite solo en escritorio, tier `full` y WebGL2.
+- **Decisión:** El sonido lofi y los efectos de interacción se sintetizan con Web Audio, sin archivos de audio con licencia.
+
+## 18. Carrusel y protocolo de medición (Tickets 10–12)
+- **Decisión:** El carrusel usa showcase con 1–3 proyectos y Coverflow con 4 o más. `TiltSurface` es compartido y escribe `--spot-x` y `--spot-y`.
+- **Protocolo:** La fuente de verdad de rendimiento es una comparación A/B en la misma máquina y momento, en un worktree fuera de Dropbox, con build, `vite preview`, `node scripts/lh-summary.mjs <url> mobile 3` y la medición del JS inicial descrita en `docs/PERFORMANCE.md`.
