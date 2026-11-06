@@ -70,5 +70,44 @@
     "displayOrder": 2,
     "createdAt": "2026-10-20T01:15:45.003302Z",
     "updatedAt": "2026-10-23T04:53:57.381578Z"
+  },
+  {
+    "id": "9becb0ef-188d-482e-85db-4ee7aaa43b63",
+    "slug": "carrito-iot",
+    "title": {
+      "es": "Carrito IoT: control remoto con AWS” / “IoT Robot Car: Remote Control on AWS",
+      "en": "“Carrito IoT: control remoto con AWS” / “IoT Robot Car: Remote Control on AWS"
+    },
+    "summary": {
+      "es": "Sistema IoT full-stack diseñado para la telemetría, monitoreo y control remoto en tiempo real de un vehículo robótico basado en ESP8266. Cuenta con un backend en Python/Flask que implementa comunicación bidireccional continua mediante WebSockets nativos (puerto 5000) y una API REST (puerto 5001) des",
+      "en": "A full-stack IoT platform engineered for real-time remote control and telemetry monitoring of an ESP8266-driven robotic vehicle. Built with a Python/Flask backend leveraging native WebSockets (port 5000) for low-latency bidirectional messaging and a REST API (port 5001) hosted on AWS EC2. Data persi"
+    },
+    "description": {
+      "es": "Panel web para controlar y monitorear un carrito ESP8266 por internet: comandos en tiempo real por WebSocket, historial en MySQL (RDS) con stored procedures y auto 3D en el navegador. Re-desplegado en AWS (EC2 + RDS) en nov-2026; después queda en modo demo simulado.\n\nStack: React 19, Vite, Three.js, Python, Flask, WebSockets, MySQL, AWS EC2, Amazon RDS, Cloudflare Tunnel, ESP8266, Vercel",
+      "en": "Web panel to control and monitor an ESP8266 robot car over the internet: real-time commands via WebSocket, history in MySQL (RDS) with stored procedures, and a 3D car in the browser. Re-deployed on AWS (EC2 + RDS) in Nov 2026; afterwards it runs in a simulated demo mode.\n\nStack: React 19, Vite, Three.js, Python, Flask, WebSockets, MySQL, AWS EC2, Amazon RDS, Cloudflare Tunnel, ESP8266, Vercel"
+    },
+    "techStack": [
+      "React 19",
+      "Vite",
+      "Three.js",
+      "Python",
+      "Flask",
+      "WebSockets",
+      "MySQL",
+      "AWS EC2",
+      "Amazon RDS",
+      "Cloudflare Tunnel",
+      "ESP8266",
+      "Vercel"
+    ],
+    "imageUrl": "https://res.cloudinary.com/w6ydqvtv/image/upload/v1793903492/portfolio/projects/y9hskhuljm0zlwco4blk.jpg",
+    "videoUrl": null,
+    "repoUrl": "https://github.com/Villa19d/Iot_carrito_aws_frontend",
+    "liveUrl": "https://iot-carrito-aws-frontend.vercel.app",
+    "featured": true,
+    "published": true,
+    "displayOrder": 3,
+    "createdAt": "2026-11-05T18:35:14.390707Z",
+    "updatedAt": "2026-11-05T18:40:21.712876Z"
   }
 ]
