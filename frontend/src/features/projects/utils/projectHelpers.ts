@@ -127,15 +127,20 @@ export function isPlaceholderImageUrl(url: string): boolean {
   }
 }
 
-/** Up to this many projects the section uses the large showcase layout (ticket 12.6). */
-export const SHOWCASE_MAX_PROJECTS = 3;
-
-export type CarouselLayout = 'showcase' | 'carousel';
-
 /**
- * Layout of the projects section: 1-3 projects get the big showcase (no forced loop and
- * no duplicated slides), 4 or more keep the carousel track. Pure so it can be unit tested.
+ * Layout of the projects section (ticket CAROUSEL-2):
+ * 1 project  -> a single centred card,
+ * 2 projects -> two cards side by side, no loop and no autoplay,
+ * 3 or more  -> the flat horizontal carousel.
+ * Pure so it can be unit tested.
  */
+export type CarouselLayout = 'single' | 'duo' | 'carousel';
+
+/** Below this amount the section renders a static layout instead of the carousel. */
+export const CAROUSEL_MIN_PROJECTS = 3;
+
 export function resolveCarouselLayout(count: number): CarouselLayout {
-  return count > 0 && count <= SHOWCASE_MAX_PROJECTS ? 'showcase' : 'carousel';
+  if (count < 2) return 'single';
+  if (count < CAROUSEL_MIN_PROJECTS) return 'duo';
+  return 'carousel';
 }

@@ -91,11 +91,11 @@ describe('isPlaceholderImageUrl', () => {
 });
 
 describe('resolveCarouselLayout', () => {
-  it('uses the showcase for 1-3 projects and the carousel from 4 projects up', () => {
-    expect(resolveCarouselLayout(0)).toBe('carousel');
-    expect(resolveCarouselLayout(1)).toBe('showcase');
-    expect(resolveCarouselLayout(2)).toBe('showcase');
-    expect(resolveCarouselLayout(3)).toBe('showcase');
+  it('picks the single, duo and carousel layout by amount of projects', () => {
+    expect(resolveCarouselLayout(0)).toBe('single');
+    expect(resolveCarouselLayout(1)).toBe('single');
+    expect(resolveCarouselLayout(2)).toBe('duo');
+    expect(resolveCarouselLayout(3)).toBe('carousel');
     expect(resolveCarouselLayout(4)).toBe('carousel');
     expect(resolveCarouselLayout(9)).toBe('carousel');
   });
