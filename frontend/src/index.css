@@ -43,6 +43,7 @@
   /* === DARK MODE (default) === */
   :root {
     --bento-row: 12rem;
+    --nav-h: 72px;
     --bg: #07090c;
     --surface: #0d1117;
     --surface-elevated: #151b23;
@@ -172,14 +173,17 @@
     opacity: 0.5;
   }
 
-  /* Scroll margin for sections (accounts for navbar height) */
+  /* Scroll margin for sections (accounts for the measured navbar height) */
   section[id] {
-    scroll-margin-top: 72px;
+    scroll-margin-top: var(--nav-h);
   }
 }
 
 .projects-section {
   width: 100%;
+  /* Tighter than the shared py-24 so the carousel and its title fit under the navbar on
+     short viewports (720/768px); the cards also cap their own height further below. */
+  padding-block: 3.5rem;
 }
 
 .projects-grid {
@@ -242,6 +246,9 @@
   --frame-duration: 0ms;
   --dispersion-x: 0px;
   --dispersion-o: 0;
+  /* Tallest a card may grow: the viewport minus the navbar, minus room for the section
+     title, the swiper padding and the controls. Keeps every card under the navbar. */
+  --carousel-card-max: calc(100svh - var(--nav-h) - 15rem);
   --ghost-cyan: color-mix(in srgb, var(--accent-primary) 34%, transparent);
   --ghost-warm: color-mix(in srgb, var(--error) 32%, transparent);
   position: relative;
@@ -266,6 +273,7 @@
   width: clamp(15rem, 36vw, 22rem);
   height: auto;
   align-items: stretch;
+  max-height: var(--carousel-card-max);
 }
 
 /* Compact card body inside the carousel: the base rows are too tall for a card whose
@@ -313,9 +321,11 @@
   flex: 1;
 }
 
-/* 16:10 by default; the ratio arrives as a CSS variable from the `cardAspect` prop. */
+/* 16:10 by default; the ratio arrives as a CSS variable from the `cardAspect` prop. The
+   max-height keeps media + body inside --carousel-card-max (the compact body is 15.5rem). */
 .project-carousel__card .project-card__media {
   aspect-ratio: var(--project-card-aspect, 1.6);
+  max-height: calc(var(--carousel-card-max) - 15.5rem);
 }
 
 /* Static accent glow on the active card's own frame, so it travels with the card

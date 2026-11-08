@@ -74,7 +74,7 @@ function DeferredFeatureSection({
       id={id}
       ref={sectionRef}
       aria-labelledby={`${id}-heading`}
-      className="mx-auto flex min-h-screen w-full max-w-6xl scroll-mt-[72px] flex-col justify-center px-4 py-24 sm:px-6 lg:px-8"
+      className="mx-auto flex min-h-[calc(100svh-var(--nav-h))] w-full max-w-6xl scroll-mt-[var(--nav-h)] flex-col justify-center px-4 py-24 sm:px-6 lg:px-8"
     >
       <h2 id={`${id}-heading`} className="mb-8 font-display text-4xl font-bold text-text md:text-5xl">
         {title}
@@ -185,7 +185,7 @@ function DeferredExperienceSection() {
       ref={sectionRef}
       role="region"
       aria-label={t('experience.title')}
-      className="min-h-screen scroll-mt-[72px]"
+      className="min-h-[calc(100svh-var(--nav-h))] scroll-mt-[var(--nav-h)]"
     >
       {shouldLoad ? (
         <Suspense fallback={placeholder}>

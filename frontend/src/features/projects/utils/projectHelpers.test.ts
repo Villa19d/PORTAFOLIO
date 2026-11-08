@@ -6,7 +6,9 @@ import {
   getProjectVideoSource,
   isCloudinaryImageUrl,
   isPlaceholderImageUrl,
+  nextIndex,
   resolveCarouselLayout,
+  type CarouselDirection,
 } from './projectHelpers';
 
 describe('getLocalized', () => {
@@ -98,5 +100,19 @@ describe('resolveCarouselLayout', () => {
     expect(resolveCarouselLayout(3)).toBe('carousel');
     expect(resolveCarouselLayout(4)).toBe('carousel');
     expect(resolveCarouselLayout(9)).toBe('carousel');
+  });
+});
+
+describe('nextIndex', () => {
+  it('bounces at the ends instead of looping (n=3, from index 1, direction +1)', () => {
+    let state: { index: number; direction: CarouselDirection } = { index: 1, direction: 1 };
+    const visited = [state.index];
+
+    for (let step = 0; step < 5; step += 1) {
+      state = nextIndex(state.index, state.direction, 3);
+      visited.push(state.index);
+    }
+
+    expect(visited).toEqual([1, 2, 1, 0, 1, 2]);
   });
 });

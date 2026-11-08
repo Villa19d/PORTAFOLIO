@@ -15,7 +15,7 @@ export function Section({ id, title, children, className = '' }: SectionProps) {
     <section
       id={id}
       aria-labelledby={headingId}
-      className={`min-h-screen flex flex-col justify-center py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto scroll-mt-[72px] ${className}`}
+      className={`min-h-[calc(100svh-var(--nav-h))] flex flex-col justify-center py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto scroll-mt-[var(--nav-h)] ${className}`}
     >
       <h2
         id={headingId}

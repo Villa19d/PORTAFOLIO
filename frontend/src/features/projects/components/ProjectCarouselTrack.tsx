@@ -12,7 +12,7 @@ import { A11y, Keyboard } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { useCapabilities } from '../../../hooks/useCapabilities';
 import type { Project } from '../types';
-import { getLocalized } from '../utils/projectHelpers';
+import { getLocalized, nextIndex, type CarouselDirection } from '../utils/projectHelpers';
 import { ProjectCard } from './ProjectCard';
 import 'swiper/css';
 
@@ -105,7 +105,13 @@ export function ProjectCarouselTrack({
   const { prefersReducedMotion } = useCapabilities();
   const rootRef = useRef<HTMLDivElement>(null);
   const swiperRef = useRef<SwiperInstance | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  /** Autoplay direction; `nextIndex` flips it when the track reaches either end. */
+  const directionRef = useRef<CarouselDirection>(1);
+  /** Transient pause (hover/focus/hidden tab/off screen): skips a tick, never the intent. */
+  const autoplayPausedRef = useRef(false);
+  /** Opens on the middle card without a visible jump, via Swiper's own `initialSlide`. */
+  const initialIndex = Math.max(0, Math.floor((items.length - 1) / 2));
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [isReady, setIsReady] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [isDocumentVisible, setIsDocumentVisible] = useState(true);
@@ -232,25 +238,27 @@ export function ProjectCarouselTrack({
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
-  const canPlay =
-    autoplayEnabled &&
-    isPlaying &&
-    isInView &&
-    isDocumentVisible &&
-    !(pauseOnHover && isHovered) &&
-    !hasFocus;
+  // Transient pauses (hover, focus, hidden tab, off screen) only skip a tick; they never
+  // touch `isPlaying`, which is the user's intent and is owned exclusively by the button.
+  useEffect(() => {
+    autoplayPausedRef.current =
+      !isInView || !isDocumentVisible || hasFocus || (pauseOnHover && isHovered);
+  }, [isInView, isDocumentVisible, hasFocus, isHovered, pauseOnHover]);
 
   useEffect(() => {
-    if (!canPlay) return;
+    if (!autoplayEnabled || !isPlaying) return;
     const handle = window.setInterval(() => {
       const swiper = swiperRef.current;
+      if (!swiper || autoplayPausedRef.current) return;
       // An open detail modal pauses the carousel without touching its state.
-      if (!swiper || document.querySelector('dialog[open]')) return;
-      if (swiper.activeIndex >= total - 1) swiper.slideTo(0, effectiveSpeed);
-      else swiper.slideNext(effectiveSpeed);
+      if (document.querySelector('dialog[open]')) return;
+      // Ping-pong: 1 2 3 2 1 2 3 …, reversing at both ends (see `nextIndex`).
+      const step = nextIndex(swiper.activeIndex, directionRef.current, total);
+      directionRef.current = step.direction;
+      swiper.slideTo(step.index, effectiveSpeed);
     }, AUTOPLAY_INTERVAL_MS);
     return () => window.clearInterval(handle);
-  }, [canPlay, effectiveSpeed, total]);
+  }, [autoplayEnabled, isPlaying, effectiveSpeed, total]);
 
   /** Wheel: only a horizontal-dominant gesture navigates, and vertical is never prevented. */
   useEffect(() => {
@@ -330,6 +338,7 @@ export function ProjectCarouselTrack({
         slidesPerView="auto"
         spaceBetween={SLIDE_GAP_PX}
         loop={false}
+        initialSlide={initialIndex}
         // With three (or fewer) slides wide enough, Swiper would lock itself and ignore
         // slideNext()/slideTo(): the track must always be able to centre the active card.
         watchOverflow={false}
