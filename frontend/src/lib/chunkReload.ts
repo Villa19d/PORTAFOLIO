@@ -1,10 +1,10 @@
 /**
- * `three`, `HeroScene` and the Bento mini world are optional: if they fail to download,
- * the Hero keeps its CSS poster and the Bento keeps its static card. Reloading the page
+ * `three`, `HeroScene`, the Hero title canvas and the Bento mini world are optional: if they fail
+ * to download, the Hero keeps its CSS poster and the Bento keeps its static card. Reloading the page
  * for them would hide the real failure, so the global preload handler lets the error
  * reach the error boundary of each feature instead.
  */
-const OPTIONAL_CHUNK_PATTERN = /(?:^|\/)(?:three|HeroScene|BentoWorldCanvas)[-.][^/]*\.js/i;
+const OPTIONAL_CHUNK_PATTERN = /(?:^|\/)(?:three|HeroScene|CanvasText|BentoWorldCanvas)[-.][^/]*\.js/i;
 
 function payloadText(payload: unknown): string {
   if (payload instanceof Error) return payload.message;

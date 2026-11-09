@@ -6,6 +6,8 @@ import { useSound } from '../../sound/SoundContext';
 import { useEntranceMotion } from '../../../hooks/useEntranceMotion';
 import { MagneticButton } from '../../../components/ui/MagneticButton';
 import { HeroBackground } from './HeroBackground';
+import { HeroTitle } from './HeroTitle';
+import { HeroRole } from './HeroRole';
 import { HeroPhoto } from './HeroPhoto';
 
 export function Hero() {
@@ -59,22 +61,13 @@ export function Hero() {
               {t('hero.greeting')}
             </m.p>
 
-            <m.h1
-              id="hero-title"
-              variants={itemVariants}
-              className="mt-2 font-display text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
-            >
-              <span className="bg-gradient-to-r from-accent to-accent-2 bg-clip-text text-transparent">
-                {t('hero.name')}
-              </span>
-            </m.h1>
+            <m.div variants={itemVariants} className="mt-2">
+              <HeroTitle />
+            </m.div>
 
-            <m.p
-              variants={itemVariants}
-              className="mt-3 font-display text-xl font-semibold text-text sm:text-2xl"
-            >
-              {t('hero.role')}
-            </m.p>
+            <m.div variants={itemVariants} className="mt-3">
+              <HeroRole />
+            </m.div>
 
             <m.p
               variants={itemVariants}

@@ -1,5 +1,10 @@
-'use client';
-
+/**
+ * Vendor: TechText — interactive canvas lettering.
+ * Adapted from React Bits (https://reactbits.dev), MIT licensed. Kept as .jsx on
+ * purpose. Local edits: dropped the Next.js 'use client' directive, removed the
+ * inline `cursor` styling so it does not fight the site's custom cursor, and added
+ * an optional `onReady` callback fired once after the first frame is painted.
+ */
 import { useEffect, useRef } from 'react';
 
 import './TechText.css';
@@ -61,12 +66,14 @@ const TechText = ({
   introDuration = 2,
   guides = false,
   className = '',
+  onReady,
   style
 }) => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const settingsRef = useRef(null);
   const wakeRef = useRef(() => {});
+  const onReadyRef = useRef(null);
 
   useEffect(() => {
     settingsRef.current = {
@@ -97,6 +104,7 @@ const TechText = ({
       introDuration,
       guides
     };
+    onReadyRef.current = onReady;
     wakeRef.current();
   });
 
@@ -125,12 +133,12 @@ const TechText = ({
     let pulse = 0;
     let placed = false;
     let dragging = -1;
-    let cursor = '';
     let introClock = 0;
     let introKind = '';
     let introducing = false;
     let fontsReady = !document.fonts;
     let guideAlpha = 0;
+    let readySignaled = false;
     const kicks = [];
     const press = { x: 0, y: 0, time: 0, index: -1 };
     const pointer = { x: 0, y: 0, inside: false };
@@ -803,14 +811,6 @@ const TechText = ({
 
       guideAlpha = approach(guideAlpha, s.guides && !introducing && (focus >= 0 || presence > 0.4) ? 1 : 0, dt, 0.14);
 
-      const hovering = !introducing && focus >= 0 && pointer.inside;
-      const nextCursor =
-        dragging >= 0 ? 'grabbing' : hovering && s.draggable ? 'grab' : hovering && s.clickKick ? 'pointer' : '';
-      if (nextCursor !== cursor) {
-        cursor = nextCursor;
-        container.style.cursor = nextCursor;
-      }
-
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = 1;
@@ -858,6 +858,11 @@ const TechText = ({
       });
       if (presence > 0.001) drawReveal(s);
       drawFrame(s, accent);
+
+      if (!readySignaled) {
+        readySignaled = true;
+        if (onReadyRef.current) onReadyRef.current();
+      }
 
       const settling =
         moving ||
@@ -973,7 +978,6 @@ const TechText = ({
       intersectionObserver.disconnect();
       themeObserver.disconnect();
       schemeQuery?.removeEventListener?.('change', wake);
-      container.style.cursor = '';
       container.removeEventListener('pointermove', onMove);
       container.removeEventListener('pointerenter', onMove);
       container.removeEventListener('pointerdown', onDown);

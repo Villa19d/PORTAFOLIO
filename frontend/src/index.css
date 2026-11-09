@@ -1647,3 +1647,41 @@ html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
     opacity: 0.7;
   }
 }
+
+/* ==========================================================================
+   Hero title (S13): HTML typewriter fallback for the name, plus the lazy TechText
+   canvas layer. The caret only animates opacity so it stays cheap and lite-safe.
+   ========================================================================== */
+.hero-title__caret {
+  display: inline-block;
+  width: 0.08em;
+  height: 0.86em;
+  margin-left: 0.06em;
+  vertical-align: -0.06em;
+  background-color: var(--accent-primary);
+  animation: hero-caret-blink 1s steps(1, end) infinite;
+}
+
+@keyframes hero-caret-blink {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+[data-perf="lite"] .hero-title__caret {
+  animation: none;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title__caret {
+    animation: none;
+    opacity: 1;
+  }
+}
+
