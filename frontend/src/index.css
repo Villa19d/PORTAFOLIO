@@ -43,6 +43,7 @@
   /* === DARK MODE (default) === */
   :root {
     --bento-row: 12rem;
+    --nav-h: 72px;
     --bg: #07090c;
     --surface: #0d1117;
     --surface-elevated: #151b23;
@@ -172,14 +173,17 @@
     opacity: 0.5;
   }
 
-  /* Scroll margin for sections (accounts for navbar height) */
+  /* Scroll margin for sections (accounts for the measured navbar height) */
   section[id] {
-    scroll-margin-top: 72px;
+    scroll-margin-top: var(--nav-h);
   }
 }
 
 .projects-section {
   width: 100%;
+  /* Tighter than the shared py-24 so the carousel and its title fit under the navbar on
+     short viewports (720/768px); the cards also cap their own height further below. */
+  padding-block: 3.5rem;
 }
 
 .projects-grid {
@@ -213,78 +217,218 @@
   scroll-snap-align: center;
 }
 
-/* 1-3 projects: big cards side by side (ticket 12.6). Phones get one card per
-   view with a natural horizontal swipe; from 640px up it becomes a grid. */
-.projects-showcase {
-  display: flex;
+/* Stack layout (CAROUSEL-2): 1 project -> one centred card, 2 projects -> two cards
+   side by side with no loop and no autoplay. Cards keep their natural width inside
+   minmax(0, 1fr) columns, so the layout can never overlap at any viewport width. */
+.project-stack {
+  display: grid;
   width: 100%;
-  gap: 1rem;
-  overflow-x: auto;
-  padding-inline: max(0px, calc((100% - min(82vw, 340px)) / 2));
-  overscroll-behavior-x: contain;
-  scroll-padding-inline: max(0px, calc((100% - min(82vw, 340px)) / 2));
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
 }
 
-.projects-showcase::-webkit-scrollbar {
-  display: none;
+.project-stack[data-layout='single'] {
+  max-width: 26rem;
+  margin-inline: auto;
 }
 
-.projects-showcase > .project-card {
-  width: min(82vw, 340px);
-  flex: 0 0 min(82vw, 340px);
-  scroll-snap-align: center;
+.project-stack[data-layout='duo'] {
+  max-width: 64rem;
+  margin-inline: auto;
 }
 
-.project-coverflow {
+/* Flat horizontal carousel (CAROUSEL-2): the active card sits centred at scale 1 and
+   its neighbours at ~0.66 with less opacity and a token veil. It is not an orbit: the
+   slides keep their slot, so scaled-down neighbours can never cover the active card.
+   Only transform and opacity are animated; every colour comes from the theme tokens. */
+.project-carousel {
+  --frame-ease: cubic-bezier(0.3, 0, 0, 1);
+  --frame-duration: 0ms;
+  --dispersion-x: 0px;
+  --dispersion-o: 0;
+  /* Tallest a card may grow: the viewport minus the navbar, minus room for the section
+     title, the swiper padding and the controls. Keeps every card under the navbar. */
+  --carousel-card-max: calc(100svh - var(--nav-h) - 15rem);
+  --ghost-cyan: color-mix(in srgb, var(--accent-primary) 34%, transparent);
+  --ghost-warm: color-mix(in srgb, var(--error) 32%, transparent);
+  position: relative;
   width: 100%;
   overflow: hidden;
 }
 
-.project-coverflow__swiper {
+/* Two classes on purpose: the Swiper stylesheet loads after index.css, so a single
+   class would lose the `overflow` tie-break against `.swiper`. */
+.project-carousel .project-carousel__swiper {
   overflow: visible;
-  padding-block: 1rem 2rem;
+  padding-block: 1.25rem 2rem;
+  /* Horizontal drags belong to the carousel; vertical scrolling stays with the page. */
+  touch-action: pan-y;
 }
 
-.project-coverflow__swiper .project-coverflow__slide {
+.project-carousel__swiper .project-carousel__slide {
   position: relative;
   display: flex;
-  width: min(340px, 72vw);
+  /* Small enough to fit the viewport with the section title and the controls: at 1280px
+     and up the active card is 352px wide, so the whole card stays inside the screen. */
+  width: clamp(15rem, 36vw, 22rem);
   height: auto;
   align-items: stretch;
+  max-height: var(--carousel-card-max);
 }
 
-.project-coverflow__slide > .project-card {
-  width: 100%;
-  height: auto;
+/* Compact card body inside the carousel: the base rows are too tall for a card whose
+   media is meant to be fully visible while the neighbours peek at the sides. */
+.project-carousel .project-card__body {
+  grid-template-rows: 3rem 3.75rem 3rem 2.75rem;
+  gap: 0.5rem;
+  padding: 0.75rem;
 }
 
-.project-coverflow__overlay {
+.project-carousel .project-card__title {
+  font-size: 1.0625rem;
+  line-height: 1.5rem;
+}
+
+.project-carousel .project-card__summary {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  -webkit-line-clamp: 3;
+}
+
+.project-carousel .project-card__technologies {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.project-carousel__frame {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  transform: translate3d(var(--frame-shift, 0px), 0, 0) scale(var(--frame-scale, 1));
+  transform-origin: center center;
+  opacity: var(--frame-opacity, 1);
+  transition:
+    transform var(--frame-duration, 0ms) var(--frame-ease),
+    opacity var(--frame-duration, 0ms) var(--frame-ease);
+}
+
+.project-carousel__card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+}
+
+/* 16:10 by default; the ratio arrives as a CSS variable from the `cardAspect` prop. The
+   max-height keeps media + body inside --carousel-card-max (the compact body is 15.5rem). */
+.project-carousel__card .project-card__media {
+  aspect-ratio: var(--project-card-aspect, 1.6);
+  max-height: calc(var(--carousel-card-max) - 15.5rem);
+}
+
+/* Static accent glow on the active card's own frame, so it travels with the card
+   (lite tier keeps exactly this). */
+.project-carousel__frame[data-active='true'] .project-card {
+  border-color: color-mix(in srgb, var(--accent-primary) 70%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent-primary) 45%, transparent),
+    0 18px 40px -26px color-mix(in srgb, var(--accent-primary) 60%, transparent);
+}
+
+/* Dispersion: two tinted copies peek out from behind the card, at most 4px. */
+.project-carousel__ghost {
   position: absolute;
-  z-index: 1;
   inset: 0;
   border-radius: 4px;
-  background-color: #000;
-  opacity: 0.45;
+  opacity: var(--dispersion-o, 0);
   pointer-events: none;
-  transition: opacity 300ms ease;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
 }
 
-.project-coverflow__overlay[data-active='true'] {
+.project-carousel__ghost--cyan {
+  background-color: var(--ghost-cyan);
+  transform: translate3d(calc(var(--dispersion-x, 0px) * -1), 0, 0);
+}
+
+.project-carousel__ghost--warm {
+  background-color: var(--ghost-warm);
+  transform: translate3d(var(--dispersion-x, 0px), 0, 0);
+}
+
+/* Desaturation stand-in for the neighbours: a static surface veil instead of `filter`,
+   which is never allowed on moving elements. */
+.project-carousel__veil {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  border-radius: 4px;
+  background-color: var(--surface);
+  opacity: var(--frame-veil, 0);
+  pointer-events: none;
+  transition: opacity var(--frame-duration, 0ms) var(--frame-ease);
+}
+
+/* Colour sweep: a spectral gradient crosses the active card once when it takes focus. */
+.project-carousel__sweep {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.project-carousel__sweep-line {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: linear-gradient(
+    100deg,
+    transparent 14%,
+    color-mix(in srgb, var(--accent-primary) 42%, transparent) 38%,
+    color-mix(in srgb, var(--accent-secondary) 38%, transparent) 52%,
+    color-mix(in srgb, var(--error) 32%, transparent) 66%,
+    transparent 88%
+  );
   opacity: 0;
+  transform: translate3d(-120%, 0, 0);
 }
 
-.project-coverflow__controls {
+.project-carousel__frame[data-sweep='true'] .project-carousel__sweep-line {
+  animation: project-carousel-sweep 600ms var(--frame-ease) both;
+}
+
+@keyframes project-carousel-sweep {
+  0% {
+    opacity: 0;
+    transform: translate3d(-120%, 0, 0);
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(120%, 0, 0);
+  }
+}
+
+.project-carousel__controls {
   display: flex;
   min-height: 2.75rem;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
-.project-coverflow__navigation {
+.project-carousel__navigation,
+.project-carousel__playback {
   display: inline-grid;
   width: 2.75rem;
   height: 2.75rem;
@@ -297,19 +441,42 @@
   cursor: pointer;
 }
 
-.project-coverflow__navigation:disabled {
+.project-carousel__playback {
+  display: inline-flex;
+  width: auto;
+  min-width: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding-inline: 0.75rem;
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+}
+
+.project-carousel__playback-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.project-carousel__playback[data-playing='true'] {
+  border-color: color-mix(in srgb, var(--accent-primary) 55%, var(--border-control));
+}
+
+.project-carousel__navigation:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-.project-coverflow__pagination {
+.project-carousel__pagination {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.625rem;
 }
 
-.project-coverflow__pagination-button {
+.project-carousel__pagination-button {
   width: 0.625rem;
   height: 0.625rem;
   padding: 0;
@@ -317,9 +484,10 @@
   border-radius: 50%;
   background-color: var(--text-muted);
   cursor: pointer;
+  transition: transform 180ms ease;
 }
 
-.project-coverflow__pagination-button[aria-current='true'] {
+.project-carousel__pagination-button[aria-current='true'] {
   background-color: var(--accent-primary);
   transform: scale(1.25);
 }
@@ -479,33 +647,26 @@
   color: var(--accent-primary);
 }
 
-/* Showcase cards are bigger: taller media, roomier body, wrapped stack chips. */
-.projects-showcase .project-card__media {
-  aspect-ratio: 16 / 9;
-}
-
-.projects-showcase > .project-card:first-child .project-card__media {
-  aspect-ratio: 16 / 10;
-}
-
-.projects-showcase .project-card__body {
+/* Single and duo cards are roomier: wrapped stack chips and a taller body. The media
+   keeps the base 16:10 aspect so a card reads the same in every layout. */
+.project-stack .project-card__body {
   grid-template-rows: auto auto 1fr auto;
-  gap: 0.875rem;
-  padding: 1.5rem;
+  gap: 0.75rem;
+  padding: 1.25rem;
 }
 
-.projects-showcase .project-card__title {
+.project-stack .project-card__title {
   font-size: 1.5rem;
   line-height: 2rem;
 }
 
-.projects-showcase .project-card__summary {
+.project-stack .project-card__summary {
   font-size: 1rem;
   line-height: 1.625rem;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
 }
 
-.projects-showcase .project-card__technologies {
+.project-stack .project-card__technologies {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -830,24 +991,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .projects-showcase {
-    display: grid;
-    align-items: stretch;
-    gap: 1.25rem;
-    overflow-x: visible;
-    padding-inline: 0;
-    scroll-snap-type: none;
+  .project-stack[data-layout='duo'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .projects-showcase[data-count='1'] {
-    max-width: 34rem;
-    margin-inline: auto;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .projects-showcase[data-count='3'] {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -856,16 +1001,8 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .projects-showcase[data-count='1'] {
-    max-width: 46rem;
-  }
-
-  .projects-showcase[data-count='2'] {
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  }
-
-  .projects-showcase[data-count='3'] {
-    grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 1fr));
+  .project-stack[data-layout='single'] {
+    max-width: 30rem;
   }
 
   .projects-track {
@@ -889,8 +1026,20 @@
     animation: none;
   }
 
-  .project-coverflow__overlay {
+  /* Reduced motion: no transitions at all, so navigation lands instantly. */
+  .project-carousel {
+    --frame-duration: 0ms !important;
+  }
+
+  .project-carousel__frame,
+  .project-carousel__veil,
+  .project-carousel__ghost,
+  .project-carousel__pagination-button {
     transition: none;
+  }
+
+  .project-carousel__sweep {
+    display: none;
   }
 
   .project-card {
@@ -1498,3 +1647,41 @@ html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
     opacity: 0.7;
   }
 }
+
+/* ==========================================================================
+   Hero title (S13): HTML typewriter fallback for the name, plus the lazy TechText
+   canvas layer. The caret only animates opacity so it stays cheap and lite-safe.
+   ========================================================================== */
+.hero-title__caret {
+  display: inline-block;
+  width: 0.08em;
+  height: 0.86em;
+  margin-left: 0.06em;
+  vertical-align: -0.06em;
+  background-color: var(--accent-primary);
+  animation: hero-caret-blink 1s steps(1, end) infinite;
+}
+
+@keyframes hero-caret-blink {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+[data-perf="lite"] .hero-title__caret {
+  animation: none;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title__caret {
+    animation: none;
+    opacity: 1;
+  }
+}
+

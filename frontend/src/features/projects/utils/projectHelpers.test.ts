@@ -6,7 +6,9 @@ import {
   getProjectVideoSource,
   isCloudinaryImageUrl,
   isPlaceholderImageUrl,
+  nextIndex,
   resolveCarouselLayout,
+  type CarouselDirection,
 } from './projectHelpers';
 
 describe('getLocalized', () => {
@@ -91,12 +93,26 @@ describe('isPlaceholderImageUrl', () => {
 });
 
 describe('resolveCarouselLayout', () => {
-  it('uses the showcase for 1-3 projects and the carousel from 4 projects up', () => {
-    expect(resolveCarouselLayout(0)).toBe('carousel');
-    expect(resolveCarouselLayout(1)).toBe('showcase');
-    expect(resolveCarouselLayout(2)).toBe('showcase');
-    expect(resolveCarouselLayout(3)).toBe('showcase');
+  it('picks the single, duo and carousel layout by amount of projects', () => {
+    expect(resolveCarouselLayout(0)).toBe('single');
+    expect(resolveCarouselLayout(1)).toBe('single');
+    expect(resolveCarouselLayout(2)).toBe('duo');
+    expect(resolveCarouselLayout(3)).toBe('carousel');
     expect(resolveCarouselLayout(4)).toBe('carousel');
     expect(resolveCarouselLayout(9)).toBe('carousel');
+  });
+});
+
+describe('nextIndex', () => {
+  it('bounces at the ends instead of looping (n=3, from index 1, direction +1)', () => {
+    let state: { index: number; direction: CarouselDirection } = { index: 1, direction: 1 };
+    const visited = [state.index];
+
+    for (let step = 0; step < 5; step += 1) {
+      state = nextIndex(state.index, state.direction, 3);
+      visited.push(state.index);
+    }
+
+    expect(visited).toEqual([1, 2, 1, 0, 1, 2]);
   });
 });

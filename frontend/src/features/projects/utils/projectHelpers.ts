@@ -127,15 +127,40 @@ export function isPlaceholderImageUrl(url: string): boolean {
   }
 }
 
-/** Up to this many projects the section uses the large showcase layout (ticket 12.6). */
-export const SHOWCASE_MAX_PROJECTS = 3;
+/**
+ * Layout of the projects section (ticket CAROUSEL-2):
+ * 1 project  -> a single centred card,
+ * 2 projects -> two cards side by side, no loop and no autoplay,
+ * 3 or more  -> the flat horizontal carousel.
+ * Pure so it can be unit tested.
+ */
+export type CarouselLayout = 'single' | 'duo' | 'carousel';
 
-export type CarouselLayout = 'showcase' | 'carousel';
+/** Below this amount the section renders a static layout instead of the carousel. */
+export const CAROUSEL_MIN_PROJECTS = 3;
+
+export function resolveCarouselLayout(count: number): CarouselLayout {
+  if (count < 2) return 'single';
+  if (count < CAROUSEL_MIN_PROJECTS) return 'duo';
+  return 'carousel';
+}
+
+/** Direction of the carousel autoplay: `1` walks forward, `-1` walks backward. */
+export type CarouselDirection = 1 | -1;
 
 /**
- * Layout of the projects section: 1-3 projects get the big showcase (no forced loop and
- * no duplicated slides), 4 or more keep the carousel track. Pure so it can be unit tested.
+ * Ping-pong step for the carousel autoplay (ticket CAROUSEL-3): moves `index` by
+ * `direction` and flips the direction when it reaches either end, so the track bounces
+ * (… 1 2 1 0 1 2 …) instead of looping to the start or stopping. Pure, unit tested.
  */
-export function resolveCarouselLayout(count: number): CarouselLayout {
-  return count > 0 && count <= SHOWCASE_MAX_PROJECTS ? 'showcase' : 'carousel';
+export function nextIndex(
+  index: number,
+  direction: CarouselDirection,
+  count: number,
+): { index: number; direction: CarouselDirection } {
+  if (count <= 1) return { index: 0, direction };
+  const next = index + direction;
+  if (next > count - 1) return { index: count - 2, direction: -1 };
+  if (next < 0) return { index: 1, direction: 1 };
+  return { index: next, direction };
 }

@@ -110,3 +110,7 @@ Reporte Sprint s7
 - **Traducciones:** Integración fluida con `i18next` en `common.json` (ES/EN) para todos los títulos y textos de la cuadrícula.
 - **Optimización Crítica (React Query):** Se refactorizó `useProjects.ts` migrando de `placeholderData` a `initialData` con `staleTime: Infinity`. 
   * *Impacto:* Se eliminaron las peticiones HTTP de fondo redundantes desde el cliente, forzando la lectura del snapshot de Vercel. Esto resolvió errores de entorno local (CORS/Proxy) y garantizó un CLS de 0 estricto en producción sin costo de base de datos.
+
+
+
+Se ha desactualizado este documento. El sprint actual es el 12.

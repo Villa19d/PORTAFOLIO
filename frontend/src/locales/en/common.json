@@ -171,6 +171,11 @@
     "slidePosition": "Project {{current}} of {{total}}",
     "pagination": "Project pagination",
     "goToSlide": "Go to project {{current}} of {{total}}",
-    "showcase": "Featured projects"
+    "showcase": "Featured projects",
+    "carousel": "Project carousel",
+    "pauseAutoplay": "Pause autoplay",
+    "resumeAutoplay": "Resume autoplay",
+    "pause": "Pause",
+    "resume": "Resume"
   }
 }

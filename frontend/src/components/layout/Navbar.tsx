@@ -29,6 +29,7 @@ export function Navbar() {
 
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNavRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   // Scroll spy — IntersectionObserver
   useEffect(() => {
@@ -67,6 +68,23 @@ export function Navbar() {
     const onScroll = () => setScrolled(window.scrollY > 24);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Publish the real header height as --nav-h, so sections, cards and anchors can
+  // subtract it (100svh - var(--nav-h)) instead of hard-coding 72px.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const apply = () =>
+      document.documentElement.style.setProperty('--nav-h', `${header.offsetHeight}px`);
+    apply();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', apply);
+      return () => window.removeEventListener('resize', apply);
+    }
+    const observer = new ResizeObserver(apply);
+    observer.observe(header);
+    return () => observer.disconnect();
   }, []);
 
   // Close menu on Escape and click-outside
@@ -131,6 +149,7 @@ export function Navbar() {
 
   return (
     <header
+      ref={headerRef}
       data-scrolled={scrolled}
       className={[
         'site-header fixed top-0 inset-x-0 z-50 transition-all duration-300',

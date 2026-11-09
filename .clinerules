@@ -13,3 +13,13 @@
    REPORTE FINAL: formato breve de AGENTS.md §9.
 
 Nunca sondees con el mismo comando repetido: usa un único comando con espera interna y timeout
+
+CONTROL DE TAREA: si en 3 turnos seguidos no editas un archivo ni ejecutas un
+comando útil, DETENTE y reporta en 5 líneas qué decides y qué te falta. Decide
+UNA opción y ejecútala; no repitas el análisis. No hagas polling con
+Start-Sleep ni leas logs en pedazos: corre los comandos en primer plano y lee
+la salida una vez. No releas un archivo que ya leíste. Corre la suite completa
+de Vitest una sola vez, al final. Si el directorio de trabajo no es
+PORTAFOLIO\frontend, DETENTE y avísalo (no busques el repo por el disco).
+Máximo ~30 llamadas a herramientas por tarea; si llegas, termina en un estado
+coherente y reporta.
