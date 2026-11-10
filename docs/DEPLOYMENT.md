@@ -37,6 +37,8 @@ En el dashboard de Render, al configurar el Web Service (o background worker), s
 - **`CLOUDINARY_API_SECRET`**: API secret de Cloudinary; solo debe existir en el entorno del backend.
 - **`CLOUDINARY_UPLOAD_PRESET`**: Nombre del upload preset firmado.
 - **`CLOUDINARY_FOLDER`**: Carpeta de destino; por defecto `portfolio/projects`.
+- **`CLOUDINARY_CV_UPLOAD_PRESET`**: Preset firmado para PDF del CV; opcional al arrancar, sin él la subida del CV responde 503.
+- **`CLOUDINARY_CV_FOLDER`**: Carpeta de destino del CV; por defecto `portfolio/cv`.
 
 En el perfil `prod`, todas las variables de contacto son obligatorias y
 `CONTACT_MODE=log` provoca un fallo rápido durante el arranque.
@@ -57,6 +59,15 @@ un preset con estas opciones:
 Guarda el nombre del preset en `CLOUDINARY_UPLOAD_PRESET`. El administrador
 solicita la firma mediante `POST /api/admin/uploads/sign` usando un access JWT
 y el navegador carga el archivo directamente a Cloudinary.
+
+### 2.1.2 Preset de Cloudinary para el CV
+
+En Cloudinary:
+
+1. Activa **Settings > Security > Allow delivery of PDF and ZIP files**.
+2. En **Settings > Upload > Upload presets**, crea un preset `Signed`, con carpeta
+   `portfolio/cv` y formatos permitidos `pdf`. Anota el nombre y configúralo en
+   `CLOUDINARY_CV_UPLOAD_PRESET`.
 
 ### 2.1 Configuración de Resend y Turnstile
 

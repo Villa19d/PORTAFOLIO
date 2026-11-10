@@ -1109,50 +1109,6 @@
   background-color: color-mix(in srgb, var(--accent-primary) 12%, transparent);
 }
 
-/* --------------------------------------------------------------------------
-   Modal dialogs and the custom cursor
-   A <dialog> opened with showModal() lives in the top layer, which paints above
-   any z-index. The decorative cursor is fixed with z-index 9999, so it would
-   stay behind the dialog while `cursor: none` hides the native one. While a
-   modal dialog is open the pointer goes back to the browser and the decorative
-   cursor is hidden; both revert as soon as the dialog closes.
-   -------------------------------------------------------------------------- */
-html.custom-cursor-active:has(dialog:modal),
-html.custom-cursor-active:has(dialog:modal) *,
-html.custom-cursor-active:has(dialog:modal) dialog::backdrop {
-  cursor: auto !important;
-}
-
-html.custom-cursor-active:has(dialog:modal)
-  :is(
-    input:not([type]),
-    input[type='text'],
-    input[type='email'],
-    input[type='search'],
-    input[type='url'],
-    input[type='tel'],
-    input[type='password'],
-    input[type='number'],
-    input[type='date'],
-    input[type='datetime-local'],
-    input[type='month'],
-    input[type='week'],
-    input[type='time'],
-    textarea,
-    [contenteditable]:not([contenteditable='false'])
-  ) {
-  cursor: text !important;
-}
-
-html.custom-cursor-active:has(dialog:modal)
-  :is(a[href], button, [role='button'], summary, select) {
-  cursor: pointer !important;
-}
-
-html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
-  visibility: hidden;
-}
-
 @keyframes blob-drift-1 {
   0%, 100% {
     transform: translate(0, 0) scale(1);
@@ -2059,4 +2015,24 @@ html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
   .project-gallery__thumb {
     transition: none;
   }
+}
+
+/* ==========================================================================
+   S13-G1
+   Tailwind v4 preflight sets `margin: 0`, which kills the browser centring of a
+   modal dialog, so the project modal sat in a corner. Same explicit centring as
+   `.terminal-window`: fixed + inset 0 + fit-content height + auto margins. No
+   `display` here on purpose: a closed dialog must stay hidden.
+   ========================================================================== */
+.project-detail-modal {
+  position: fixed;
+  inset: 0;
+  height: fit-content;
+  margin: auto;
+}
+
+/* The decorative cursor is portalled into the open dialog (see CustomCursor), so the
+   pointer over the backdrop has to stay hidden. */
+html.custom-cursor-active dialog::backdrop {
+  cursor: none;
 }

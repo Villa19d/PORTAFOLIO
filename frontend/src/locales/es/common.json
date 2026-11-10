@@ -20,7 +20,38 @@
     "contactPlaceholder": "(placeholder) Formulario de contacto próximamente."
   },
   "footer": {
-    "rights": "Todos los derechos reservados."
+    "rights": "Todos los derechos reservados.",
+    "tagline": "Desarrollador Full-Stack. Construyo cosas rápidas, seguras y con detalle.",
+    "navLabel": "Navegación del pie de página",
+    "socialLabel": "Redes",
+    "builtWith": "Hecho con React 19, TypeScript y Spring Boot.",
+    "backToTop": "Volver arriba"
+  },
+  "cv": {
+    "title": "Currículum",
+    "open": "Ver CV",
+    "openEs": "Ver CV (ES)",
+    "openEn": "Ver CV (EN)",
+    "download": "Descargar",
+    "close": "Cerrar",
+    "modalLabel": "Visor de currículum",
+    "languageSwitch": "Idioma del CV",
+    "langEs": "Español",
+    "langEn": "English",
+    "mobileNote": "Tu navegador no muestra PDF aquí. Descárgalo o ábrelo en otra pestaña.",
+    "openNewTab": "Abrir en otra pestaña",
+    "loading": "Cargando currículum",
+    "unavailable": "Currículum próximamente"
+  },
+  "social": {
+    "linkedin": "LinkedIn",
+    "instagram": "Instagram",
+    "github": "GitHub",
+    "email": "Correo",
+    "emailHint": "Copiar y escribirme",
+    "emailCopied": "Correo copiado",
+    "copyFailed": "No se pudo copiar. Usa el formulario de contacto.",
+    "opensNewTab": "se abre en otra pestaña"
   },
   "hero": {
     "greeting": "Hola, soy",

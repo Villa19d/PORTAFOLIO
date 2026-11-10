@@ -1,5 +1,24 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { m, useMotionValue, useSpring } from 'motion/react';
+
+/**
+ * A `<dialog>` opened with `showModal()` paints in the top layer, above any z-index, so the
+ * decorative cursor has to live inside it. Falls back to the document body when no dialog is
+ * open.
+ */
+function findCursorHost(): HTMLElement {
+  try {
+    const modalDialog = document.querySelector<HTMLDialogElement>('dialog[open]:modal');
+    if (modalDialog) {
+      return modalDialog;
+    }
+  } catch {
+    // Selector engines without :modal support fall back to the plain [open] check.
+  }
+
+  return document.querySelector<HTMLDialogElement>('dialog[open]') ?? document.body;
+}
 
 export function CustomCursor() {
   const pointX = useMotionValue(0);
@@ -11,9 +30,31 @@ export function CustomCursor() {
   const ringRef = useRef<HTMLDivElement>(null);
   const isInteractive = useRef(false);
   const isPressed = useRef(false);
+  const lastPoint = useRef({ x: 0, y: 0 });
+  const [cursorHost, setCursorHost] = useState<HTMLElement>(() => findCursorHost());
+
+  useLayoutEffect(() => {
+    pointX.set(lastPoint.current.x);
+    pointY.set(lastPoint.current.y);
+    ringX.jump(lastPoint.current.x);
+    ringY.jump(lastPoint.current.y);
+  }, [cursorHost, pointX, pointY, ringX, ringY]);
 
   useEffect(() => {
     document.documentElement.classList.add('custom-cursor-active');
+
+    const observer = new MutationObserver(() => {
+      setCursorHost((current) => {
+        const next = findCursorHost();
+        return next === current ? current : next;
+      });
+    });
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['open'],
+    });
 
     const setInteractive = (interactive: boolean) => {
       if (isInteractive.current === interactive) {
@@ -32,6 +73,7 @@ export function CustomCursor() {
         return;
       }
 
+      lastPoint.current = { x: event.clientX, y: event.clientY };
       pointX.set(event.clientX);
       pointY.set(event.clientY);
 
@@ -79,6 +121,7 @@ export function CustomCursor() {
 
     return () => {
       document.documentElement.classList.remove('custom-cursor-active');
+      observer.disconnect();
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerUp);
@@ -86,7 +129,7 @@ export function CustomCursor() {
     };
   }, [opacity, pointX, pointY, ringScale]);
 
-  return (
+  return createPortal(
     <>
       <m.div
         aria-hidden="true"
@@ -99,6 +142,7 @@ export function CustomCursor() {
         className="custom-cursor-ring"
         style={{ x: ringX, y: ringY, scale: ringScale, opacity }}
       />
-    </>
+    </>,
+    cursorHost,
   );
 }

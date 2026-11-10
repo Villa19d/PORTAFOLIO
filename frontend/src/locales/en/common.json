@@ -20,7 +20,38 @@
     "contactPlaceholder": "(placeholder) Contact form coming soon."
   },
   "footer": {
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "tagline": "Full-Stack Developer. I build fast, secure things with attention to detail.",
+    "navLabel": "Footer navigation",
+    "socialLabel": "Social links",
+    "builtWith": "Built with React 19, TypeScript and Spring Boot.",
+    "backToTop": "Back to top"
+  },
+  "cv": {
+    "title": "Résumé",
+    "open": "View CV",
+    "openEs": "View CV (ES)",
+    "openEn": "View CV (EN)",
+    "download": "Download",
+    "close": "Close",
+    "modalLabel": "Résumé viewer",
+    "languageSwitch": "CV language",
+    "langEs": "Español",
+    "langEn": "English",
+    "mobileNote": "Your browser can't show PDFs here. Download it or open it in a new tab.",
+    "openNewTab": "Open in a new tab",
+    "loading": "Loading résumé",
+    "unavailable": "Résumé coming soon"
+  },
+  "social": {
+    "linkedin": "LinkedIn",
+    "instagram": "Instagram",
+    "github": "GitHub",
+    "email": "Email",
+    "emailHint": "Copy and write to me",
+    "emailCopied": "Email copied",
+    "copyFailed": "Couldn't copy. Use the contact form.",
+    "opensNewTab": "opens in a new tab"
   },
   "hero": {
     "greeting": "Hi, I'm",

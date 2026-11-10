@@ -141,3 +141,9 @@
 ## 18. Carrusel y protocolo de medición (Tickets 10–12)
 - **Decisión:** El carrusel usa showcase con 1–3 proyectos y Coverflow con 4 o más. `TiltSurface` es compartido y escribe `--spot-x` y `--spot-y`.
 - **Protocolo:** La fuente de verdad de rendimiento es una comparación A/B en la misma máquina y momento, en un worktree fuera de Dropbox, con build, `vite preview`, `node scripts/lh-summary.mjs <url> mobile 3` y la medición del JS inicial descrita en `docs/PERFORMANCE.md`.
+
+## 19. CV administrable: tabla propia y Cloudinary raw (Sprint 13)
+- **Contexto:** El CV debe subirse desde /admin y verse en "Sobre mí" sin redeploy. El disco de Render es efímero.
+- **Decisión:** Tabla `cv_documents` (PK `lang` es|en, una fila por idioma), `GET /api/cv` público (cache 60 s), `PUT/DELETE /api/admin/cv/{lang}` y firma `POST /api/admin/uploads/sign-document` con preset propio. El navegador sube el PDF directo a Cloudinary (`/raw/upload`) y el backend solo guarda la URL, validada (https, res.cloudinary.com, /raw/upload/, .pdf). El preset es opcional al arrancar para que un deploy sin la variable no tumbe la app.
+- **Frontend:** snapshot (`cv.snapshot.json`, generado en el build) más revalidación en vivo, para no mostrar "próximamente" mientras Render despierta. Visor en iframe en escritorio; en móvil, descarga o pestaña nueva. Descarga con `fl_attachment`.
+- **Consecuencia:** Quitar un CV solo lo desvincula; el archivo queda en Cloudinary. Requiere activar "Allow delivery of PDF and ZIP files" en Cloudinary.
