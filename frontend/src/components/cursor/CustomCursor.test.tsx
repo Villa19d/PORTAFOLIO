@@ -1,5 +1,5 @@
 import { Profiler } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { CustomCursor } from './CustomCursor';
 
@@ -35,5 +35,30 @@ describe('CustomCursor', () => {
       'custom-cursor-ring--interactive'
     );
     expect(renderCount).toBe(1);
+  });
+
+  it('portals the cursor into the open dialog and returns to the body when it closes', async () => {
+    const dialog = document.createElement('dialog');
+    dialog.setAttribute('open', '');
+    document.body.append(dialog);
+
+    render(<CustomCursor />);
+
+    expect(dialog.querySelectorAll('.custom-cursor-dot, .custom-cursor-ring')).toHaveLength(2);
+
+    await act(async () => {
+      dialog.removeAttribute('open');
+      await Promise.resolve();
+    });
+
+    expect(dialog.querySelectorAll('.custom-cursor-dot, .custom-cursor-ring')).toHaveLength(0);
+    expect(document.body.querySelectorAll('.custom-cursor-dot, .custom-cursor-ring')).toHaveLength(
+      2
+    );
+
+    await act(async () => {
+      dialog.remove();
+      await Promise.resolve();
+    });
   });
 });

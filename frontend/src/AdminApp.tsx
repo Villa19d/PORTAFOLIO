@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './AuthProvider';
 import AdminLogin from './AdminLogin';
+import CvView from './CvView';
 import MessagesView from './MessagesView';
 import ProjectsView from './ProjectsView';
 
-type AdminView = 'projects' | 'messages';
+type AdminView = 'projects' | 'messages' | 'cv';
 
 const adminQueryClient = new QueryClient({
   defaultOptions: {
@@ -17,7 +18,10 @@ const adminQueryClient = new QueryClient({
 });
 
 function getViewFromHash(): AdminView {
-  return window.location.hash === '#/messages' ? 'messages' : 'projects';
+  const hash = window.location.hash;
+  if (hash === '#/messages') return 'messages';
+  if (hash === '#/cv') return 'cv';
+  return 'projects';
 }
 
 function setRobotsMeta() {
@@ -104,6 +108,15 @@ function AuthenticatedAdminApp() {
             >
               Mensajes
             </button>
+            <button
+              className={`rounded-md px-3 py-2 text-sm ${
+                view === 'cv' ? 'bg-accent text-bg' : 'text-text-muted hover:text-text'
+              }`}
+              onClick={() => navigateTo('cv')}
+              type="button"
+            >
+              CV
+            </button>
           </nav>
 
           <button
@@ -125,7 +138,7 @@ function AuthenticatedAdminApp() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-10">
-        {view === 'projects' ? <ProjectsView /> : <MessagesView />}
+        {view === 'projects' ? <ProjectsView /> : view === 'messages' ? <MessagesView /> : <CvView />}
       </main>
     </div>
   );

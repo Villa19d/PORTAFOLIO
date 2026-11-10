@@ -13,6 +13,11 @@ vi.mock('../../hooks/useCapabilities', () => ({
   useCapabilities: useCapabilitiesMock,
 }));
 
+// SocialLinks scrolls with the Navbar mechanism, which needs the provider.
+vi.mock('../../components/SmoothScrollProvider', () => ({
+  useSmoothScroll: () => ({ scrollTo: vi.fn(), pause: vi.fn(), resume: vi.fn() }),
+}));
+
 const desktopCapabilities = {
   hasFinePointer: true,
   isDesktopLayout: true,

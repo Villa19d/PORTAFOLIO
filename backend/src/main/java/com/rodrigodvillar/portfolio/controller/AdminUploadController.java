@@ -2,6 +2,7 @@ package com.rodrigodvillar.portfolio.controller;
 
 import com.rodrigodvillar.portfolio.config.CloudinaryProperties;
 import com.rodrigodvillar.portfolio.dto.CloudinarySignatureResponse;
+import com.rodrigodvillar.portfolio.exception.CvUploadPresetMissingException;
 import com.rodrigodvillar.portfolio.service.CloudinarySignatureService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -32,13 +33,28 @@ public class AdminUploadController {
     @PostMapping("/sign")
     @Operation(summary = "Create a Cloudinary upload signature")
     public ResponseEntity<CloudinarySignatureResponse> sign() {
-        CloudinarySignatureService.SignatureData signature = signatureService.generateSignature();
+        return signatureResponse(properties.getFolder(), properties.getUploadPreset());
+    }
+
+    @PostMapping("/sign-document")
+    @Operation(summary = "Create the Cloudinary upload signature for the CV PDF")
+    public ResponseEntity<CloudinarySignatureResponse> signDocument() {
+        String cvUploadPreset = properties.getCvUploadPreset();
+        if (cvUploadPreset == null || cvUploadPreset.isBlank()) {
+            throw new CvUploadPresetMissingException("Cloudinary CV upload preset is not configured");
+        }
+        return signatureResponse(properties.getCvFolder(), cvUploadPreset);
+    }
+
+    private ResponseEntity<CloudinarySignatureResponse> signatureResponse(String folder, String uploadPreset) {
+        CloudinarySignatureService.SignatureData signature =
+                signatureService.generateSignature(folder, uploadPreset);
         CloudinarySignatureResponse response = new CloudinarySignatureResponse(
                 properties.getCloudName(),
                 properties.getApiKey(),
                 signature.timestamp(),
-                properties.getFolder(),
-                properties.getUploadPreset(),
+                folder,
+                uploadPreset,
                 signature.signature()
         );
 

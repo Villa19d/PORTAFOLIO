@@ -182,4 +182,37 @@ describe('ProjectDetailModal', () => {
     expect(dialog.querySelector('.project-detail-modal__summary')).toHaveTextContent('Resumen');
     expect(dialog.querySelectorAll('.project-detail-modal__actions a')).toHaveLength(3);
   });
+
+  it('shows the cover plus every extra image and one action per repository', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <ProjectCard
+          project={{
+            ...project,
+            media: [
+              {
+                type: 'IMAGE',
+                url: 'https://res.cloudinary.com/w6ydqvtv/image/upload/v1793903492/portfolio/projects/extra-1.jpg',
+              },
+              {
+                type: 'IMAGE',
+                url: 'https://res.cloudinary.com/w6ydqvtv/image/upload/v1793903492/portfolio/projects/extra-2.jpg',
+              },
+            ],
+            repos: [
+              { label: 'Frontend', url: 'https://github.com/example/front' },
+              { label: 'Backend', url: 'https://github.com/example/back' },
+            ],
+          }}
+        />
+      </I18nextProvider>,
+    );
+
+    const dialog = await openDetails();
+
+    expect(dialog.querySelectorAll('.project-gallery__thumb')).toHaveLength(3);
+    expect(dialog.querySelectorAll('.project-detail-modal__actions a')).toHaveLength(3);
+    expect(screen.getByRole('link', { name: 'Frontend' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Backend' })).toBeInTheDocument();
+  });
 });

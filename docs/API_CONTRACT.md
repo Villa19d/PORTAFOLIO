@@ -16,6 +16,10 @@
 | PUT | `/api/admin/projects/{id}` | JWT | Update project. |
 | DELETE | `/api/admin/projects/{id}` | JWT | Delete project. |
 | POST | `/api/admin/uploads/sign` | JWT | Get a short-lived Cloudinary direct-upload signature. |
+| GET | `/api/cv` | Public | CV por idioma. |
+| PUT | `/api/admin/cv/{lang}` | JWT | Asocia el CV de un idioma (`es` o `en`). |
+| DELETE | `/api/admin/cv/{lang}` | JWT | Desvincula el CV de un idioma (204 aunque no exista). |
+| POST | `/api/admin/uploads/sign-document` | JWT | Firma de subida directa a Cloudinary para el PDF del CV. |
 | GET | `/api/admin/messages` | JWT | List contact messages, newest first, paginated. |
 | DELETE | `/api/admin/messages/{id}` | JWT | Delete a contact message. |
 | POST | `/api/contact` | Public (Rate limit) | Send contact message. |
@@ -263,6 +267,12 @@ para su posterior observabilidad/reintento.
 | `403 Forbidden` | Turnstile rechazó el token o el hostname no está permitido. |
 | `429 Too Many Requests` | Más de 3 solicitudes por hora desde la misma IP. Incluye `Retry-After`. |
 | `503 Service Unavailable` | Turnstile no está disponible o se alcanzó el límite diario. Incluye `Retry-After`. |
+
+## CV
+
+- `GET /api/cv` responde 200 `{ "es": {url, fileName, updatedAt} | null, "en": {...} | null }` con `Cache-Control: public, max-age=60`. Sin datos devuelve `{ "es": null, "en": null }`.
+- `PUT /api/admin/cv/{lang}` body `{ "url": string, "fileName": string }`. `url`: https, host `res.cloudinary.com`, ruta con `/raw/upload/`, termina en `.pdf`. `fileName`: 1 a 120 caracteres sin caracteres de control. Respuesta 200 con el objeto del slot, `Cache-Control: no-store`. `lang` distinto de `es|en` o body inválido: 400 (RFC 7807).
+- `POST /api/admin/uploads/sign-document` responde igual que `/sign` (misma forma, sin secreto) pero con el preset y la carpeta del CV. 503 si el preset del CV no está configurado. Límite de 20 por hora, igual que `/sign`.
 
 ## Errores (RFC 7807)
 **Response (400 Bad Request)**

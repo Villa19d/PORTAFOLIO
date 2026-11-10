@@ -2,10 +2,10 @@ import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'rea
 import { useTranslation } from 'react-i18next';
 import { Navbar } from './components/layout/Navbar';
 import { Section } from './components/layout/Section';
+import { Footer } from './components/layout/Footer';
 import { ContactForm } from './features/contact/components/ContactForm';
 import { Hero } from './features/hero/components/Hero';
-import { SITE_CONFIG } from './data/site';
-import { TerminalLauncher, openTerminal } from './features/terminal/TerminalLauncher';
+import { TerminalLauncher } from './features/terminal/TerminalLauncher';
 import { BootIntroLauncher } from './features/boot-intro/BootIntroLauncher';
 
 const LazyAboutSection = lazy(() =>
@@ -200,7 +200,6 @@ function DeferredExperienceSection() {
 
 export default function App() {
   const { t } = useTranslation('common');
-  const currentYear = new Date().getFullYear();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -232,36 +231,7 @@ export default function App() {
         </Section>
       </main>
 
-      <footer className="border-t border-border py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-text-muted">
-          <span>
-            &copy; {currentYear} {SITE_CONFIG.authorName}. {t('footer.rights')}
-          </span>
-          <div className="flex items-center gap-6">
-            <button type="button" onClick={openTerminal} className="font-mono text-xs opacity-70 transition-opacity hover:text-accent hover:opacity-100" aria-label={t('terminal.open')}>
-              {'>_'}
-            </button>
-            {SITE_CONFIG.githubUrl && (
-              <a
-                href={SITE_CONFIG.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-accent transition-colors"
-              >
-                GitHub
-              </a>
-            )}
-            <a
-              href={SITE_CONFIG.linkedinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-accent transition-colors"
-            >
-              LinkedIn
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
       <TerminalLauncher />
       <BootIntroLauncher />
     </div>

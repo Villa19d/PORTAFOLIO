@@ -9,6 +9,11 @@ import spanish from '../../locales/es/common.json';
 import i18n from '../../lib/i18n';
 import { AboutSection } from './AboutSection';
 
+// SocialLinks scrolls with the Navbar mechanism, which needs the provider.
+vi.mock('../../components/SmoothScrollProvider', () => ({
+  useSmoothScroll: () => ({ scrollTo: vi.fn(), pause: vi.fn(), resume: vi.fn() }),
+}));
+
 beforeEach(() => {
   // jsdom has no canvas implementation: answer the WebGL probe of the mini world gate
   // so it does not log "Not implemented: HTMLCanvasElement.prototype.getContext".
@@ -36,7 +41,7 @@ describe('AboutSection', () => {
     expect(screen.getByRole('region', { name: intro })).toBeInTheDocument();
     // Seven content tiles plus the mini world tile added in S12.1.
     expect(container.querySelector('[role="group"]')?.children).toHaveLength(8);
-    expect(screen.getAllByRole('link', { name: /github|linkedin/i })).toHaveLength(1);
+    expect(screen.getAllByRole('link', { name: /github|linkedin|instagram/i })).toHaveLength(3);
     expect(screen.queryByRole('link', { name: /cv|résumé|currículum/i })).not.toBeInTheDocument();
   });
 
