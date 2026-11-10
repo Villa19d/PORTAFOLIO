@@ -152,4 +152,55 @@ describe('ProjectCard', () => {
     expect(screen.getByText('+1')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(6);
   });
+
+    it('shows the video badge only when the project has a YouTube video', () => {
+    const { container, rerender } = renderCard();
+    expect(container.querySelector('.project-card__video-badge')).not.toBeInTheDocument();
+
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <ProjectCard
+          project={{ ...project, media: [{ type: 'YOUTUBE', url: 'https://youtu.be/abc123_DEF' }] }}
+        />
+      </I18nextProvider>,
+    );
+    expect(container.querySelector('.project-card__video-badge')).toBeInTheDocument();
+    expect(screen.getByText('Incluye video')).toBeInTheDocument();
+  });
+
+  it('uses the repo label when there is a single labelled repo', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <ProjectCard project={{ ...project, repos: [{ label: 'Backend', url: project.repoUrl }] }} />
+      </I18nextProvider>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Backend' })).toHaveAttribute('href', project.repoUrl);
+  });
+
+  it('collapses several repos into a single "Código · 2" button that is out of the tab order when inactive', () => {
+    const multi: Project = {
+      ...project,
+      repos: [
+        { label: 'Frontend', url: 'https://github.com/example/front' },
+        { label: 'Backend', url: 'https://github.com/example/back' },
+      ],
+    };
+    const { rerender } = render(
+      <I18nextProvider i18n={i18n}>
+        <ProjectCard project={multi} />
+      </I18nextProvider>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Ver los 2 repositorios' })).toHaveTextContent('Código · 2');
+    expect(screen.queryByRole('link', { name: 'Código' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Frontend' })).not.toBeInTheDocument();
+
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <ProjectCard project={multi} isActive={false} />
+      </I18nextProvider>,
+    );
+    expect(screen.getByRole('button', { name: 'Ver los 2 repositorios' })).toHaveAttribute('tabindex', '-1');
+  });
 });

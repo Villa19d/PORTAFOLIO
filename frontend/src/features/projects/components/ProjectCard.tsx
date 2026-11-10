@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TiltSurface } from '../../../components/ui/TiltSurface';
 import { useCapabilities } from '../../../hooks/useCapabilities';
@@ -7,6 +7,8 @@ import {
   buildImageSrcSet,
   getSafeExternalUrl,
   getLocalized,
+  getProjectGallery,
+  getProjectRepos,
   isCloudinaryImageUrl,
   isPlaceholderImageUrl,
 } from '../utils/projectHelpers';
@@ -32,7 +34,12 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
   const visibleTechnologies = project.techStack.slice(0, 5);
   const remainingTechnologies = Math.max(0, project.techStack.length - visibleTechnologies.length);
   const linkTabIndex = isActive ? undefined : -1;
-  const repoUrl = getSafeExternalUrl(project.repoUrl);
+  const repos = useMemo(() => getProjectRepos(project), [project]);
+  const hasVideo = useMemo(
+    () => getProjectGallery(project).some((item) => item.kind === 'youtube'),
+    [project],
+  );
+  const singleRepo = repos.length === 1 ? repos[0] : undefined;
   const liveUrl = getSafeExternalUrl(project.liveUrl);
   const tiltEnabled = isActive && canUseHeavyEffects;
 
@@ -54,6 +61,12 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
             decoding="async"
             onError={() => setFailedImageUrl(project.imageUrl)}
           />
+        )}
+        {hasVideo && (
+          <span className="project-card__video-badge" title={t('projects.hasVideo')}>
+            <span aria-hidden="true">▶</span>
+            <span className="sr-only">{t('projects.hasVideo')}</span>
+          </span>
         )}
       </div>
 
@@ -81,16 +94,27 @@ export function ProjectCard({ project, isActive = true }: ProjectCardProps) {
         </ul>
 
         <div className="project-card__actions">
-          {repoUrl && (
+          {singleRepo && (
             <a
               className="project-card__action project-card__action--primary"
-              href={repoUrl}
+              href={singleRepo.url}
               target="_blank"
               rel="noopener noreferrer"
               tabIndex={linkTabIndex}
             >
-              {t('projects.code')}
+              {singleRepo.label ?? t('projects.code')}
             </a>
+          )}
+          {repos.length > 1 && (
+            <button
+              className="project-card__action project-card__action--primary"
+              type="button"
+              aria-label={t('projects.viewRepos', { count: repos.length })}
+              tabIndex={linkTabIndex}
+              onClick={() => setIsDetailOpen(true)}
+            >
+              {t('projects.codeMultiple', { count: repos.length })}
+            </button>
           )}
           {liveUrl && (
             <a

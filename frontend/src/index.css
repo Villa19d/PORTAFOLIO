@@ -1793,3 +1793,25 @@ html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
   min-height: 2.75rem;
   flex: 1 1 7rem;
 }
+
+
+
+/* Video badge on the card cover (S13-C): static, sits above the spotlight. */
+.project-card__video-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 3;
+  display: inline-grid;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  padding-inline: 0.4rem;
+  border: 1px solid var(--border-control);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+  line-height: 1;
+  pointer-events: none;
+}

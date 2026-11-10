@@ -156,6 +156,8 @@
     "technologies": "Technologies used",
     "moreTechnologies": "{{count}} more technologies",
     "code": "Code",
+    "codeMultiple": "Code · {{count}}",
+    "viewRepos": "View all {{count}} repositories",
     "demo": "Demo",
     "viewDetails": "View details",
     "closeDetails": "Close project details",
