@@ -176,6 +176,16 @@
     "pauseAutoplay": "Pausar el avance automático",
     "resumeAutoplay": "Reanudar el avance automático",
     "pause": "Pausar",
-    "resume": "Reanudar"
+    "resume": "Reanudar",
+    "hasVideo": "Incluye video",
+    "gallery": {
+      "label": "Galería del proyecto",
+      "previous": "Elemento anterior",
+      "next": "Elemento siguiente",
+      "thumbnails": "Miniaturas de la galería",
+      "goToImage": "Ver imagen {{current}} de {{total}}",
+      "goToVideo": "Ver video {{current}} de {{total}}",
+      "imageAlt": "{{title}}, imagen {{current}} de {{total}}"
+    }
   }
 }

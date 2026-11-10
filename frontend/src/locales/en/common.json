@@ -176,6 +176,16 @@
     "pauseAutoplay": "Pause autoplay",
     "resumeAutoplay": "Resume autoplay",
     "pause": "Pause",
-    "resume": "Resume"
+    "resume": "Resume",
+    "hasVideo": "Includes video",
+    "gallery": {
+      "label": "Project gallery",
+      "previous": "Previous item",
+      "next": "Next item",
+      "thumbnails": "Gallery thumbnails",
+      "goToImage": "View image {{current}} of {{total}}",
+      "goToVideo": "View video {{current}} of {{total}}",
+      "imageAlt": "{{title}}, image {{current}} of {{total}}"
+    }
   }
 }

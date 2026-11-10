@@ -1,16 +1,14 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import type { Project } from '../types';
 import {
-  buildImageSrcSet,
-  getProjectVideoSource,
-  getSafeExternalUrl,
   getLocalized,
-  isCloudinaryImageUrl,
-  isPlaceholderImageUrl,
+  getProjectGallery,
+  getProjectRepos,
+  getSafeExternalUrl,
 } from '../utils/projectHelpers';
-import { PlaceholderArt } from './PlaceholderArt';
+import { ProjectMediaGallery } from './ProjectMediaGallery';
 
 const LazyMarkdown = lazy(() => import('react-markdown'));
 
@@ -46,21 +44,11 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const prefersReducedMotion = useReducedMotion();
-  const [failedImageUrl, setFailedImageUrl] = useState('');
   const title = getLocalized(project.title, i18n.language);
   const description = getLocalized(project.description, i18n.language);
-  const showPlaceholder =
-    isPlaceholderImageUrl(project.imageUrl) || failedImageUrl === project.imageUrl;
-  const isCloudinaryImage = isCloudinaryImageUrl(project.imageUrl);
-  const videoSource = getProjectVideoSource(project.videoUrl);
-  const safeVideoUrl = getSafeExternalUrl(project.videoUrl);
-  const videoLink = safeVideoUrl?.startsWith('https://') ? safeVideoUrl : undefined;
-  const [isVideoActive, setIsVideoActive] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
-  const repoUrl = getSafeExternalUrl(project.repoUrl);
+  const gallery = useMemo(() => getProjectGallery(project), [project]);
+  const repos = useMemo(() => getProjectRepos(project), [project]);
   const liveUrl = getSafeExternalUrl(project.liveUrl);
-  const showVideoFacade = Boolean(videoSource && !isVideoActive && !videoFailed);
-  const showVideoFallback = Boolean(project.videoUrl && (!videoSource || videoFailed));
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -108,64 +96,7 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
             <span aria-hidden="true">×</span>
           </button>
 
-          <div className="project-detail-modal__media">
-            {isVideoActive && videoSource?.kind === 'youtube' ? (
-              <iframe
-                className="project-detail-modal__video"
-                src={videoSource.embedUrl}
-                title={t('projects.videoTitle', { title })}
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                onError={() => setVideoFailed(true)}
-              />
-            ) : isVideoActive && videoSource?.kind === 'cloudinary' ? (
-              <video
-                className="project-detail-modal__video"
-                src={videoSource.url}
-                poster={project.imageUrl}
-                controls
-                preload="none"
-                playsInline
-                onError={() => setVideoFailed(true)}
-              >
-                <track kind="captions" />
-              </video>
-            ) : showPlaceholder ? (
-              <PlaceholderArt slug={project.slug} title={title} />
-            ) : (
-              <img
-                className="project-detail-modal__image"
-                src={project.imageUrl}
-                srcSet={isCloudinaryImage ? buildImageSrcSet(project.imageUrl) : undefined}
-                sizes="(min-width: 768px) 720px, 100vw"
-                width={800}
-                height={500}
-                alt={t('projects.imageAlt', { title })}
-                decoding="async"
-                onError={() => setFailedImageUrl(project.imageUrl)}
-              />
-            )}
-            {showVideoFacade && (
-              <button
-                className="project-detail-modal__play"
-                type="button"
-                aria-label={t('projects.playVideo', { title })}
-                onClick={() => setIsVideoActive(true)}
-              >
-                <span aria-hidden="true">▶</span>
-              </button>
-            )}
-          </div>
-          {showVideoFallback && videoLink && (
-            <a
-              className="project-detail-modal__video-link"
-              href={videoLink}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t('projects.openVideo')}
-            </a>
-          )}
+          <ProjectMediaGallery items={gallery} slug={project.slug} title={title} />
 
           <div className="project-detail-modal__content">
             <h2 id="project-detail-title" className="project-detail-modal__title">
@@ -181,16 +112,21 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
             </ul>
 
             <div className="project-detail-modal__actions">
-              {repoUrl && (
+              {repos.map((repo, repoIndex) => (
                 <a
-                  className="project-card__action project-card__action--primary"
-                  href={repoUrl}
+                  className={`project-card__action ${
+                    repoIndex === 0
+                      ? 'project-card__action--primary'
+                      : 'project-card__action--secondary'
+                  }`}
+                  href={repo.url}
+                  key={repo.url}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {t('projects.code')}
+                  {repo.label ?? t('projects.code')}
                 </a>
-              )}
+              ))}
               {liveUrl && (
                 <a
                   className="project-card__action project-card__action--secondary"

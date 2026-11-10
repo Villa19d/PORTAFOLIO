@@ -1,5 +1,4 @@
-import type { LocalizedText } from '../types';
-
+import type { LocalizedText, Project, RepoItem } from '../types';
 const CLOUDINARY_HOST = 'res.cloudinary.com';
 const CLOUDINARY_WIDTHS = [400, 800, 1200] as const;
 const YOUTUBE_HOSTS = new Set([
@@ -163,4 +162,97 @@ export function nextIndex(
   if (next > count - 1) return { index: count - 2, direction: -1 };
   if (next < 0) return { index: 1, direction: 1 };
   return { index: next, direction };
+}
+
+
+
+export interface YoutubeLink {
+  videoId: string;
+  embedUrl: string;
+  thumbnailUrl: string;
+  watchUrl: string;
+}
+
+export type GalleryItem =
+  | { kind: 'image'; url: string }
+  | ({ kind: 'youtube'; url: string } & YoutubeLink);
+
+export function parseYoutubeUrl(url: string | null | undefined): YoutubeLink | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol !== 'https:' || !YOUTUBE_HOSTS.has(parsedUrl.hostname.toLowerCase())) {
+      return undefined;
+    }
+    const videoId = getYoutubeVideoId(parsedUrl);
+    if (!videoId) {
+      return undefined;
+    }
+    return {
+      videoId,
+      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&playsinline=1&autoplay=1`,
+      thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function getSafeHttpsUrl(url: string | null | undefined): string | undefined {
+  const safeUrl = getSafeExternalUrl(url);
+  return safeUrl?.startsWith('https://') ? safeUrl : undefined;
+}
+
+/**
+ * Cover first, then `media` in order. Entries that fail validation are dropped. The legacy
+ * `videoUrl` is used only when `media` is empty, so old snapshots still show their video.
+ */
+export function getProjectGallery(
+  project: Pick<Project, 'imageUrl' | 'videoUrl' | 'media'>,
+): GalleryItem[] {
+  const items: GalleryItem[] = [{ kind: 'image', url: project.imageUrl }];
+  const media = project.media ?? [];
+  const seen = new Set<string>([project.imageUrl]);
+
+  for (const entry of media) {
+    if (entry.type === 'YOUTUBE') {
+      const link = parseYoutubeUrl(entry.url);
+      if (link) {
+        items.push({ kind: 'youtube', url: entry.url, ...link });
+      }
+    } else {
+      const imageUrl = getSafeHttpsUrl(entry.url);
+      if (imageUrl && !seen.has(imageUrl)) {
+        seen.add(imageUrl);
+        items.push({ kind: 'image', url: imageUrl });
+      }
+    }
+  }
+
+  if (media.length === 0 && project.videoUrl) {
+    const legacy = parseYoutubeUrl(project.videoUrl);
+    if (legacy) {
+      items.push({ kind: 'youtube', url: project.videoUrl, ...legacy });
+    }
+  }
+
+  return items;
+}
+
+/** Safe repo list; falls back to the legacy `repoUrl` when `repos` is missing or empty. */
+export function getProjectRepos(project: Pick<Project, 'repoUrl' | 'repos'>): RepoItem[] {
+  const source: RepoItem[] =
+    project.repos && project.repos.length > 0 ? project.repos : [{ url: project.repoUrl }];
+
+  return source.flatMap((repo) => {
+    const url = getSafeExternalUrl(repo.url);
+    if (!url) {
+      return [];
+    }
+    return [{ label: repo.label?.trim() || null, url }];
+  });
 }

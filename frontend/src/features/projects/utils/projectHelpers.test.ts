@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  parseYoutubeUrl,
+  getProjectGallery,
+  getProjectRepos,
   buildImageSrcSet,
   getSafeExternalUrl,
   getLocalized,
@@ -114,5 +117,82 @@ describe('nextIndex', () => {
     }
 
     expect(visited).toEqual([1, 2, 1, 0, 1, 2]);
+  });
+});
+
+describe('parseYoutubeUrl', () => {
+  it('parses supported link shapes into embed, thumbnail and watch URLs', () => {
+    expect(parseYoutubeUrl('https://youtu.be/abc123_DEF')).toEqual({
+      videoId: 'abc123_DEF',
+      embedUrl: 'https://www.youtube-nocookie.com/embed/abc123_DEF?rel=0&playsinline=1&autoplay=1',
+      thumbnailUrl: 'https://i.ytimg.com/vi/abc123_DEF/hqdefault.jpg',
+      watchUrl: 'https://www.youtube.com/watch?v=abc123_DEF',
+    });
+    expect(parseYoutubeUrl('https://www.youtube.com/shorts/abc123_DEF')?.videoId).toBe('abc123_DEF');
+  });
+
+  it('rejects other hosts, http and malformed links', () => {
+    expect(parseYoutubeUrl('https://vimeo.com/123456789')).toBeUndefined();
+    expect(parseYoutubeUrl('http://www.youtube.com/watch?v=abc123_DEF')).toBeUndefined();
+    expect(parseYoutubeUrl('https://www.youtube.com/watch')).toBeUndefined();
+    expect(parseYoutubeUrl(null)).toBeUndefined();
+  });
+});
+
+describe('getProjectGallery', () => {
+  const base = { imageUrl: 'https://images.test/cover.webp', videoUrl: null };
+
+  it('returns only the cover for a snapshot without media', () => {
+    expect(getProjectGallery(base)).toEqual([{ kind: 'image', url: base.imageUrl }]);
+  });
+
+  it('keeps the cover first and the media order, dropping invalid and duplicate entries', () => {
+    const gallery = getProjectGallery({
+      ...base,
+      media: [
+        { type: 'YOUTUBE', url: 'https://youtu.be/abc123_DEF' },
+        { type: 'IMAGE', url: 'https://images.test/2.webp' },
+        { type: 'IMAGE', url: base.imageUrl },
+        { type: 'IMAGE', url: 'http://insecure.test/3.webp' },
+        { type: 'YOUTUBE', url: 'https://vimeo.com/123456789' },
+      ],
+    });
+
+    expect(gallery.map((item) => item.kind)).toEqual(['image', 'youtube', 'image']);
+    expect(gallery[2]?.url).toBe('https://images.test/2.webp');
+  });
+
+  it('uses the legacy videoUrl only when media is empty', () => {
+    const videoUrl = 'https://www.youtube.com/watch?v=abc123_DEF';
+    expect(getProjectGallery({ ...base, videoUrl }).map((item) => item.kind)).toEqual(['image', 'youtube']);
+    expect(
+      getProjectGallery({ ...base, videoUrl, media: [{ type: 'IMAGE', url: 'https://images.test/2.webp' }] })
+        .map((item) => item.kind),
+    ).toEqual(['image', 'image']);
+  });
+});
+
+describe('getProjectRepos', () => {
+  it('falls back to repoUrl when repos is missing or empty', () => {
+    expect(getProjectRepos({ repoUrl: 'https://github.com/a/b' })).toEqual([
+      { label: null, url: 'https://github.com/a/b' },
+    ]);
+    expect(getProjectRepos({ repoUrl: 'https://github.com/a/b', repos: [] })).toHaveLength(1);
+  });
+
+  it('keeps order, trims labels and drops unsafe URLs', () => {
+    expect(
+      getProjectRepos({
+        repoUrl: 'https://github.com/a/front',
+        repos: [
+          { label: ' Frontend ', url: 'https://github.com/a/front' },
+          { label: null, url: 'javascript:alert(1)' },
+          { label: '  ', url: 'https://github.com/a/back' },
+        ],
+      }),
+    ).toEqual([
+      { label: 'Frontend', url: 'https://github.com/a/front' },
+      { label: null, url: 'https://github.com/a/back' },
+    ]);
   });
 });

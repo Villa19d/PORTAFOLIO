@@ -133,11 +133,13 @@ describe('ProjectDetailModal', () => {
     expect(container.querySelector('[data-lenis-prevent="true"]')).toBeInTheDocument();
   });
 
-  it('keeps the YouTube iframe unloaded until the video facade is activated', async () => {
+    it('keeps the YouTube iframe unloaded until the video facade is activated', async () => {
     renderCard(project.description.es, 'https://www.youtube.com/watch?v=abc123_DEF');
 
     await openDetails();
 
+    expect(document.querySelector('iframe')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver video 2 de 2' }));
     expect(document.querySelector('iframe')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Reproducir video de Proyecto de prueba' }));
     expect(await screen.findByTitle('Video de Proyecto de prueba')).toBeInTheDocument();
