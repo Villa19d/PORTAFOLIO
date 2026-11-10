@@ -70,56 +70,58 @@ export function ProjectMediaGallery({ items, slug, title }: ProjectMediaGalleryP
   return (
     <section ref={rootRef} className="project-gallery" aria-label={t('projects.gallery.label')}>
       <div className="project-detail-modal__media">
-        {current.kind === 'youtube' ? (
-          isPlaying ? (
-            <iframe
-              className="project-detail-modal__video"
-              src={current.embedUrl}
-              title={t('projects.videoTitle', { title })}
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
+        <div key={safeIndex} className="project-gallery__slide">
+          {current.kind === 'youtube' ? (
+            isPlaying ? (
+              <iframe
+                className="project-detail-modal__video"
+                src={current.embedUrl}
+                title={t('projects.videoTitle', { title })}
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            ) : (
+              <>
+                {failedUrls.has(current.thumbnailUrl) ? (
+                  <PlaceholderArt slug={slug} title={title} />
+                ) : (
+                  <img
+                    className="project-detail-modal__image"
+                    src={current.thumbnailUrl}
+                    alt=""
+                    width={800}
+                    height={500}
+                    decoding="async"
+                    onError={() => markFailed(current.thumbnailUrl)}
+                  />
+                )}
+                <button
+                  className="project-detail-modal__play"
+                  type="button"
+                  aria-label={t('projects.playVideo', { title })}
+                  onClick={() => setIsPlaying(true)}
+                >
+                  <span aria-hidden="true">▶</span>
+                </button>
+              </>
+            )
+          ) : isBroken(current.url) ? (
+            <PlaceholderArt slug={slug} title={title} />
           ) : (
-            <>
-              {failedUrls.has(current.thumbnailUrl) ? (
-                <PlaceholderArt slug={slug} title={title} />
-              ) : (
-                <img
-                  className="project-detail-modal__image"
-                  src={current.thumbnailUrl}
-                  alt=""
-                  width={800}
-                  height={500}
-                  decoding="async"
-                  onError={() => markFailed(current.thumbnailUrl)}
-                />
-              )}
-              <button
-                className="project-detail-modal__play"
-                type="button"
-                aria-label={t('projects.playVideo', { title })}
-                onClick={() => setIsPlaying(true)}
-              >
-                <span aria-hidden="true">▶</span>
-              </button>
-            </>
-          )
-        ) : isBroken(current.url) ? (
-          <PlaceholderArt slug={slug} title={title} />
-        ) : (
-          <img
-            className="project-detail-modal__image"
-            src={current.url}
-            srcSet={isCloudinaryImageUrl(current.url) ? buildImageSrcSet(current.url) : undefined}
-            sizes="(min-width: 768px) 720px, 100vw"
-            width={800}
-            height={500}
-            alt={imageAlt}
-            decoding="async"
-            onError={() => markFailed(current.url)}
-          />
-        )}
+            <img
+              className="project-detail-modal__image"
+              src={current.url}
+              srcSet={isCloudinaryImageUrl(current.url) ? buildImageSrcSet(current.url) : undefined}
+              sizes="(min-width: 768px) 720px, 100vw"
+              width={800}
+              height={500}
+              alt={imageAlt}
+              decoding="async"
+              onError={() => markFailed(current.url)}
+            />
+          )}
+        </div>
 
         {total > 1 && (
           <>

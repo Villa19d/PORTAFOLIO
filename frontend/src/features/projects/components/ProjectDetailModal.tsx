@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { m, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion, type Variants } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { useCapabilities } from '../../../hooks/useCapabilities';
 import type { Project } from '../types';
 import {
   getLocalized,
@@ -11,6 +12,16 @@ import {
 import { ProjectMediaGallery } from './ProjectMediaGallery';
 
 const LazyMarkdown = lazy(() => import('react-markdown'));
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.3, 0, 0, 1] } },
+};
 
 interface ProjectDetailModalProps {
   project: Project;
@@ -41,10 +52,13 @@ function SafeMarkdownLink({ href, children }: SafeMarkdownLinkProps) {
 
 export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps) {
   const { i18n, t } = useTranslation('common');
+  const { canUseHeavyEffects } = useCapabilities();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const prefersReducedMotion = useReducedMotion();
+  const animated = !prefersReducedMotion && canUseHeavyEffects;
   const title = getLocalized(project.title, i18n.language);
+  const summary = getLocalized(project.summary, i18n.language);
   const description = getLocalized(project.description, i18n.language);
   const gallery = useMemo(() => getProjectGallery(project), [project]);
   const repos = useMemo(() => getProjectRepos(project), [project]);
@@ -81,9 +95,9 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
     >
       <m.div
         className="project-detail-modal__panel"
-        initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+        initial={animated ? { opacity: 0, y: 20, scale: 0.98 } : false}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: animated ? 0.32 : 0, ease: [0.3, 0, 0, 1] }}
       >
         <div className="project-detail-modal__scroll" data-lenis-prevent="true">
           <button
@@ -96,61 +110,88 @@ export function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps
             <span aria-hidden="true">×</span>
           </button>
 
-          <ProjectMediaGallery items={gallery} slug={project.slug} title={title} />
+          <m.div
+            className="project-detail-modal__layout"
+            variants={containerVariants}
+            initial={animated ? 'hidden' : false}
+            animate="show"
+          >
+            <m.div className="project-detail-modal__gallery" variants={itemVariants}>
+              <ProjectMediaGallery items={gallery} slug={project.slug} title={title} />
+            </m.div>
 
-          <div className="project-detail-modal__content">
-            <h2 id="project-detail-title" className="project-detail-modal__title">
-              {title}
-            </h2>
+            <div className="project-detail-modal__info">
+              <m.p className="project-detail-modal__eyebrow" variants={itemVariants}>
+                {project.featured ? t('projects.detail.featured') : t('projects.detail.project')}
+              </m.p>
 
-            <ul className="project-card__technologies" aria-label={t('projects.technologies')}>
-              {project.techStack.map((technology) => (
-                <li className="project-card__technology" key={technology}>
-                  {technology}
-                </li>
-              ))}
-            </ul>
+              <m.h2
+                id="project-detail-title"
+                className="project-detail-modal__title"
+                variants={itemVariants}
+              >
+                {title}
+              </m.h2>
 
-            <div className="project-detail-modal__actions">
-              {repos.map((repo, repoIndex) => (
-                <a
-                  className={`project-card__action ${
-                    repoIndex === 0
-                      ? 'project-card__action--primary'
-                      : 'project-card__action--secondary'
-                  }`}
-                  href={repo.url}
-                  key={repo.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {repo.label ?? t('projects.code')}
-                </a>
-              ))}
-              {liveUrl && (
-                <a
-                  className="project-card__action project-card__action--secondary"
-                  href={liveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('projects.demo')}
-                </a>
-              )}
+              <m.p className="project-detail-modal__summary" variants={itemVariants}>
+                {summary}
+              </m.p>
+
+              <m.div variants={itemVariants}>
+                <p className="project-detail-modal__label">{t('projects.detail.stack')}</p>
+                <ul className="project-card__technologies" aria-label={t('projects.technologies')}>
+                  {project.techStack.map((technology) => (
+                    <li className="project-card__technology" key={technology}>
+                      {technology}
+                    </li>
+                  ))}
+                </ul>
+              </m.div>
+
+              <m.div className="project-detail-modal__actions" variants={itemVariants}>
+                {repos.map((repo, repoIndex) => (
+                  <a
+                    className={`project-card__action ${
+                      repoIndex === 0
+                        ? 'project-card__action--primary'
+                        : 'project-card__action--secondary'
+                    }`}
+                    href={repo.url}
+                    key={repo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {repo.label ?? t('projects.code')}
+                  </a>
+                ))}
+                {liveUrl && (
+                  <a
+                    className="project-card__action project-card__action--secondary"
+                    href={liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t('projects.demo')}
+                  </a>
+                )}
+              </m.div>
             </div>
 
-            <div className="project-detail-modal__markdown">
-              <Suspense fallback={<p>{t('projects.loadingDetails')}</p>}>
-                <LazyMarkdown
-                  skipHtml
-                  urlTransform={sanitizeMarkdownUrl}
-                  components={{ a: SafeMarkdownLink }}
-                >
-                  {description}
-                </LazyMarkdown>
-              </Suspense>
-            </div>
-          </div>
+            <m.section className="project-detail-modal__about" variants={itemVariants}>
+              <h3 className="project-detail-modal__label">{t('projects.detail.about')}</h3>
+              <div className="project-detail-modal__markdown">
+                <Suspense fallback={<p>{t('projects.loadingDetails')}</p>}>
+                  <LazyMarkdown
+                    skipHtml
+                    urlTransform={sanitizeMarkdownUrl}
+                    components={{ a: SafeMarkdownLink }}
+                  >
+                    {description}
+                  </LazyMarkdown>
+                </Suspense>
+              </div>
+            </m.section>
+          </m.div>
         </div>
       </m.div>
     </dialog>

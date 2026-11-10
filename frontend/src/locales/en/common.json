@@ -165,6 +165,12 @@
     "videoTitle": "Video of {{title}}",
     "openVideo": "Open project video",
     "loadingDetails": "Loading project details…",
+    "detail": {
+      "project": "Project",
+      "featured": "Featured project",
+      "stack": "Stack",
+      "about": "About the project"
+    },
     "previous": "Previous project",
     "next": "Next project",
     "firstSlide": "First project",

@@ -159,4 +159,27 @@ describe('ProjectDetailModal', () => {
     await waitFor(() => expect(trigger).toHaveFocus());
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  it('shows every technology, the summary and all repository buttons', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <ProjectCard
+          project={{
+            ...project,
+            techStack: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+            repos: [
+              { label: 'Frontend', url: 'https://github.com/example/front' },
+              { label: 'Backend', url: 'https://github.com/example/back' },
+            ],
+          }}
+        />
+      </I18nextProvider>,
+    );
+
+    const dialog = await openDetails();
+
+    expect(dialog.querySelectorAll('.project-card__technology')).toHaveLength(8);
+    expect(dialog.querySelector('.project-detail-modal__summary')).toHaveTextContent('Resumen');
+    expect(dialog.querySelectorAll('.project-detail-modal__actions a')).toHaveLength(3);
+  });
 });
