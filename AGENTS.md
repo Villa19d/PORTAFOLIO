@@ -12,6 +12,7 @@ Objetivo: impresionar a reclutadores y usuarios con un diseño moderno, interact
 - **Backend:** Java 21 + Spring Boot (línea vigente registrada en docs/DECISIONS.md) + Spring Security + JWT + Spring Data JPA + Flyway + Validation + Actuator + springdoc-openapi 2.8.x + Bucket4j. Deploy: Render (Docker).
 - **BD:** PostgreSQL (Neon en producción, contenedor Postgres en local).
 - **Servicios externos:** Resend (correo por API HTTP, NUNCA SMTP), Cloudinary (imágenes), Cloudflare Turnstile (anti-spam).
+- **Proyectos (Multimedia y Repos):** Soporte en modelo y API para múltiples medios (`media[]`, máx. 15 entre imágenes y videos de YouTube) y múltiples repositorios (`repos[]`, máx. 5).
 - **Dominios:** frontend `rodrigodvillar.com`, backend `api.rodrigodvillar.com`.
 
 ## 3. Restricciones de producción (no negociables)
@@ -41,7 +42,7 @@ Objetivo: impresionar a reclutadores y usuarios con un diseño moderno, interact
 ## 6. Flujo de trabajo con Git
 - Rama por ticket: `feat/s<sprint>-t<ticket>-<slug>`.
 - Commits convencionales: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
-- No hacer push a `main`. Un ticket = un PR.
+- No hacer push a `main`. Un ticket = un PR (squash and merge, el humano hace los commits).
 
 ## 7. Reglas para agentes
 1. Haz SOLO lo que pide el ticket. Si ves algo mejorable fuera de alcance, anótalo en el reporte, no lo implementes.

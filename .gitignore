@@ -50,3 +50,9 @@ CREAR_CONTEXT_PACK.ps1
 
 frontend/IA_CONTEXT_PACK.md
 frontend/measure-initial.mjs
+
+# Local audit and context artifacts
+dist-audit-*/
+gitleaks-report.json
+skills-lock.json
+backend/HELP.md

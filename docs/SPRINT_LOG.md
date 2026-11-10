@@ -8,6 +8,14 @@
 | Sprint 3 | 2024-10-XX | Frontend scaffolding y Fundaciones | Tickets 3.1, 3.2 y 3.3 completados. Tailwind v4, useCapabilities y Snapshot Strategy. |
 | Sprint 4 | 2024-10-XX | Despliegue a Producción y Hardening | Tickets 4.1, 4.2, 4.3 y 4.4 completados. Render, Vercel, Neon y mitigación de IP Spoofing. |
 | Sprint 5 | 2024-10-XX | Hero, Navegación y Microinteracciones | S5-T1 y S5-T2 completados. S5-T3 (Cursor/Magnetic) en progreso. |
+| Sprint 6 | 2024-10-XX | [TODO_CONTENT] | [TODO_CONTENT] |
+| Sprint 7 | 2024-10-XX | Bento Grid Layout y optimizaciones | Tickets 7.1, 7.2 y 7.3 completados. |
+| Sprint 8 | 2024-10-XX | Contacto seguro y retención | Persistencia previa, Turnstile fail-closed, retención de mensajes. |
+| Sprint 9 | 2024-10-XX | Panel de administración | CRUD de proyectos, subida de imágenes a Cloudinary, gestión de mensajes. |
+| Sprint 10 | 2024-10-XX | Experiencia interactiva y sonido | Carrusel (showcase/coverflow), paleta de comandos, terminal y sonido. |
+| Sprint 11 | 2024-11-XX | Rendimiento adaptativo y Hero 3D | Modo lite adaptativo (usePerformanceTier) y fondo 3D en Hero (Three.js). |
+| Sprint 12 | 2024-11-XX | Bento 3D World | Habitación 3D interactiva, física con cannon-es y sonido generativo. |
+| Sprint 13 | 2024-11-XX | Multimedia de proyectos y CV administrable | Múltiples media/repos, modal de proyectos, CV en Cloudinary raw. |
 
 
 ## Reporte de Sprint S0
@@ -113,4 +121,67 @@ Reporte Sprint s7
 
 
 
-Se ha desactualizado este documento. El sprint actual es el 12.
+## Reporte de Sprint S8
+- **Tickets:** [TODO_CONTENT]
+- **Estado de main:** Builds verdes. Funcionalidad de contacto integrada.
+- **Decisiones clave (docs/DECISIONS.md ADR 2.1):**
+  - Contacto seguro: persistencia del mensaje como `PENDING` antes de llamar a Resend para evitar pérdida ante caídas del proveedor.
+  - Envío exclusivo en texto plano sin HTML crudo.
+  - Turnstile fail-closed: rechazo con `403` si falla validación; `503` sin persistir si hay timeout o caída del servicio.
+  - Límite diario de mensajes (protección con `503`).
+  - Retención de mensajes de contacto durante 30 días (`CONTACT_RETENTION_DAYS`, mínimo 1 día), con tarea programada diaria y purga al arranque.
+- **Hallazgos de rendimiento:** [TODO_CONTENT]
+
+## Reporte de Sprint S9
+- **Tickets:** [TODO_CONTENT]
+- **Estado de main:** Builds verdes. Panel de administración operativo.
+- **Decisiones clave (docs/DECISIONS.md ADR 3, ADR 5, ADR 9):**
+  - Panel Admin con autenticación JWT stateless y refresh token en cookie HttpOnly + Secure + SameSite=Lax.
+  - Almacenamiento de imágenes de proyectos en Cloudinary con URLs persistidas en BD (disco efímero de Render).
+  - Firma directa de uploads a Cloudinary desde el backend para que el cliente suba directo sin pasar bytes por el servidor.
+  - Visualización y gestión de mensajes de contacto desde admin.
+- **Hallazgos de rendimiento:** [TODO_CONTENT]
+
+## Reporte de Sprint S10
+- **Tickets:** [TODO_CONTENT]
+- **Estado de main:** Builds verdes.
+- **Decisiones clave (docs/DECISIONS.md ADR 17, ADR 18):**
+  - Carrusel de proyectos: showcase para 1–3 proyectos y Coverflow con 4 o más; superficie compartida `TiltSurface`.
+  - Sonido sintetizado generativo mediante Web Audio API, sin dependencias de audio externas ni archivos con licencia.
+  - Modal de terminal, paleta de comandos (Ctrl+K) e intro de arranque (boot intro).
+- **Hallazgos de rendimiento:** [TODO_CONTENT]
+
+## Reporte de Sprint S11
+- **Tickets:** Ticket 11.0 (Rendimiento adaptativo / Modo lite), Ticket 11.2 (Fondo 3D Hero).
+- **Estado de main:** Builds verdes. Three.js integrado en chunk independiente y lazy.
+- **Decisiones clave (docs/DECISIONS.md ADR 14, ADR 15; docs/PERFORMANCE.md):**
+  - Modo `lite` adaptativo vía `usePerformanceTier`: medición de FPS con requestAnimationFrame en ventanas de 500 ms (umbral < 40 fps), o detección por hardware (`hardwareConcurrency <= 2` o `deviceMemory <= 2`). Aplica atributo `data-perf="lite"`.
+  - Fondo 3D del Hero con Three.js directo (0.186.1, sin React Three Fiber ni postprocessing), escena imperativa de partículas (`BufferGeometry` + `ShaderMaterial`).
+  - Compuertas de carga (`useHeroSceneGate`): solo escritorio, tier full, WebGL2 disponible, idle callback y Hero en viewport. En móvil nunca se descarga Three.js.
+  - Degradación automática a modo lite si los FPS caen por debajo de 40 en 3 ventanas consecutivas de 1 s.
+  - Presupuesto: chunk Three <= 180 KB gzip (JS inicial total gzip en S11.0: 141,512 B según docs/PERFORMANCE.md).
+- **Hallazgos de rendimiento:** CLS de 0 gracias a fade-in sobre fondo CSS existente y posicionamiento absoluto.
+
+## Reporte de Sprint S12
+- **Tickets:** Tickets 12.2, 12.3, 12.4 (Bento 3D World).
+- **Estado de main:** Builds verdes.
+- **Decisiones clave (docs/DECISIONS.md ADR 16, ADR 17; docs/PERFORMANCE.md):**
+  - Mundo 3D del Bento con Three.js imperativo y física de cuerpos rígidos con `cannon-es` (sin Rapier ni React Three Fiber), cargado en su propio chunk lazy.
+  - Física activa únicamente en modo interactivo (primera persona); la cámara solo hace drift suave en modo showcase.
+  - Habitación nocturna con paleta propia fija aislada del tema global.
+  - Sonido lofi y efectos de interacción (clics, teclas, materiales) sintetizados con Web Audio API.
+  - Presupuesto de bundle medido en docs/PERFORMANCE.md: JS inicial total gzip en S12 de 143,700 B (dentro del presupuesto de <= 150,000 B).
+- **Hallazgos de rendimiento:** Un solo canvas WebGL animando a la vez (pausado fuera de pantalla).
+
+## Reporte de Sprint S13
+- **Tickets:** Sprint 13 (Tickets G0 a G5, fix modales, media y CV).
+- **Estado de main:** Builds verdes. Sprints S0 a S13 funcionalmente completos.
+- **Decisiones clave (docs/DECISIONS.md ADR 6, ADR 12, ADR 18, ADR 19; docs/PERFORMANCE.md):**
+  - CV administrable (ADR 19): tabla `cv_documents`, subida directa de PDF a Cloudinary (`/raw/upload`) con preset firmado, visor en modal con iframe en escritorio y enlace con `fl_attachment` para descarga.
+  - Proyectos con multimedia extendida: `media[]` (máx. 15 ítems entre imágenes y videos de YouTube) y `repos[]` (máx. 5 enlaces a repositorios).
+  - Modal de detalle de proyectos (`ProjectDetailModal`) con galería interactiva (`ProjectMediaGallery`).
+  - Animación ligera en el nombre del Hero con canvas (`CanvasText`).
+  - Resolución de IP del cliente corregida (ADR 12): `ClientIpResolver` con `TRUSTED_HOPS = 3` para proxies de Render y fallback a `request.getRemoteAddr()`.
+  - Cierre de auditoría Swiper (ADR 6): actualización a `swiper` `^14.3.0` (cierre de GHSA-hmx5-qpq5-p643).
+  - Mejora opcional: desmontar Hero al montar Bento para garantizar un solo canvas WebGL.
+- **Hallazgos de rendimiento:** Respeto estricto del presupuesto inicial de JavaScript (<= 150,000 B gzip).
