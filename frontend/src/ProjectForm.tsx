@@ -2,13 +2,18 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { ApiError } from './lib/api';
 import { type ProjectInput } from './adminProjectsApi';
+import type { MediaItem, RepoItem } from './features/projects/types';
 import ImageUpload from './ImageUpload';
+import MediaManager from './MediaManager';
+import RepoManager from './RepoManager';
 
 interface ProjectFormProps {
   initialValue?: ProjectInput;
   onCancel?: () => void;
   onSubmit: (project: ProjectInput) => Promise<void>;
 }
+
+type FormState = ProjectInput & { media: MediaItem[]; repos: RepoItem[] };
 
 const emptyProject: ProjectInput = {
   slug: '',
@@ -25,6 +30,15 @@ const emptyProject: ProjectInput = {
   displayOrder: 0,
 };
 
+function toFormState(value?: ProjectInput): FormState {
+  const base = value ?? emptyProject;
+  const repos: RepoItem[] =
+    base.repos && base.repos.length > 0
+      ? base.repos
+      : [{ label: null, url: base.repoUrl }];
+  return { ...base, media: base.media ?? [], repos };
+}
+
 function slugify(value: string) {
   return value
     .normalize('NFD')
@@ -35,7 +49,7 @@ function slugify(value: string) {
 }
 
 export default function ProjectForm({ initialValue, onCancel, onSubmit }: ProjectFormProps) {
-  const [project, setProject] = useState<ProjectInput>(initialValue ?? emptyProject);
+  const [project, setProject] = useState<FormState>(() => toFormState(initialValue));
   const [language, setLanguage] = useState<'es' | 'en'>('es');
   const [tag, setTag] = useState('');
   const [slugEdited, setSlugEdited] = useState(Boolean(initialValue?.slug));
@@ -44,14 +58,14 @@ export default function ProjectForm({ initialValue, onCancel, onSubmit }: Projec
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setProject(initialValue ?? emptyProject);
+    setProject(toFormState(initialValue));
     setSlugEdited(Boolean(initialValue?.slug));
   }, [initialValue]);
 
   const description = project.description[language];
   const preview = useMemo(() => description || 'Escribe una descripción para ver la vista previa.', [description]);
 
-  function updateField<K extends keyof ProjectInput>(field: K, value: ProjectInput[K]) {
+  function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setProject((current) => ({ ...current, [field]: value }));
   }
 
@@ -76,9 +90,16 @@ export default function ProjectForm({ initialValue, onCancel, onSubmit }: Projec
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const urls = [project.imageUrl, project.repoUrl, project.liveUrl, project.videoUrl].filter(
-      (url): url is string => Boolean(url),
-    );
+    const repos = project.repos
+      .map((repo) => ({ label: repo.label?.trim() || null, url: repo.url.trim() }))
+      .filter((repo) => repo.url);
+    const urls = [
+      project.imageUrl,
+      project.liveUrl,
+      project.videoUrl,
+      ...repos.map((repo) => repo.url),
+      ...project.media.map((item) => item.url),
+    ].filter((url): url is string => Boolean(url));
     if (urls.some((url) => !url.startsWith('https://'))) {
       setError('Todas las URLs deben comenzar con https://.');
       return;
@@ -91,11 +112,19 @@ export default function ProjectForm({ initialValue, onCancel, onSubmit }: Projec
       setError('Agrega al menos una tecnología.');
       return;
     }
+    if (repos.length < 1) {
+      setError('Agrega al menos un repositorio.');
+      return;
+    }
+    if (new Set(repos.map((repo) => repo.url)).size !== repos.length) {
+      setError('Hay repositorios repetidos.');
+      return;
+    }
     setError('');
     setSlugError('');
     setIsSaving(true);
     try {
-      await onSubmit(project);
+      await onSubmit({ ...project, repos, repoUrl: repos[0]?.url ?? '' });
     } catch (submitError: unknown) {
       if (submitError instanceof ApiError && submitError.status === 409) {
         setSlugError('Este slug ya existe.');
@@ -157,6 +186,7 @@ export default function ProjectForm({ initialValue, onCancel, onSubmit }: Projec
         );
       })}
       <ImageUpload onChange={(imageUrl) => updateField('imageUrl', imageUrl)} value={project.imageUrl} />
+      <MediaManager onChange={(media) => updateField('media', media)} value={project.media} />
       <label className="block text-sm" htmlFor="project-tech">
         Tecnologías
         <div className="mt-1 flex gap-2">
@@ -171,12 +201,11 @@ export default function ProjectForm({ initialValue, onCancel, onSubmit }: Projec
           ))}
         </div>
       </label>
-      {(['repoUrl', 'liveUrl', 'videoUrl'] as const).map((field) => (
-        <label className="block text-sm" htmlFor={`project-${field}`} key={field}>
-          {field}
-          <input className="mt-1 w-full rounded border border-border-control bg-bg px-3 py-2" id={`project-${field}`} onChange={(event) => updateField(field, event.target.value || null)} type="url" value={project[field] ?? ''} />
-        </label>
-      ))}
+      <RepoManager onChange={(repos) => updateField('repos', repos)} value={project.repos} />
+      <label className="block text-sm" htmlFor="project-liveUrl">
+        liveUrl
+        <input className="mt-1 w-full rounded border border-border-control bg-bg px-3 py-2" id="project-liveUrl" onChange={(event) => updateField('liveUrl', event.target.value || null)} type="url" value={project.liveUrl ?? ''} />
+      </label>
       <label className="block text-sm" htmlFor="project-order">
         Orden
         <input className="mt-1 w-full rounded border border-border-control bg-bg px-3 py-2" id="project-order" min={0} onChange={(event) => updateField('displayOrder', Number(event.target.value))} type="number" value={project.displayOrder} />
