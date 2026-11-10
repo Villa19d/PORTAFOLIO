@@ -10,6 +10,8 @@ public class CloudinaryProperties {
     private String apiSecret;
     private String uploadPreset;
     private String folder = "portfolio/projects";
+    private String cvUploadPreset;
+    private String cvFolder = "portfolio/cv";
 
     public String getCloudName() {
         return cloudName;
@@ -49,5 +51,21 @@ public class CloudinaryProperties {
 
     public void setFolder(String folder) {
         this.folder = folder;
+    }
+
+    public String getCvUploadPreset() {
+        return cvUploadPreset;
+    }
+
+    public void setCvUploadPreset(String cvUploadPreset) {
+        this.cvUploadPreset = cvUploadPreset;
+    }
+
+    public String getCvFolder() {
+        return cvFolder;
+    }
+
+    public void setCvFolder(String cvFolder) {
+        this.cvFolder = cvFolder;
     }
 }

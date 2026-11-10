@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run snapshot",
+    "prebuild": "npm run snapshot && npm run snapshot:cv",
     "build": "tsc -b && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc -b",
@@ -13,6 +13,7 @@
     "test": "vitest run",
     "preview": "vite preview",
     "snapshot": "node scripts/snapshot-projects.mjs",
+    "snapshot:cv": "node scripts/snapshot-cv.mjs",
     "optimize-images": "node scripts/optimize-images.mjs",
     "measure:initial": "node scripts/measure-initial.mjs"
   },

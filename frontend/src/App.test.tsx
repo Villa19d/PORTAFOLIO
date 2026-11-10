@@ -21,7 +21,12 @@ describe('App Component', () => {
 
   it('renders the navigation', () => {
     renderApp();
-    expect(screen.getByRole('navigation')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
+  });
+
+  it('renders the footer', () => {
+    renderApp();
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });
 });
 

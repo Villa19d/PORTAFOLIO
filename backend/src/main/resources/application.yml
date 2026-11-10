@@ -69,6 +69,11 @@ portfolio:
         bandwidths:
           - capacity: 20
             duration: PT1H
+      - method: POST
+        pathPattern: /api/admin/uploads/sign-document
+        bandwidths:
+          - capacity: 20
+            duration: PT1H
   contact:
     resend-api-key: ${RESEND_API_KEY:}
     to-email: ${CONTACT_TO_EMAIL:}
@@ -84,3 +89,5 @@ portfolio:
     api-secret: ${CLOUDINARY_API_SECRET:}
     upload-preset: ${CLOUDINARY_UPLOAD_PRESET:}
     folder: ${CLOUDINARY_FOLDER:portfolio/projects}
+    cv-upload-preset: ${CLOUDINARY_CV_UPLOAD_PRESET:}
+    cv-folder: ${CLOUDINARY_CV_FOLDER:portfolio/cv}

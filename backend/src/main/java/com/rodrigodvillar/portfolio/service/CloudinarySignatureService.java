@@ -17,11 +17,11 @@ public class CloudinarySignatureService {
         this.properties = properties;
     }
 
-    public SignatureData generateSignature() {
+    public SignatureData generateSignature(String folder, String uploadPreset) {
         long timestamp = Instant.now().getEpochSecond();
-        String signatureBase = "folder=" + properties.getFolder()
+        String signatureBase = "folder=" + folder
                 + "&timestamp=" + timestamp
-                + "&upload_preset=" + properties.getUploadPreset();
+                + "&upload_preset=" + uploadPreset;
 
         return new SignatureData(
                 timestamp,

@@ -44,6 +44,11 @@ public class GlobalExceptionHandler {
                 .body(problem);
     }
 
+    @ExceptionHandler(CvUploadPresetMissingException.class)
+    public ProblemDetail handleCvUploadPresetMissing(CvUploadPresetMissingException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "CV upload service temporarily unavailable");
+    }
+
     @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class, ResourceNotFoundException.class})
     public ProblemDetail handleNotFoundException(Exception ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());

@@ -8,7 +8,6 @@ import {
   type SVGProps,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SITE_CONFIG } from '../../data/site';
 import { PROFILE_BASE_DATA } from '../../data/profile-base';
 import { Section } from '../../components/layout/Section';
 import {
@@ -24,6 +23,7 @@ import { BentoTile } from './components/BentoTile';
 import { BentoWorldTile } from './bento-world/BentoWorldTile';
 import { CvTile } from './components/CvTile';
 import { LocationTile } from './components/LocationTile';
+import { SocialLinks } from './components/SocialLinks';
 import { useCapabilities } from '../../hooks/useCapabilities';
 
 const BentoGlow = lazy(() => import('./components/BentoGlow'));
@@ -58,10 +58,6 @@ export function AboutSection() {
   const shouldRenderGlow = useLatchedTrue(canUseHeavyEffects);
   const bentoRef = useRef<HTMLDivElement>(null);
   const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
-  const links = [
-    { label: 'GitHub', href: SITE_CONFIG.githubUrl },
-    { label: 'LinkedIn', href: SITE_CONFIG.linkedinUrl },
-  ].flatMap(({ label, href }) => (href ? [{ label, href }] : []));
 
   const bentoGrid = (
     <BentoGrid containerRef={bentoRef}>
@@ -139,28 +135,10 @@ export function AboutSection() {
 
       <BentoTile label={t('about.cvLabel')} className="col-span-1 lg:row-span-1 !p-0 flex flex-col justify-center">
         <CvTile />
-        {!PROFILE_BASE_DATA.cv[lang] && (
-          <p className="px-4 text-center text-xs text-text-muted">{t('about.cvUnavailable')}</p>
-        )}
       </BentoTile>
 
-      <BentoTile label={t('about.linksLabel')} className="col-span-1 lg:row-span-1">
-        <h3 className="text-sm font-mono uppercase tracking-widest text-text-muted">
-          {t('about.linksLabel')}
-        </h3>
-        <div className="mt-auto flex flex-col gap-2">
-          {links.map(({ label, href }) => (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-[--radius-sm] border border-border px-3 py-2 text-sm text-text transition-colors hover:bg-surface-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            >
-              {label}
-            </a>
-          ))}
-        </div>
+      <BentoTile label={t('about.linksLabel')} className="col-span-1 lg:row-span-1 !p-0">
+        <SocialLinks />
       </BentoTile>
 
       {/* Mini world (S12): static card first, three is downloaded only on demand. */}

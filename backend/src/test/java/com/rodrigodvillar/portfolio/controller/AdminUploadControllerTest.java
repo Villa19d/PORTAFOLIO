@@ -34,6 +34,8 @@ class AdminUploadControllerTest {
     private static final String API_SECRET = "test-cloudinary-secret";
     private static final String FOLDER = "portfolio/projects";
     private static final String UPLOAD_PRESET = "portfolio_signed";
+    private static final String CV_FOLDER = "portfolio/cv";
+    private static final String CV_UPLOAD_PRESET = "portfolio_cv_signed";
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -52,6 +54,8 @@ class AdminUploadControllerTest {
         registry.add("portfolio.cloudinary.api-secret", () -> API_SECRET);
         registry.add("portfolio.cloudinary.upload-preset", () -> UPLOAD_PRESET);
         registry.add("portfolio.cloudinary.folder", () -> FOLDER);
+        registry.add("portfolio.cloudinary.cv-upload-preset", () -> CV_UPLOAD_PRESET);
+        registry.add("portfolio.cloudinary.cv-folder", () -> CV_FOLDER);
     }
 
     @Autowired
@@ -103,6 +107,36 @@ class AdminUploadControllerTest {
                 + API_SECRET;
 
         org.junit.jupiter.api.Assertions.assertTrue(Math.abs(responseTimestamp - timestamp) <= 2);
+        org.junit.jupiter.api.Assertions.assertEquals(
+                sha1Hex(signatureInput),
+                response.get("signature").asText()
+        );
+    }
+
+    @Test
+    void signDocument_withAccessToken_shouldReturnCvSignatureWithoutSecret() throws Exception {
+        String responseBody = mockMvc.perform(post("/api/admin/uploads/sign-document")
+                        .header("Authorization", "Bearer " + jwtService.generateAccessToken("admin")))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", containsString("no-store")))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.cloudName").value("test-cloud"))
+                .andExpect(jsonPath("$.apiKey").value("test-api-key"))
+                .andExpect(jsonPath("$.folder").value(CV_FOLDER))
+                .andExpect(jsonPath("$.uploadPreset").value(CV_UPLOAD_PRESET))
+                .andExpect(jsonPath("$.apiSecret").doesNotExist())
+                .andExpect(content().string(not(containsString(API_SECRET))))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode response = objectMapper.readTree(responseBody);
+        long responseTimestamp = response.get("timestamp").asLong();
+        String signatureInput = "folder=" + CV_FOLDER
+                + "&timestamp=" + responseTimestamp
+                + "&upload_preset=" + CV_UPLOAD_PRESET
+                + API_SECRET;
+
         org.junit.jupiter.api.Assertions.assertEquals(
                 sha1Hex(signatureInput),
                 response.get("signature").asText()
