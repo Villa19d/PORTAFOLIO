@@ -19,7 +19,9 @@ public record ProjectResponse(
         boolean published,
         int displayOrder,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        List<MediaItemDto> media,
+        List<RepoItemDto> repos
 ) {
     public record Translations(String es, String en) {}
 }

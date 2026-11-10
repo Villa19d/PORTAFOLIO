@@ -1,7 +1,9 @@
 package com.rodrigodvillar.portfolio.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rodrigodvillar.portfolio.dto.MediaItemDto;
 import com.rodrigodvillar.portfolio.dto.ProjectRequest;
+import com.rodrigodvillar.portfolio.dto.RepoItemDto;
 import com.rodrigodvillar.portfolio.entity.Project;
 import com.rodrigodvillar.portfolio.repository.ProjectRepository;
 import com.rodrigodvillar.portfolio.security.JwtService;
@@ -26,11 +28,26 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.springframework.test.annotation.DirtiesContext;
+//MediaItemDto, RepoItemDto y MediaType
+import static com.rodrigodvillar.portfolio.entity.MediaType.YOUTUBE;
+import static com.rodrigodvillar.portfolio.entity.MediaType.IMAGE;
+import com.rodrigodvillar.portfolio.dto.MediaItemDto;
+import com.rodrigodvillar.portfolio.dto.RepoItemDto;
+
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
 class AdminProjectIntegrationTest {
+        private ProjectRequest richRequest(String slug, List<MediaItemDto> media, List<RepoItemDto> repos) {
+        return new ProjectRequest(
+                slug,
+                new ProjectRequest.Translations("T", "T"),
+                new ProjectRequest.SummaryTranslations("S", "S"),
+                new ProjectRequest.DescriptionTranslations("D", "D"),
+                List.of("Java"), "https://example.com/cover.png", null,
+                "https://github.com/legacy", null, true, true, 5, media, repos);
+        }
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -238,4 +255,58 @@ class AdminProjectIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void create_withMediaAndRepos_roundTripsInOrder() throws Exception {
+    ProjectRequest request = richRequest("rich",
+                List.of(new MediaItemDto(com.rodrigodvillar.portfolio.entity.MediaType.YOUTUBE, "https://youtu.be/abc123_DEF"),
+                        new MediaItemDto(com.rodrigodvillar.portfolio.entity.MediaType.IMAGE, "https://example.com/1.png")),
+                List.of(new RepoItemDto("Frontend", "https://github.com/a/front"),
+                        new RepoItemDto("Backend", "https://github.com/a/back")));
+
+        mockMvc.perform(post("/api/admin/projects")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.media[0].type", is("YOUTUBE")))
+                .andExpect(jsonPath("$.media[1].type", is("IMAGE")))
+                .andExpect(jsonPath("$.repos[1].label", is("Backend")))
+                .andExpect(jsonPath("$.repoUrl", is("https://github.com/a/front")));
+
+        mockMvc.perform(get("/api/projects/rich"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.media", hasSize(2)))
+                .andExpect(jsonPath("$.repos", hasSize(2)));
+        }
+
+        @Test
+        void create_withInvalidYoutubeLink_returns400() throws Exception {
+        ProjectRequest request = richRequest("bad-video",
+                List.of(new MediaItemDto(com.rodrigodvillar.portfolio.entity.MediaType.YOUTUBE, "https://vimeo.com/123456789")), null);
+
+        mockMvc.perform(post("/api/admin/projects")
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void update_withoutMedia_keepsExistingMedia() throws Exception {
+        mockMvc.perform(put("/api/admin/projects/" + existingProject.getId())
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(richRequest("test-project",
+                                List.of(new MediaItemDto(com.rodrigodvillar.portfolio.entity.MediaType.IMAGE, "https://example.com/1.png")), null))))
+                .andExpect(status().isOk());
+
+        // legacy client: no media/repos fields at all
+        mockMvc.perform(put("/api/admin/projects/" + existingProject.getId())
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(richRequest("test-project", null, null))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.media", hasSize(1)));
+        }
 }

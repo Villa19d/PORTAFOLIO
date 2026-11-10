@@ -8,6 +8,10 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import java.util.ArrayList;
+
 @Entity
 @Table(name = "projects")
 public class Project {
@@ -51,6 +55,15 @@ public class Project {
 
     @Column(name = "live_url")
     private String liveUrl;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "media", nullable = false, columnDefinition = "jsonb")
+    private List<MediaItem> media = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "repos", nullable = false, columnDefinition = "jsonb")
+    private List<RepoItem> repos = new ArrayList<>();
+
 
     @Column(nullable = false)
     private boolean featured;
@@ -108,4 +121,8 @@ public class Project {
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public List<MediaItem> getMedia() { return media; }
+    public void setMedia(List<MediaItem> media) { this.media = media; }
+    public List<RepoItem> getRepos() { return repos; }
+    public void setRepos(List<RepoItem> repos) { this.repos = repos; }
 }
