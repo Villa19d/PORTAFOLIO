@@ -39,6 +39,11 @@
 | `displayOrder` | integer | |
 | `createdAt` | string | ISO-8601 |
 | `updatedAt` | string | ISO-8601 |
+| `media` | {type: "IMAGE"|"YOUTUBE", url: string}[] | Orden = orden de visualización. Máx. 10 imágenes y 5 videos. YOUTUBE solo enlaces https de YouTube. La portada sigue siendo imageUrl. |
+| `repos` | {label?: string, url: string}[] | Máx. 5, etiqueta ≤ 30 caracteres. repoUrl es siempre repos[0].url. |
+
+
+nota:en POST/PUT /api/admin/projects: media/repos ausentes o null = no modificar; [] = vaciar.
 
 ## Ejemplos de Request / Response
 

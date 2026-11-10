@@ -15,6 +15,8 @@ function toProjectInput(project: Project): ProjectInput {
     displayOrder: project.displayOrder,
     featured: project.featured,
     imageUrl: project.imageUrl,
+    media: project.media ?? [],
+    repos: project.repos ?? [],
     liveUrl: project.liveUrl,
     published: project.published,
     repoUrl: project.repoUrl,

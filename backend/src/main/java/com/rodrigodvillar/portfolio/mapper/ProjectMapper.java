@@ -1,8 +1,16 @@
 package com.rodrigodvillar.portfolio.mapper;
 
+import com.rodrigodvillar.portfolio.dto.MediaItemDto;
+import com.rodrigodvillar.portfolio.dto.ProjectRequest;
 import com.rodrigodvillar.portfolio.dto.ProjectResponse;
+import com.rodrigodvillar.portfolio.dto.RepoItemDto;
+import com.rodrigodvillar.portfolio.entity.MediaItem;
 import com.rodrigodvillar.portfolio.entity.Project;
+import com.rodrigodvillar.portfolio.entity.RepoItem;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class ProjectMapper {
@@ -27,11 +35,15 @@ public class ProjectMapper {
                 project.isPublished(),
                 project.getDisplayOrder(),
                 project.getCreatedAt(),
-                project.getUpdatedAt()
+                project.getUpdatedAt(),
+                project.getMedia().stream()
+                        .map(item -> new MediaItemDto(item.type(), item.url()))
+                        .toList(),
+                resolveRepos(project)
         );
     }
 
-    public Project toEntity(com.rodrigodvillar.portfolio.dto.ProjectRequest request) {
+    public Project toEntity(ProjectRequest request) {
         if (request == null) {
             return null;
         }
@@ -40,7 +52,7 @@ public class ProjectMapper {
         return project;
     }
 
-    public void updateEntityFromRequest(com.rodrigodvillar.portfolio.dto.ProjectRequest request, Project project) {
+    public void updateEntityFromRequest(ProjectRequest request, Project project) {
         if (request == null || project == null) {
             return;
         }
@@ -54,10 +66,44 @@ public class ProjectMapper {
         project.setTechStack(request.techStack());
         project.setImageUrl(request.imageUrl());
         project.setVideoUrl(request.videoUrl());
-        project.setRepoUrl(request.repoUrl());
         project.setLiveUrl(request.liveUrl());
         project.setFeatured(request.featured());
         project.setPublished(request.published());
         project.setDisplayOrder(request.displayOrder());
+
+        if (request.media() != null) {
+            List<MediaItem> media = new ArrayList<>();
+            for (MediaItemDto item : request.media()) {
+                media.add(new MediaItem(item.type(), item.url().trim()));
+            }
+            project.setMedia(media);
+        }
+
+        String repoUrl = request.repoUrl();
+        if (request.repos() != null) {
+            List<RepoItem> repos = new ArrayList<>();
+            for (RepoItemDto item : request.repos()) {
+                String label = item.label() == null || item.label().isBlank() ? null : item.label().trim();
+                repos.add(new RepoItem(label, item.url().trim()));
+            }
+            project.setRepos(repos);
+            if (!repos.isEmpty()) {
+                repoUrl = repos.get(0).url();
+            }
+        }
+        project.setRepoUrl(repoUrl);
+    }
+
+    private List<RepoItemDto> resolveRepos(Project project) {
+        if (!project.getRepos().isEmpty()) {
+            return project.getRepos().stream()
+                    .map(item -> new RepoItemDto(item.label(), item.url()))
+                    .toList();
+        }
+        String repoUrl = project.getRepoUrl();
+        if (repoUrl != null && !repoUrl.isBlank()) {
+            return List.of(new RepoItemDto(null, repoUrl));
+        }
+        return List.of();
     }
 }

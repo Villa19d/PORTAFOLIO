@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from './lib/api';
 import ProjectForm from './ProjectForm';
@@ -31,7 +31,7 @@ describe('ProjectForm', () => {
     expect(textareas[1]).toHaveAttribute('maxLength', '300');
     expect(textareas[2]).toHaveAttribute('maxLength', '20000');
 
-    fireEvent.change(screen.getByLabelText('repoUrl'), { target: { value: 'http://unsafe.test' } });
+    fireEvent.change(screen.getByLabelText('URL del repositorio 1'), { target: { value: 'http://unsafe.test' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar proyecto' }));
     expect(screen.getByRole('alert')).toHaveTextContent('https://');
   });
@@ -84,5 +84,56 @@ describe('ProjectForm', () => {
     expect(preview.querySelector('img[onerror]')).not.toBeInTheDocument();
     expect(preview.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
     expect(vi.fn()).not.toHaveBeenCalled();
+  });
+    it('submits media and repos in order and derives repoUrl from the first repo', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ProjectForm
+        initialValue={{
+          ...validProject,
+          media: [{ type: 'YOUTUBE', url: 'https://www.youtube.com/watch?v=abc123_DEF' }],
+          repos: [
+            { label: 'Frontend', url: 'https://github.com/example/front' },
+            { label: '  ', url: 'https://github.com/example/back' },
+          ],
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bajar repositorio 1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar proyecto' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const sent = onSubmit.mock.calls[0]?.[0];
+    expect(sent.repoUrl).toBe('https://github.com/example/back');
+    expect(sent.repos).toEqual([
+      { label: null, url: 'https://github.com/example/back' },
+      { label: 'Frontend', url: 'https://github.com/example/front' },
+    ]);
+    expect(sent.media).toHaveLength(1);
+  });
+
+  it('rejects a form without repositories and duplicated repositories', () => {
+    const { rerender } = render(
+      <ProjectForm initialValue={{ ...validProject, repoUrl: '' }} onSubmit={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar proyecto' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('al menos un repositorio');
+
+    rerender(
+      <ProjectForm
+        initialValue={{
+          ...validProject,
+          repos: [
+            { url: 'https://github.com/example/a' },
+            { url: 'https://github.com/example/a' },
+          ],
+        }}
+        onSubmit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar proyecto' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('repetidos');
   });
 });

@@ -156,6 +156,8 @@
     "technologies": "Technologies used",
     "moreTechnologies": "{{count}} more technologies",
     "code": "Code",
+    "codeMultiple": "Code · {{count}}",
+    "viewRepos": "View all {{count}} repositories",
     "demo": "Demo",
     "viewDetails": "View details",
     "closeDetails": "Close project details",
@@ -163,6 +165,12 @@
     "videoTitle": "Video of {{title}}",
     "openVideo": "Open project video",
     "loadingDetails": "Loading project details…",
+    "detail": {
+      "project": "Project",
+      "featured": "Featured project",
+      "stack": "Stack",
+      "about": "About the project"
+    },
     "previous": "Previous project",
     "next": "Next project",
     "firstSlide": "First project",
@@ -176,6 +184,16 @@
     "pauseAutoplay": "Pause autoplay",
     "resumeAutoplay": "Resume autoplay",
     "pause": "Pause",
-    "resume": "Resume"
+    "resume": "Resume",
+    "hasVideo": "Includes video",
+    "gallery": {
+      "label": "Project gallery",
+      "previous": "Previous item",
+      "next": "Next item",
+      "thumbnails": "Gallery thumbnails",
+      "goToImage": "View image {{current}} of {{total}}",
+      "goToVideo": "View video {{current}} of {{total}}",
+      "imageAlt": "{{title}}, image {{current}} of {{total}}"
+    }
   }
 }

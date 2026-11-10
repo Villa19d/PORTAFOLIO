@@ -1685,3 +1685,378 @@ html:has(dialog:modal) :is(.custom-cursor-dot, .custom-cursor-ring) {
   }
 }
 
+/* ==========================================================================
+   Project gallery (S13-C): lives inside the detail modal. No animations at all.
+   ========================================================================== */
+.project-gallery {
+  display: grid;
+  gap: 0;
+}
+
+.project-gallery__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 1px solid var(--border-control);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text-main);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.project-gallery__nav--prev {
+  left: 0.75rem;
+}
+
+.project-gallery__nav--next {
+  right: 0.75rem;
+}
+
+.project-gallery__counter {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.project-gallery__strip {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 1rem 0.25rem;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.project-gallery__strip > li {
+  flex: none;
+}
+
+.project-gallery__thumb {
+  position: relative;
+  display: block;
+  width: 5.5rem;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-elevated);
+  cursor: pointer;
+  scroll-snap-align: center;
+}
+
+.project-gallery__thumb[aria-current='true'] {
+  border-color: var(--accent-primary);
+}
+
+.project-gallery__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-gallery__thumb-badge {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  padding: 0 0.3rem;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--accent-primary);
+  font-size: 0.625rem;
+  line-height: 1rem;
+}
+
+/* Several repos: the actions wrap instead of squeezing. */
+.project-detail-modal__actions {
+  flex-wrap: wrap;
+}
+
+.project-detail-modal__actions .project-card__action {
+  min-height: 2.75rem;
+  flex: 1 1 7rem;
+}
+
+
+
+/* Video badge on the card cover (S13-C): static, sits above the spotlight. */
+.project-card__video-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 3;
+  display: inline-grid;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  padding-inline: 0.4rem;
+  border: 1px solid var(--border-control);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+
+
+/* ==========================================================================
+   Project detail modal redesign (S13-F)
+   Glass surface over a blurred ::backdrop. The blur is static (never animated);
+   the panel animates only opacity and transform. Tokens only.
+   ========================================================================== */
+.project-detail-modal {
+  width: min(70rem, calc(100vw - 2rem));
+  max-height: min(92dvh, 60rem);
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 24%, var(--border));
+  border-radius: var(--radius-2xl);
+  background:
+    radial-gradient(
+      ellipse 60% 45% at 100% 0%,
+      color-mix(in srgb, var(--accent-primary) 12%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 0% 100%,
+      color-mix(in srgb, var(--accent-secondary) 8%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent),
+    0 40px 90px -36px color-mix(in srgb, var(--accent-primary) 45%, transparent),
+    var(--shadow-soft);
+}
+
+.project-detail-modal::before {
+  position: absolute;
+  z-index: 6;
+  inset: 0 0 auto;
+  height: 2px;
+  content: '';
+  pointer-events: none;
+  background: var(--gradient-brand);
+  opacity: 0.8;
+}
+
+.project-detail-modal::backdrop {
+  background:
+    radial-gradient(
+      circle at 50% 28%,
+      color-mix(in srgb, var(--accent-primary) 10%, transparent),
+      transparent 60%
+    ),
+    rgb(0 0 0 / 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.project-detail-modal__panel,
+.project-detail-modal__scroll {
+  max-height: min(92dvh, 60rem);
+}
+
+.project-detail-modal__scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 40%, transparent) transparent;
+}
+
+.project-detail-modal__close {
+  position: sticky;
+  z-index: 5;
+  top: 0.75rem;
+  float: none;
+  margin: 0.75rem 0.75rem -3.25rem auto;
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, var(--border-control));
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  transition: transform 180ms var(--ease-snappy), color 180ms ease;
+}
+
+.project-detail-modal__layout {
+  display: grid;
+  gap: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+
+.project-detail-modal__gallery,
+.project-detail-modal__info {
+  min-width: 0;
+}
+
+.project-detail-modal__gallery .project-detail-modal__media {
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, var(--border));
+  border-radius: var(--radius-lg);
+}
+
+.project-gallery__slide {
+  position: absolute;
+  inset: 0;
+  animation: project-gallery-fade 220ms ease both;
+}
+
+.project-gallery__strip {
+  padding-inline: 0;
+}
+
+.project-gallery__thumb {
+  border-radius: var(--radius-md);
+  transition: transform 160ms var(--ease-snappy);
+}
+
+.project-detail-modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.project-detail-modal__eyebrow {
+  margin: 0;
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.project-detail-modal__title::after {
+  display: block;
+  width: 3rem;
+  height: 3px;
+  margin-top: 0.75rem;
+  border-radius: 2px;
+  background: var(--gradient-brand);
+  content: '';
+}
+
+.project-detail-modal__summary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.project-detail-modal__label {
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* The base grid (3x2, overflow hidden) hid chips beyond the sixth: wrap instead. */
+.project-detail-modal .project-card__technologies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  overflow: visible;
+}
+
+.project-detail-modal .project-card__technology {
+  padding: 0.3rem 0.65rem;
+  border-color: color-mix(in srgb, var(--accent-primary) 28%, var(--border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  color: var(--text-main);
+}
+
+.project-detail-modal__actions {
+  padding-top: 0.25rem;
+}
+
+.project-detail-modal__actions .project-card__action {
+  border-radius: var(--radius-md);
+  transition: transform 160ms var(--ease-snappy);
+}
+
+.project-detail-modal__actions .project-card__action--primary {
+  box-shadow: 0 10px 28px -14px color-mix(in srgb, var(--accent-primary) 80%, transparent);
+}
+
+.project-detail-modal__about {
+  padding-top: 1.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--accent-primary) 18%, var(--border));
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .project-detail-modal__close:hover {
+    transform: rotate(90deg);
+    color: var(--accent-primary);
+  }
+
+  .project-detail-modal__actions .project-card__action:hover,
+  .project-gallery__thumb:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .project-detail-modal__layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .project-detail-modal__info {
+    padding-right: 2.5rem;
+  }
+
+  .project-detail-modal__about {
+    grid-column: 1 / -1;
+  }
+}
+
+@keyframes project-gallery-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+[data-perf="lite"] .project-detail-modal::backdrop {
+  background: rgb(0 0 0 / 0.78);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+[data-perf="lite"] .project-gallery__slide {
+  animation: none;
+}
+
+[data-perf="lite"] .project-detail-modal__close,
+[data-perf="lite"] .project-detail-modal__actions .project-card__action,
+[data-perf="lite"] .project-gallery__thumb {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-gallery__slide {
+    animation: none;
+  }
+
+  .project-detail-modal__close,
+  .project-detail-modal__actions .project-card__action,
+  .project-gallery__thumb {
+    transition: none;
+  }
+}
