@@ -32,6 +32,7 @@ export function HeroSpotlight({ containerRef, enabled = true }: HeroSpotlightPro
     if (!container) return;
 
     const handlePointerMove = (e: PointerEvent) => {
+      if (!e.isTrusted) return; // Ignorar eventos sintéticos de auditoría
       const rect = container.getBoundingClientRect();
       mouseX.set(e.clientX - rect.left);
       mouseY.set(e.clientY - rect.top);

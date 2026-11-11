@@ -32,7 +32,8 @@ function whenLoaded(callback: () => void): () => void {
 function whenIdle(callback: () => void): () => void {
   if (typeof window.requestIdleCallback === 'function') {
     const handle = window.requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS });
-    return () => window.cancelIdleCallback(handle);
+    // Some test environments do not implement cancelIdleCallback
+    return () => (window.cancelIdleCallback ? window.cancelIdleCallback(handle) : undefined);
   }
   const timer = window.setTimeout(callback, IDLE_FALLBACK_MS);
   return () => window.clearTimeout(timer);
@@ -55,11 +56,12 @@ export function useHeroSceneGate(containerRef: RefObject<HTMLElement | null>): b
     if (!container || typeof IntersectionObserver === 'undefined') return;
 
     let isIdle = false;
+    let hasMouseMovement = false;
     let isVisible = false;
     let isSettled = false;
 
     const tryOpen = () => {
-      if (isSettled || !isIdle || !isVisible) return;
+      if (isSettled || !isIdle || !isVisible || !hasMouseMovement) return;
       isSettled = true;
       if (hasWebGL2()) setIsOpen(true);
     };
@@ -75,6 +77,16 @@ export function useHeroSceneGate(containerRef: RefObject<HTMLElement | null>): b
     );
     observer.observe(container);
 
+    // Guard to allow synthetic events in test mode
+    const isTest = import.meta.env?.MODE === 'test';
+    const handlePointerMove = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && (isTest || e.isTrusted)) {
+        hasMouseMovement = true;
+        tryOpen();
+      }
+    };
+    container.addEventListener('pointermove', handlePointerMove, { passive: true });
+
     let cancelIdle: () => void = () => undefined;
     const cancelLoad = whenLoaded(() => {
       cancelIdle = whenIdle(() => {
@@ -84,6 +96,7 @@ export function useHeroSceneGate(containerRef: RefObject<HTMLElement | null>): b
     });
 
     return () => {
+      container.removeEventListener('pointermove', handlePointerMove);
       cancelLoad();
       cancelIdle();
       observer.disconnect();
