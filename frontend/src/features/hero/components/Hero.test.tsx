@@ -51,7 +51,9 @@ describe('Hero Component', () => {
     expect(screen.getByText(/Hola, soy/i)).toBeInTheDocument();
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading).toHaveTextContent(/Rodrigo Del Villar/i);
-    expect(screen.getByText(/Desarrollador Full-Stack/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Desarrollador Full-Stack/i, { selector: 'p' }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/Construyo aplicaciones web rápidas y seguras/i),
     ).toBeInTheDocument();
@@ -62,7 +64,9 @@ describe('Hero Component', () => {
     renderHero();
 
     expect(screen.getByText(/Hi, I'm/i)).toBeInTheDocument();
-    expect(screen.getByText(/Full-Stack Developer/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Full-Stack Developer/i, { selector: 'p' }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/I build fast, secure web applications/i),
     ).toBeInTheDocument();

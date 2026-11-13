@@ -39,7 +39,7 @@ describe('HeroRole gate', () => {
 
     expect(screen.getByTestId('hero-role')).toHaveAttribute('data-mode', 'canvas');
     expect(screen.getByTestId('hero-role-canvas')).toBeInTheDocument();
-    expect(screen.getByText('Desarrollador Full-Stack')).toBeInTheDocument();
+    expect(screen.getByText('Desarrollador Full-Stack', { selector: 'p' })).toBeInTheDocument();
   });
 
   it('keeps the plain paragraph when heavy effects are off', () => {
@@ -49,6 +49,6 @@ describe('HeroRole gate', () => {
 
     expect(screen.getByTestId('hero-role')).toHaveAttribute('data-mode', 'text');
     expect(screen.queryByTestId('hero-role-canvas')).not.toBeInTheDocument();
-    expect(screen.getByText('Desarrollador Full-Stack')).toBeInTheDocument();
+    expect(screen.getByText('Desarrollador Full-Stack', { selector: 'p' })).toBeInTheDocument();
   });
 });
