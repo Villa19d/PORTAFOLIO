@@ -126,7 +126,7 @@ export function AboutSection() {
         <p className="text-sm leading-relaxed text-text">{PROFILE_BASE_DATA.hobbies[lang]}</p>
       </BentoTile>
 
-      <BentoTile label={t('about.currentlyLabel')} className="col-span-1 sm:col-span-2 lg:row-span-1">
+      <BentoTile label={t('about.currentlyLabel')} className="col-span-1 sm:col-span-2 lg:col-span-1 lg:row-span-1">
         <h3 className="text-sm font-mono uppercase tracking-widest text-text-muted">
           {t('about.currentlyLabel')}
         </h3>
@@ -137,7 +137,7 @@ export function AboutSection() {
         <CvTile />
       </BentoTile>
 
-      <BentoTile label={t('about.linksLabel')} className="col-span-1 lg:row-span-1 !p-0">
+      <BentoTile label={t('about.linksLabel')} className="col-span-1 sm:col-span-2 lg:col-span-2 lg:row-span-1 !p-0">
         <SocialLinks />
       </BentoTile>
 

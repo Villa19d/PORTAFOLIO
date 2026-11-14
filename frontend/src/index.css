@@ -2331,6 +2331,9 @@ html.custom-cursor-active dialog::backdrop {
 .social-links__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  grid-auto-rows: 1fr;
+  align-content: stretch;
   gap: 0.5rem;
   margin: 0;
   padding: 0;
